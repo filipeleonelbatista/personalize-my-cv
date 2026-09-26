@@ -50,5 +50,7 @@ describe("base setup dialog", () => {
     expect(dlg).toContain("Dialog");
     const page = readFileSync("app/page.tsx", "utf8");
     expect(page).toContain("BaseSetupDialog");
+    expect(page).toContain("Atualizar currículo");
+    expect(page).not.toContain("Re-envie o PDF");
   });
 });

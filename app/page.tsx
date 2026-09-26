@@ -4,7 +4,6 @@ import { BaseSetupDialog } from "./components/BaseSetupDialog";
 import { VacancyTable } from "./components/VacancyTable";
 import { GenerateModal } from "./components/GenerateModal";
 import { ThemeToggle } from "./components/theme-toggle";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import { buttonVariants } from "./components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -51,17 +50,9 @@ export default async function Page() {
             >
               <LuPrinter /> Imprimir currículo base
             </a>
+            <BaseSetupDialog label="Atualizar currículo" description="A IA vai recatalogar seus dados a partir do novo PDF." />
           </div>
           <VacancyTable apps={apps} />
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Currículo base</CardTitle>
-              <CardDescription>Re-envie o PDF para atualizar os dados (novo idioma ou conteúdo).</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <BaseSetupDialog label="Atualizar base" description="A IA vai recatalogar seus dados a partir do novo PDF." />
-            </CardContent>
-          </Card>
         </>
       )}
     </main>
