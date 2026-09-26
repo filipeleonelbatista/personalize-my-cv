@@ -153,9 +153,13 @@ function defaulted(v: unknown, fallback: string): string {
   return typeof v === "string" && v.trim() ? v.trim() : fallback;
 }
 
-export function normalizeEnvelope(data: unknown, lang: PdfLang = "pt-BR"): TailorEnvelope {
+export function normalizeEnvelope(data: unknown, lang: PdfLang = "pt-BR", fallbackResume?: Resume): TailorEnvelope {
   if (typeof data !== "object" || data === null) throw new Error("Envelope da IA inválido.");
   const copy = deepCopy(data);
+  const r = (copy as Record<string, unknown>).resume;
+  if (fallbackResume && (r === undefined || r === null || typeof r !== "object" || Array.isArray(r))) {
+    (copy as Record<string, unknown>).resume = JSON.parse(JSON.stringify(fallbackResume));
+  }
   normalizeContatos(copy);
   normalizeHabilidades(copy);
   normalizeExperiencias(copy);

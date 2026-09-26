@@ -75,10 +75,10 @@ export async function tailorResume(jobText: string, langOverride?: string): Prom
     const { data } = await generateJson(tailorSystem, tailorUser);
     let env;
     try {
-      env = normalizeEnvelope(data);
+      env = normalizeEnvelope(data, lang, base);
     } catch (zerr) {
       const { data: fixed } = await generateJson(tailorSystem, buildRepairUser(JSON.stringify(data), String(zerr)));
-      env = normalizeEnvelope(fixed);
+      env = normalizeEnvelope(fixed, lang, base);
     }
     const fileName = buildFileName(base.cabecalho.nome, env.cargo, env.empresa);
     const outDir = path.join(process.cwd(), "public", "generated");

@@ -24,7 +24,7 @@ export function buildTailorSystem(lang: BaseLang): string {
   const outLang =
     lang === "en" ? "English" : lang === "es" ? "Español" : "Português do Brasil";
   const missing = lang === "en" ? `"Position"/"Company"` : lang === "es" ? `"Puesto"/"Empresa"` : `"Vaga"/"Empresa"`;
-  return `Dado baseJson (ResumeSchema) + jobText, reescreva resumo e realizacoes priorizando keywords da vaga, sem inventar empresas/locais/datas. Traduza cargo e local para ${outLang} (nomes de empresas permanecem inalterados). Mantenha TODOS os textos do resume em ${outLang} e escreva emailBody e chatMessage em ${outLang}. Retorne SOMENTE o envelope {resume,cargo,empresa,matchPercent(0-100 honesto),strengths[3-8],weaknesses[3-8],emailBody(${outLang}),chatMessage(${outLang})}. Se cargo/empresa ausentes na vaga use ${missing}.`;
+  return `Dado baseJson (ResumeSchema) + jobText, reescreva resumo e realizacoes priorizando keywords da vaga, sem inventar empresas/locais/datas. Traduza cargo e local para ${outLang} (nomes de empresas permanecem inalterados). Mantenha TODOS os textos do resume em ${outLang} e escreva emailBody e chatMessage em ${outLang}. O campo resume é obrigatório: inclua o ResumeSchema completo adaptado, nunca o omita. Retorne SOMENTE o envelope {resume,cargo,empresa,matchPercent(0-100 honesto),strengths[3-8],weaknesses[3-8],emailBody(${outLang}),chatMessage(${outLang})}. Se cargo/empresa ausentes na vaga use ${missing}.`;
 }
 
 export const buildTailorUser = (baseJson: string, jobText: string) => `baseJson:\n${baseJson}\n\njobText:\n${jobText}`;
