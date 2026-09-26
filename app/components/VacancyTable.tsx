@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { LuEye, LuDownload, LuPrinter, LuRotateCcw, LuLoaderCircle, LuTrash2 } from "react-icons/lu";
+import { LuEye, LuDownload, LuPrinter, LuRotateCcw, LuLoaderCircle, LuTrash2, LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { retryTailor, deleteApplication } from "../actions";
+import { paginate, PAGE_SIZES, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { Button, buttonVariants } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Card, CardContent } from "./ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { Select } from "./ui/select";
 import { Progress } from "./ui/progress";
 import { DetailDrawer, type AppRow } from "./DetailDrawer";
 import { cn } from "@/lib/utils";
@@ -19,6 +21,10 @@ function fmtDate(iso: string) {
 export function VacancyTable({ apps }: { apps: AppRow[] }) {
   const [selected, setSelected] = useState<AppRow | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const { page: current, pageCount, start, end } = paginate(apps.length, page, pageSize);
+  const visible = apps.slice(start - 1, end);
 
   async function onDelete(id: number) {
     if (!window.confirm("Excluir este currículo? O PDF também será apagado.")) return;
@@ -79,7 +85,7 @@ export function VacancyTable({ apps }: { apps: AppRow[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {apps.map((app) => (
+          {visible.map((app) => (
             <TableRow key={app.id}>
               <TableCell className="font-medium">{app.cargo}</TableCell>
               <TableCell>{app.empresa}</TableCell>
@@ -139,6 +145,38 @@ export function VacancyTable({ apps }: { apps: AppRow[] }) {
           ))}
         </TableBody>
       </Table>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <p className="text-xs text-muted-foreground">
+          Mostrando {start}–{end} de {apps.length}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" disabled={current <= 1} onClick={() => setPage(current - 1)}>
+            <LuChevronLeft /> Anterior
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Página {current} de {Math.max(pageCount, 1)}
+          </span>
+          <Button variant="outline" size="sm" disabled={current >= pageCount} onClick={() => setPage(current + 1)}>
+            Próxima <LuChevronRight />
+          </Button>
+          <label className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Select
+              value={String(pageSize)}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {PAGE_SIZES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+            por página
+          </label>
+        </div>
+      </div>
       {selected ? <DetailDrawer app={selected} onClose={() => setSelected(null)} /> : null}
     </div>
   );
