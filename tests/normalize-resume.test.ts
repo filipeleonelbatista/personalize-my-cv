@@ -41,3 +41,23 @@ describe("normalizeResume", () => {
       contatos: [{ tipo: "Fax", valor: "123", link: null }] } })).toThrow();
   });
 });
+
+describe("normalizeResume habilidades", () => {
+  const withHabs = (habilidades: unknown) => normalizeResume({ ...base, secoes: { ...base.secoes, habilidades } });
+  it("accepts English keys (name/items)", () => {
+    const r = withHabs([{ name: "Front", items: ["React"] }]);
+    expect(r.secoes.habilidades[0]).toEqual({ nome: "Front", itens: ["React"] });
+  });
+  it("accepts categoria/skills with comma string", () => {
+    const r = withHabs([{ categoria: "Back", skills: "Node, Express" }]);
+    expect(r.secoes.habilidades[0]).toEqual({ nome: "Back", itens: ["Node", "Express"] });
+  });
+  it("accepts plain string groups", () => {
+    const r = withHabs(["React, Next.js"]);
+    expect(r.secoes.habilidades[0].itens).toEqual(["React", "Next.js"]);
+  });
+  it("defaults missing itens to empty array", () => {
+    const r = withHabs([{ nome: "DevOps" }]);
+    expect(r.secoes.habilidades[0]).toEqual({ nome: "DevOps", itens: [] });
+  });
+});

@@ -34,10 +34,46 @@ function deepCopy(data: unknown): Record<string, unknown> {
   return JSON.parse(JSON.stringify(data)) as Record<string, unknown>;
 }
 
+const ITENS_KEYS = ["itens", "items", "skills", "tecnologias", "conhecimentos", "lista"];
+const NOME_KEYS = ["nome", "name", "grupo", "categoria", "category", "titulo", "title", "area"];
+
+function pick(obj: Record<string, unknown>, keys: string[]): unknown {
+  for (const k of keys) {
+    if (obj[k] !== undefined && obj[k] !== null) return obj[k];
+  }
+  return undefined;
+}
+
+function toStringArray(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map(String).map((s) => s.trim()).filter(Boolean);
+  if (typeof v === "string") return v.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+  return [];
+}
+
+function normalizeGrupo(g: unknown): { nome: string; itens: string[] } {
+  if (typeof g === "string") {
+    const itens = toStringArray(g);
+    return { nome: itens.length > 1 ? "Habilidades" : g.trim().slice(0, 60), itens };
+  }
+  if (typeof g === "object" && g !== null) {
+    const obj = g as Record<string, unknown>;
+    return { nome: String(pick(obj, NOME_KEYS) ?? "Habilidades"), itens: toStringArray(pick(obj, ITENS_KEYS)) };
+  }
+  return { nome: "Habilidades", itens: [] };
+}
+
+function normalizeHabilidades(root: Record<string, unknown>): void {
+  const secoes = (root.resume ?? root) as { secoes?: { habilidades?: unknown } };
+  const habs = secoes?.secoes?.habilidades;
+  if (!Array.isArray(habs)) return;
+  secoes.secoes!.habilidades = habs.map(normalizeGrupo);
+}
+
 export function normalizeResume(data: unknown): Resume {
   if (typeof data !== "object" || data === null) throw new Error("Currículo da IA inválido.");
   const copy = deepCopy(data);
   normalizeContatos(copy);
+  normalizeHabilidades(copy);
   return ResumeSchema.parse(copy);
 }
 
@@ -49,6 +85,7 @@ export function normalizeEnvelope(data: unknown): TailorEnvelope {
   if (typeof data !== "object" || data === null) throw new Error("Envelope da IA inválido.");
   const copy = deepCopy(data);
   normalizeContatos(copy);
+  normalizeHabilidades(copy);
   return TailorEnvelopeSchema.parse({
     ...copy,
     cargo: defaulted(copy.cargo, "Vaga"),
