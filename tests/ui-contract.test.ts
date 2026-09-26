@@ -18,4 +18,10 @@ describe("ui contract", () => {
     expect(readFileSync("app/api/base/pdf/route.ts", "utf8")).toContain("application/pdf");
     expect(readFileSync("app/page.tsx", "utf8")).toContain("/api/base/pdf");
   });
+  it("generate modal has short IA label and per-vacancy language select", () => {
+    const src = readFileSync("app/components/GenerateModal.tsx", "utf8");
+    expect(src).toContain("Personalizar com IA");
+    expect(src).not.toContain("Gerar outro currículo");
+    expect(src).toContain('name="lang"');
+  });
 });

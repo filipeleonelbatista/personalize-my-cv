@@ -63,12 +63,12 @@ export async function listApplications() {
   return db.tailoredApplication.findMany({ orderBy: { createdAt: "desc" } });
 }
 
-export async function tailorResume(jobText: string): Promise<{ ok: true; id: number } | { ok: false; error: string; id?: number }> {
+export async function tailorResume(jobText: string, langOverride?: string): Promise<{ ok: true; id: number } | { ok: false; error: string; id?: number }> {
   if (!jobText || jobText.trim().length < 20) return { ok: false, error: "Cole o texto da vaga (mín. 20 caracteres)." };
   try {
     const base = await getBase();
     if (!base) return { ok: false, error: "Cadastre o currículo base primeiro." };
-    const lang = await getBaseLang();
+    const lang = langOverride ? parseBaseLang(langOverride) : await getBaseLang();
     const tailorSystem = buildTailorSystem(lang);
     const tailorUser = buildTailorUser(JSON.stringify(base), jobText);
     const { data } = await generateJson(tailorSystem, tailorUser);

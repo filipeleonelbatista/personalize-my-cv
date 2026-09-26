@@ -16,6 +16,10 @@ describe("tailor envelope", () => {
     const r = await tailorResume("curto");
     expect(r.ok).toBe(false);
   });
+  it("accepts a language override without calling LLMs on short input", async () => {
+    const r = await tailorResume("curto", "en");
+    expect(r.ok).toBe(false);
+  });
   it("retry on unknown id returns not found", async () => {
     const r = await retryTailor(999999);
     expect(r.ok).toBe(false);

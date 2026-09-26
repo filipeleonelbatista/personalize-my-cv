@@ -15,7 +15,7 @@ npm run dev            # http://localhost:3000
 ## Uso
 
 1. Envie o PDF do currículo → a IA cataloga os dados e salva o `default`.
-2. Clique em **Gerar outro currículo**, cole o texto da vaga → gera:
+2. Clique em **Personalizar com IA**, escolha o idioma, cole o texto da vaga → gera:
    - PDF `public/generated/<Nome>_<Cargo>_<Empresa>_<timestamp>.pdf`
    - % de afinidade + pontos fortes/fracos
    - email de apresentação + mensagem instantânea (botões Copiar)

@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { tailorResume } from "../actions";
+import type { BaseLang } from "../../lib/llm/prompts";
 
-export function GenerateModal() {
+export function GenerateModal({ defaultLang = "pt-BR" }: { defaultLang?: BaseLang }) {
   const [open, setOpen] = useState(false);
   const [jobText, setJobText] = useState("");
+  const [lang, setLang] = useState<BaseLang>(defaultLang);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -13,7 +15,7 @@ export function GenerateModal() {
     setError("");
     setLoading(true);
     try {
-      const r = await tailorResume(jobText);
+      const r = await tailorResume(jobText, lang);
       if (r.ok) window.location.reload();
       else setError(r.error);
     } catch (err) {
@@ -26,7 +28,7 @@ export function GenerateModal() {
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} className="rounded bg-black px-4 py-2 text-sm text-white">
-        Gerar outro currículo
+        Personalizar com IA
       </button>
     );
   }
@@ -36,6 +38,14 @@ export function GenerateModal() {
       <div className="w-full max-w-2xl space-y-3 rounded bg-white p-6">
         <h2 className="text-lg font-bold">Nova vaga</h2>
         <p className="text-sm text-gray-600">Cole o texto da vaga (requisitos, responsabilidades, empresa).</p>
+        <label className="block text-sm">
+          Idioma do currículo
+          <select name="lang" value={lang} onChange={(e) => setLang(e.target.value as BaseLang)} className="ml-2 rounded border p-1 text-sm">
+            <option value="pt-BR">Português (BR)</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+          </select>
+        </label>
         <textarea
           value={jobText}
           onChange={(e) => setJobText(e.target.value)}

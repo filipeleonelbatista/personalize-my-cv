@@ -1,4 +1,4 @@
-import { getBase, listApplications } from "./actions";
+import { getBase, getBaseLang, listApplications } from "./actions";
 import { BaseSetup } from "./components/BaseSetup";
 import { VacancyTable } from "./components/VacancyTable";
 import { GenerateModal } from "./components/GenerateModal";
@@ -6,6 +6,7 @@ import { GenerateModal } from "./components/GenerateModal";
 export default async function Page() {
   const base = await getBase();
   const rows = base ? await listApplications() : [];
+  const lang = base ? await getBaseLang() : "pt-BR";
   const apps = rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
 
   if (!base) {
@@ -29,7 +30,7 @@ export default async function Page() {
           <a href="/api/base/pdf" target="_blank" rel="noopener" className="rounded border px-4 py-2 text-sm">
             Imprimir currículo base
           </a>
-          <GenerateModal />
+          <GenerateModal defaultLang={lang} />
         </div>
       </header>
       <VacancyTable apps={apps} />

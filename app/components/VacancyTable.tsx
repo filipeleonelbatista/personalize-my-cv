@@ -28,7 +28,7 @@ export function VacancyTable({ apps }: { apps: AppRow[] }) {
   }
 
   if (!apps.length) {
-    return <p className="text-sm text-gray-600">Nenhum currículo gerado ainda. Clique em “Gerar outro currículo”.</p>;
+    return <p className="text-sm text-gray-600">Nenhum currículo gerado ainda. Clique em “Personalizar com IA”.</p>;
   }
 
   return (
