@@ -62,7 +62,10 @@ export function VacancyTable({ apps }: { apps: AppRow[] }) {
                   <div className="flex gap-2">
                     <button onClick={() => setSelected(app)} className="underline">Ver</button>
                     {app.pdfPath ? (
-                      <a href={app.pdfPath} download={app.fileName} className="underline">Baixar</a>
+                      <>
+                        <a href={app.pdfPath} download={app.fileName} className="underline">Baixar</a>
+                        <a href={`/api/applications/${app.id}/pdf`} target="_blank" rel="noopener" className="underline">Imprimir</a>
+                      </>
                     ) : null}
                     {app.status === "failed" ? (
                       <button onClick={() => onRetry(app.id)} disabled={busyId === app.id} className="underline disabled:opacity-50">

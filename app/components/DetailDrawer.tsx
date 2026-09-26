@@ -60,9 +60,14 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
         </div>
 
         {app.pdfPath ? (
-          <a href={app.pdfPath} download={app.fileName} className="inline-block rounded bg-black px-4 py-2 text-sm text-white">
-            Baixar PDF
-          </a>
+          <div className="flex gap-2">
+            <a href={app.pdfPath} download={app.fileName} className="inline-block rounded bg-black px-4 py-2 text-sm text-white">
+              Baixar PDF
+            </a>
+            <a href={`/api/applications/${app.id}/pdf`} target="_blank" rel="noopener" className="inline-block rounded border px-4 py-2 text-sm">
+              Imprimir
+            </a>
+          </div>
         ) : (
           <p className="text-sm text-red-600">PDF não gerado. Erro: {app.errorLog}</p>
         )}

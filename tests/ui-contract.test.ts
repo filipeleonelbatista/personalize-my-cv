@@ -24,4 +24,9 @@ describe("ui contract", () => {
     expect(src).not.toContain("Gerar outro currículo");
     expect(src).toContain('name="lang"');
   });
+  it("tailored print route exists and table links it", () => {
+    expect(existsSync("app/api/applications/[id]/pdf/route.ts")).toBe(true);
+    expect(readFileSync("app/api/applications/[id]/pdf/route.ts", "utf8")).toContain("application/pdf");
+    expect(readFileSync("app/components/VacancyTable.tsx", "utf8")).toContain("/api/applications/");
+  });
 });
