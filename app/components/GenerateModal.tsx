@@ -15,10 +15,7 @@ export function GenerateModal() {
     try {
       const r = await tailorResume(jobText);
       if (r.ok) window.location.reload();
-      else {
-        setError(r.error);
-        if (r.id) window.location.reload();
-      }
+      else setError(r.error);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -46,7 +43,14 @@ export function GenerateModal() {
           placeholder="Cole aqui a descrição da vaga..."
           className="w-full rounded border p-2 text-sm"
         />
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? (
+          <div className="space-y-2">
+            <p className="text-sm text-red-600">{error}</p>
+            <button onClick={() => window.location.reload()} className="rounded border px-4 py-2 text-sm">
+              Atualizar tabela
+            </button>
+          </div>
+        ) : null}
         <div className="flex justify-end gap-2">
           <button onClick={() => setOpen(false)} className="rounded border px-4 py-2 text-sm">
             Cancelar

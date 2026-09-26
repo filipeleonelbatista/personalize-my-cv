@@ -10,3 +10,7 @@ function stamp(d: Date): string {
 export function buildFileName(nome: string, cargo: string, empresa: string, now = new Date()): string {
   return `${sanitizePart(nome)}_${sanitizePart(cargo)}_${sanitizePart(empresa)}_${stamp(now)}.pdf`;
 }
+
+export function buildFailedFileName(): string {
+  return `failed_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.pdf`;
+}

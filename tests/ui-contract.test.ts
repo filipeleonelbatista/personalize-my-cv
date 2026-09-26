@@ -8,4 +8,9 @@ describe("ui contract", () => {
     }
     expect(readFileSync("app/components/VacancyTable.tsx", "utf8")).toContain("Tentar novamente");
   });
+  it("generate modal keeps the error visible on failure", () => {
+    const src = readFileSync("app/components/GenerateModal.tsx", "utf8");
+    expect(src).toContain("setError(r.error)");
+    expect(src).not.toContain("if (r.id)");
+  });
 });

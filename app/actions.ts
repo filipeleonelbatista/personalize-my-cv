@@ -3,15 +3,23 @@
 import { renderToFile } from "@react-pdf/renderer";
 import { db } from "@/lib/db";
 import { extractCvText } from "@/lib/cv-text";
-import { parseResume, parseEnvelope, type Resume } from "@/lib/resume-schema";
+import { parseResume, type Resume } from "@/lib/resume-schema";
+import { normalizeEnvelope } from "@/lib/tailor";
 import { generateJson } from "@/lib/llm/chain";
 import { BASE_EXTRACT_SYSTEM, TAILOR_SYSTEM, buildTailorUser, buildRepairUser } from "@/lib/llm/prompts";
-import { buildFileName } from "@/lib/filename";
+import { buildFileName, buildFailedFileName } from "@/lib/filename";
 import { cvElement } from "@/lib/pdf/CVDocument";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
 
 export async function getBase(): Promise<Resume | null> {
   const row = await db.baseResume.findUnique({ where: { id: 1 } });
-  return row ? (JSON.parse(row.json) as Resume) : null;
+  if (!row) return null;
+  try {
+    return parseResume(JSON.parse(row.json));
+  } catch {
+    return null;
+  }
 }
 
 export async function uploadBase(formData: FormData): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -52,10 +60,19 @@ export async function tailorResume(jobText: string): Promise<{ ok: true; id: num
   try {
     const base = await getBase();
     if (!base) return { ok: false, error: "Cadastre o currículo base primeiro." };
-    const { data } = await generateJson(TAILOR_SYSTEM, buildTailorUser(JSON.stringify(base), jobText));
-    const env = parseEnvelope(data);
-    const fileName = buildFileName(base.cabecalho.nome, env.cargo || "Vaga", env.empresa || "Empresa");
-    await renderToFile(cvElement(env.resume), `./public/generated/${fileName}`);
+    const tailorUser = buildTailorUser(JSON.stringify(base), jobText);
+    const { data } = await generateJson(TAILOR_SYSTEM, tailorUser);
+    let env;
+    try {
+      env = normalizeEnvelope(data);
+    } catch (zerr) {
+      const { data: fixed } = await generateJson(TAILOR_SYSTEM, buildRepairUser(JSON.stringify(data), String(zerr)));
+      env = normalizeEnvelope(fixed);
+    }
+    const fileName = buildFileName(base.cabecalho.nome, env.cargo, env.empresa);
+    const outDir = path.join(process.cwd(), "public", "generated");
+    await mkdir(outDir, { recursive: true });
+    await renderToFile(cvElement(env.resume), path.join(outDir, fileName));
     const row = await db.tailoredApplication.create({
       data: {
         jobText, cargo: env.cargo, empresa: env.empresa, fileName, pdfPath: `/generated/${fileName}`,
@@ -69,7 +86,7 @@ export async function tailorResume(jobText: string): Promise<{ ok: true; id: num
     const msg = (e as Error).message.slice(0, 1000);
     const row = await db.tailoredApplication.create({
       data: {
-        jobText, cargo: "Vaga", empresa: "Empresa", fileName: `failed_${Date.now()}.pdf`, pdfPath: "",
+        jobText, cargo: "Vaga", empresa: "Empresa", fileName: buildFailedFileName(), pdfPath: "",
         matchPercent: 0, strengths: "[]", weaknesses: "[]", status: "failed", errorLog: msg,
       },
     });
@@ -81,6 +98,13 @@ export async function retryTailor(id: number): Promise<{ ok: boolean; error?: st
   const row = await db.tailoredApplication.findUnique({ where: { id } });
   if (!row) return { ok: false, error: "Registro não encontrado." };
   const r = await tailorResume(row.jobText);
-  if (r.ok && r.id !== id) await db.tailoredApplication.delete({ where: { id } });
-  return r.ok ? { ok: true } : { ok: false, error: r.error };
+  if (r.ok) {
+    if (r.id !== id) await db.tailoredApplication.delete({ where: { id } });
+    return { ok: true };
+  }
+  if (r.id && r.id !== id) {
+    await db.tailoredApplication.delete({ where: { id: r.id } });
+    await db.tailoredApplication.update({ where: { id }, data: { status: "failed", errorLog: r.error || "" } });
+  }
+  return { ok: false, error: r.error };
 }

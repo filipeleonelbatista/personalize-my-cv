@@ -83,6 +83,22 @@ export function CVDocument({ resume }: { resume: Resume }) {
             ))}
           </>
         ) : null}
+        {sec.certificacoes.length ? (
+          <>
+            <Text style={s.h2}>Certificações</Text>
+            {sec.certificacoes.map((cert) => (
+              <Text key={`${cert.nome}-${cert.ano}`} style={s.bullet}>• {cert.nome} — {cert.emissor} ({cert.ano})</Text>
+            ))}
+          </>
+        ) : null}
+        {sec.idiomas.length ? (
+          <>
+            <Text style={s.h2}>Idiomas</Text>
+            {sec.idiomas.map((idioma) => (
+              <Text key={idioma.idioma} style={s.bullet}>• {idioma.idioma}: {idioma.nivel}</Text>
+            ))}
+          </>
+        ) : null}
       </Page>
     </Document>
   );

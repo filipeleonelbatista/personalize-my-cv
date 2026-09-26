@@ -8,4 +8,8 @@ describe("extractJson", () => {
   it("passes plain json through", () => {
     expect(JSON.parse(extractJson('{"a":2}'))).toEqual({ a: 2 });
   });
+  it("rejects empty/non-string AI output with readable error", () => {
+    expect(() => extractJson("")).toThrow(/vazia ou inválida/);
+    expect(() => extractJson(null as unknown as string)).toThrow(/vazia ou inválida/);
+  });
 });

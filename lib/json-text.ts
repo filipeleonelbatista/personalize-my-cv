@@ -1,4 +1,5 @@
 export function extractJson(raw: string): string {
+  if (typeof raw !== "string" || !raw.trim()) throw new Error("Resposta da IA vazia ou inválida.");
   const m = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const inner = (m ? m[1] : raw).trim();
   const s = inner.indexOf("{");

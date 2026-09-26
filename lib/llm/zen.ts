@@ -13,8 +13,10 @@ export async function chatJsonZen(system: string, user: string): Promise<unknown
     });
     if (!res.ok) throw new Error(`zen ${res.status}: ${await res.text()}`);
     const j = (await res.json()) as { choices: { message: { content: string } }[] };
+    const content = j.choices?.[0]?.message?.content;
+    if (typeof content !== "string" || !content.trim()) throw new Error("zen: resposta vazia da IA.");
     const { extractJson } = await import("@/lib/json-text");
-    return JSON.parse(extractJson(j.choices[0].message.content));
+    return JSON.parse(extractJson(content));
   } finally {
     clearTimeout(t);
   }

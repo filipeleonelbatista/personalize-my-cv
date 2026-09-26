@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFileName } from "@/lib/filename";
+import { buildFileName, buildFailedFileName } from "@/lib/filename";
 
 describe("buildFileName", () => {
   it("builds Nome_Cargo_Empresa_timestamp", () => {
@@ -11,5 +11,12 @@ describe("buildFileName", () => {
     expect(f).not.toContain("/");
     expect(f).not.toContain(":");
     expect(f.endsWith(".pdf")).toBe(true);
+  });
+  it("builds unique failed filenames", () => {
+    const a = buildFailedFileName();
+    const b = buildFailedFileName();
+    expect(a).not.toBe(b);
+    expect(a.endsWith(".pdf")).toBe(true);
+    expect(a).not.toContain("/");
   });
 });

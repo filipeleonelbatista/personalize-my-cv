@@ -19,8 +19,10 @@ export async function chatJsonGemini(system: string, user: string): Promise<unkn
     );
     if (!res.ok) throw new Error(`gemini ${res.status}: ${await res.text()}`);
     const j = (await res.json()) as { candidates: { content: { parts: { text: string }[] } }[] };
+    const text = j.candidates?.[0]?.content?.parts?.map((p) => p.text).join("");
+    if (typeof text !== "string" || !text.trim()) throw new Error("gemini: resposta vazia da IA.");
     const { extractJson } = await import("@/lib/json-text");
-    return JSON.parse(extractJson(j.candidates[0].content.parts.map((p) => p.text).join("")));
+    return JSON.parse(extractJson(text));
   } finally {
     clearTimeout(t);
   }
