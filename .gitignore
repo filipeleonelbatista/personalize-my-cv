@@ -1,0 +1,21 @@
+# dependencies
+/node_modules
+
+# next
+/.next/
+/out/
+
+# env
+.env
+.env*.local
+
+# prisma
+prisma/dev.db*
+
+# generated cvs (keep dir, ignore pdfs)
+/public/generated/*.pdf
+
+# misc
+node_modules/.cache
+*.tsbuildinfo
+next-env.d.ts
