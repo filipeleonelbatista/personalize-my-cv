@@ -40,6 +40,11 @@ describe("ui contract", () => {
     expect(css).toContain("--background");
     expect(readFileSync("app/layout.tsx", "utf8")).toContain("ThemeProvider");
   });
+  it("layout has developer footer with linkedin", () => {
+    const src = readFileSync("app/layout.tsx", "utf8");
+    expect(src).toContain("filipeleonelbatista");
+    expect(src).toContain("linkedin.com/in/filipeleonelbatista");
+  });
 });
 
 describe("base setup dialog", () => {
