@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMesAno, formatPeriodo, skillBullets } from "@/lib/pdf/format";
+import { formatMesAno, formatPeriodo, skillBullets, skillColumns } from "@/lib/pdf/format";
 
 describe("formatMesAno", () => {
   it("formats YYYY-MM to 3-letter pt-BR month", () => {
@@ -35,5 +35,17 @@ describe("skillBullets", () => {
   it("caps at 6 bullets", () => {
     const many = Array.from({ length: 20 }, (_, i) => `S${i + 1}`);
     expect(skillBullets(many)).toHaveLength(6);
+  });
+});
+
+describe("skillColumns", () => {
+  it("splits 6 bullets into 2 columns of 3", () => {
+    const skills = Array.from({ length: 19 }, (_, i) => `K${i + 1}`);
+    const [c1, c2] = skillColumns(skills);
+    expect(c1).toEqual(["K1, K2, K3", "K4, K5, K6", "K7, K8, K9"]);
+    expect(c2).toEqual(["K10, K11, K12", "K13, K14, K15", "K16, K17, K18"]);
+  });
+  it("returns empty second column when few skills", () => {
+    expect(skillColumns(["A"])).toEqual([["A"], []]);
   });
 });

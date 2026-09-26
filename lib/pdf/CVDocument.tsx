@@ -1,7 +1,7 @@
 import React from "react";
 import { Document, Page, Text, View, Link, StyleSheet, type DocumentProps } from "@react-pdf/renderer";
 import type { Resume } from "@/lib/resume-schema";
-import { formatPeriodo, skillBullets } from "./format";
+import { formatPeriodo, skillColumns } from "./format";
 
 const s = StyleSheet.create({
   page: { padding: 56, fontFamily: "Helvetica", fontSize: 10, lineHeight: 1.4, color: "#000" },
@@ -35,17 +35,17 @@ export function CVDocument({ resume }: { resume: Resume }) {
         <Text style={s.role}>{c.titulo_profissional}</Text>
         <Text style={s.body}>{sec.resumo}</Text>
         <Text style={s.h2}>Habilidades</Text>
-        {[0, 1].map((col) => {
-          const items = skillBullets(sec.habilidades.flatMap((g) => g.itens)).slice(col * 3, col * 3 + 3);
-          if (!items.length) return null;
-          return (
-            <View key={col} style={s.col}>
-              {items.map((t, j) => (
-                <Text key={`${col}-${j}`} style={s.bullet}>• {t}</Text>
-              ))}
-            </View>
-          );
-        })}
+        <View style={s.skills}>
+          {skillColumns(sec.habilidades.flatMap((g) => g.itens)).map((items, col) =>
+            items.length ? (
+              <View key={col} style={s.col}>
+                {items.map((t, j) => (
+                  <Text key={`${col}-${j}`} style={s.bullet}>• {t}</Text>
+                ))}
+              </View>
+            ) : null
+          )}
+        </View>
         <Text style={s.h2}>Experiências</Text>
         {sec.experiencia.map((e) => (
           <View key={`${e.cargo}-${e.empresa}-${e.periodo.inicio}`} wrap={false} style={{ marginBottom: 10 }}>

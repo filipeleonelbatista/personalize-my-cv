@@ -22,3 +22,8 @@ export function skillBullets(itens: string[], perBullet = 3, maxBullets = 6): st
   }
   return out;
 }
+
+export function skillColumns(itens: string[]): [string[], string[]] {
+  const bullets = skillBullets(itens);
+  return [bullets.slice(0, 3), bullets.slice(3, 6)];
+}
