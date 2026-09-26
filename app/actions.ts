@@ -4,7 +4,7 @@ import { renderToFile } from "@react-pdf/renderer";
 import { db } from "@/lib/db";
 import { extractCvText } from "@/lib/cv-text";
 import { parseResume, type Resume } from "@/lib/resume-schema";
-import { normalizeEnvelope } from "@/lib/tailor";
+import { normalizeResume, normalizeEnvelope } from "@/lib/tailor";
 import { generateJson } from "@/lib/llm/chain";
 import { BASE_EXTRACT_SYSTEM, TAILOR_SYSTEM, buildTailorUser, buildRepairUser } from "@/lib/llm/prompts";
 import { buildFileName, buildFailedFileName } from "@/lib/filename";
@@ -29,7 +29,7 @@ export async function uploadBase(formData: FormData): Promise<{ ok: true } | { o
     const text = await extractCvText(Buffer.from(await file.arrayBuffer()));
     const { data } = await generateJson(BASE_EXTRACT_SYSTEM, text.slice(0, 12000));
     try {
-      const resume = parseResume(data);
+      const resume = normalizeResume(data);
       await db.baseResume.upsert({
         where: { id: 1 },
         create: { id: 1, json: JSON.stringify(resume) },
@@ -38,7 +38,7 @@ export async function uploadBase(formData: FormData): Promise<{ ok: true } | { o
       return { ok: true };
     } catch (zerr) {
       const { data: fixed } = await generateJson(BASE_EXTRACT_SYSTEM, buildRepairUser(JSON.stringify(data), String(zerr)));
-      const resume = parseResume(fixed);
+      const resume = normalizeResume(fixed);
       await db.baseResume.upsert({
         where: { id: 1 },
         create: { id: 1, json: JSON.stringify(resume) },
