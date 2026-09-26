@@ -25,7 +25,12 @@ export default async function Page() {
           <h1 className="text-2xl font-bold">Personalize My CV</h1>
           <p className="text-sm text-gray-600">Base: {base.cabecalho.nome} — {base.cabecalho.titulo_profissional}</p>
         </div>
-        <GenerateModal />
+        <div className="flex gap-2">
+          <a href="/api/base/pdf" target="_blank" rel="noopener" className="rounded border px-4 py-2 text-sm">
+            Imprimir currículo base
+          </a>
+          <GenerateModal />
+        </div>
       </header>
       <VacancyTable apps={apps} />
       <details>

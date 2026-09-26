@@ -13,4 +13,9 @@ describe("ui contract", () => {
     expect(src).toContain("setError(r.error)");
     expect(src).not.toContain("if (r.id)");
   });
+  it("base print route exists and page links it", () => {
+    expect(existsSync("app/api/base/pdf/route.ts")).toBe(true);
+    expect(readFileSync("app/api/base/pdf/route.ts", "utf8")).toContain("application/pdf");
+    expect(readFileSync("app/page.tsx", "utf8")).toContain("/api/base/pdf");
+  });
 });
