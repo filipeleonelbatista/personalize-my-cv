@@ -8,7 +8,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("generateJson fallback", () => {
   it("uses zen when it succeeds", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: '{"ok":1}' } }] }) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ output: [{ type: "message", content: [{ type: "output_text", text: '{"ok":1}' }] }] }) })));
     const r = await generateJson("s", "u");
     expect(r.provider).toBe("zen");
     expect(r.data).toEqual({ ok: 1 });
@@ -34,8 +34,8 @@ describe("generateJson fallback", () => {
     vi.stubGlobal("fetch", fetch);
     await expect(generateJson("s", "u")).rejects.toThrow(/zen.*gemini.*openrouter/s);
   });
-  it("zen rejects empty choices with readable error", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ choices: [] }) })));
+  it("zen rejects empty output with readable error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ output: [] }) })));
     await expect(chatJsonZen("s", "u")).rejects.toThrow(/resposta vazia/);
   });
   it("gemini rejects empty candidates with readable error", async () => {

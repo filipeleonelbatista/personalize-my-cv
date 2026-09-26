@@ -1,5 +1,5 @@
 export async function chatJsonOpenrouter(system: string, user: string): Promise<unknown> {
-  const model = process.env.OPENROUTER_MODEL || "openai/gpt-oss-20b:free";
+  const model = process.env.OPENROUTER_MODEL || "nvidia/nemotron-3-ultra-550b-a55b:free";
   const key = process.env.OPENROUTER_API_KEY || "";
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), 60_000);
