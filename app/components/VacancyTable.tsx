@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { LuEye, LuDownload, LuPrinter, LuRotateCcw, LuLoaderCircle } from "react-icons/lu";
-import { retryTailor } from "../actions";
+import { LuEye, LuDownload, LuPrinter, LuRotateCcw, LuLoaderCircle, LuTrash2 } from "react-icons/lu";
+import { retryTailor, deleteApplication } from "../actions";
 import { Button, buttonVariants } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Card, CardContent } from "./ui/card";
@@ -19,6 +19,24 @@ function fmtDate(iso: string) {
 export function VacancyTable({ apps }: { apps: AppRow[] }) {
   const [selected, setSelected] = useState<AppRow | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+
+  async function onDelete(id: number) {
+    if (!window.confirm("Excluir este currículo? O PDF também será apagado.")) return;
+    setBusyId(id);
+    try {
+      const r = await deleteApplication(id);
+      if (r.ok) {
+        toast.success("Currículo excluído!");
+        window.location.reload();
+      } else {
+        toast.error("Falha ao excluir", { description: r.error });
+      }
+    } catch (err) {
+      toast.error("Falha ao excluir", { description: (err as Error).message });
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   async function onRetry(id: number) {
     setBusyId(id);
@@ -112,6 +130,9 @@ export function VacancyTable({ apps }: { apps: AppRow[] }) {
                       {busyId === app.id ? <LuLoaderCircle className="animate-spin" /> : <LuRotateCcw />}
                     </Button>
                   ) : null}
+                  <Button variant="ghost" size="icon" title="Excluir" disabled={busyId === app.id} onClick={() => onDelete(app.id)}>
+                    <LuTrash2 />
+                  </Button>
                 </div>
               </TableCell>
             </TableRow>

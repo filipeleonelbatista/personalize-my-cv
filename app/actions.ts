@@ -11,7 +11,7 @@ import { buildFileName, buildFailedFileName } from "@/lib/filename";
 import { MISSING_JOB } from "@/lib/pdf/i18n";
 import { weekRange, bucketByWeekday, weekLabel, WEEKDAY_LABELS } from "@/lib/report";
 import { cvElement } from "@/lib/pdf/CVDocument";
-import { mkdir } from "node:fs/promises";
+import { mkdir, unlink } from "node:fs/promises";
 import path from "node:path";
 
 export async function getBase(): Promise<Resume | null> {
@@ -153,4 +153,18 @@ export async function getWeekStats(offsetWeeks: number): Promise<WeekStats> {
     bestDay: total ? WEEKDAY_LABELS[best] : "—",
     avgPerDay: Math.round((total / 7) * 10) / 10,
   };
+}
+
+export async function deleteApplication(id: number): Promise<{ ok: boolean; error?: string }> {
+  const row = await db.tailoredApplication.findUnique({ where: { id } });
+  if (!row) return { ok: false, error: "Registro não encontrado." };
+  await db.tailoredApplication.delete({ where: { id } });
+  if (row.pdfPath) {
+    try {
+      await unlink(path.join(process.cwd(), "public", path.basename(row.pdfPath)));
+    } catch {
+      // best effort: o registro já foi excluído
+    }
+  }
+  return { ok: true };
 }
