@@ -36,12 +36,18 @@ describe("CVDocument", () => {
     const job = { ...resume, secoes: { ...resume.secoes,
       experiencia: [{ cargo: "Dev", empresa: "CI&T", local: "São Paulo, SP, Brasil (Remoto)",
         periodo: { inicio: "2025-08", fim: null, atual: true },
-        descricao: "x", realizacoes: [], tecnologias: ["React"] }] } } as never;
+        descricao: "Atuo em projeto.",
+        realizacoes: ["Interfaces modernas em React.", "Integração com APIs REST."],
+        tecnologias: ["React", "Context API"] }] } } as never;
     const buf = await renderToBuffer(cvElement(job));
     const text = await extractCvText(Buffer.from(buf));
     expect(text).toContain("Ago 2025");
     expect(text).toContain("atual");
     expect(text).toContain("São Paulo, SP, Brasil (Remoto)");
     expect(text).not.toContain("2025-08");
+    expect(text).toContain("Principais atividades");
+    expect(text).toContain("Interfaces modernas em React.");
+    expect(text).toContain("Competências:");
+    expect(text).toContain("React, Context API");
   }, 30000);
 });

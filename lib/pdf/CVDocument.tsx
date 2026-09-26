@@ -17,6 +17,7 @@ const s = StyleSheet.create({
   skills: { flexDirection: "row" },
   col: { width: "50%", paddingRight: 8 },
   bullet: { marginLeft: 12, marginBottom: 2 },
+  activitiesTitle: { fontWeight: "bold", marginTop: 6, marginBottom: 2 },
   comp: { marginTop: 4 },
   bold: { fontWeight: "bold" },
 });
@@ -54,9 +55,14 @@ export function CVDocument({ resume }: { resume: Resume }) {
             </View>
             <Text style={s.org}>{e.empresa}{e.local ? `. ${e.local}` : ""}</Text>
             <Text style={s.body}>{e.descricao}</Text>
-            {e.realizacoes.map((r) => (
-              <Text key={r} style={s.bullet}>• {r}</Text>
-            ))}
+            {e.realizacoes.length ? (
+              <>
+                <Text style={s.activitiesTitle}>Principais atividades</Text>
+                {e.realizacoes.map((r, k) => (
+                  <Text key={k} style={s.bullet}>• {r}</Text>
+                ))}
+              </>
+            ) : null}
             <Text style={s.comp}><Text style={s.bold}>Competências: </Text>{e.tecnologias.join(", ")}</Text>
           </View>
         ))}

@@ -69,11 +69,82 @@ function normalizeHabilidades(root: Record<string, unknown>): void {
   secoes.secoes!.habilidades = habs.map(normalizeGrupo);
 }
 
+const MESES_BR: Record<string, string> = {
+  jan: "01", fev: "02", mar: "03", abr: "04", mai: "05", jun: "06",
+  jul: "07", ago: "08", set: "09", out: "10", nov: "11", dez: "12",
+};
+
+function parseMesAnoBr(s: string): string | null {
+  const t = s.trim().toLowerCase();
+  if (/^(atual|presente|present|atualmente|hoje|o momento)$/.test(t)) return null;
+  let m = t.match(/^(\d{4})-(\d{2})$/);
+  if (m) return `${m[1]}-${m[2]}`;
+  m = t.match(/^(\d{2})\/(\d{4})$/);
+  if (m) return `${m[2]}-${m[1]}`;
+  m = t.match(/^([a-zç]{3,9})\.?\s+(\d{4})$/);
+  if (m && MESES_BR[m[1].slice(0, 3)]) return `${m[2]}-${MESES_BR[m[1].slice(0, 3)]}`;
+  return null;
+}
+
+function normalizePeriodo(v: unknown): unknown {
+  if (typeof v !== "string") return v;
+  const parts = v.split(/\s*[–—-]\s*/).filter(Boolean);
+  if (!parts.length) return v;
+  const ini = parseMesAnoBr(parts[0]);
+  if (!ini) return v;
+  if (parts.length === 1) return { inicio: ini, fim: null, atual: false };
+  const fim = parseMesAnoBr(parts[1]);
+  if (fim) return { inicio: ini, fim, atual: false };
+  if (parts[1].trim()) return { inicio: ini, fim: null, atual: true };
+  return v;
+}
+
+const EXP_KEYS: Record<string, string[]> = {
+  cargo: ["cargo", "role", "titulo", "title", "position", "funcao", "função"],
+  empresa: ["empresa", "company", "organizacao", "organização", "organization", "empregador"],
+  local: ["local", "location", "cidade", "city", "lugar", "place"],
+  periodo: ["periodo", "period", "datas", "data", "duration", "quando"],
+  descricao: ["descricao", "description", "contexto", "context", "sobre", "about", "summary"],
+  realizacoes: ["realizacoes", "atividades", "activities", "responsabilidades", "responsibilities", "tarefas", "tasks"],
+  tecnologias: ["tecnologias", "competencias", "competências", "competencies", "stack", "technologies", "skills", "ferramentas"],
+};
+
+function pickKey(o: Record<string, unknown>, keys: string[]): unknown {
+  for (const k of keys) {
+    if (o[k] !== undefined && o[k] !== null) return o[k];
+  }
+  return undefined;
+}
+
+function normalizeExperienciaJob(e: unknown): unknown {
+  if (typeof e !== "object" || e === null) return e;
+  const o = e as Record<string, unknown>;
+  const desc = pickKey(o, EXP_KEYS.descricao) ?? o.descricao;
+  return {
+    ...o,
+    cargo: pickKey(o, EXP_KEYS.cargo) ?? o.cargo,
+    empresa: pickKey(o, EXP_KEYS.empresa) ?? o.empresa,
+    local: pickKey(o, EXP_KEYS.local) ?? o.local ?? null,
+    periodo: normalizePeriodo(pickKey(o, EXP_KEYS.periodo) ?? o.periodo),
+    descricao: typeof desc === "string" ? desc : "",
+    realizacoes: toStringArray(pickKey(o, EXP_KEYS.realizacoes) ?? o.realizacoes),
+    tecnologias: toStringArray(pickKey(o, EXP_KEYS.tecnologias) ?? o.tecnologias),
+  };
+}
+
+function normalizeExperiencias(root: Record<string, unknown>): void {
+  const secoes = (root.resume ?? root) as { secoes?: { experiencia?: unknown } };
+  const exps = secoes?.secoes?.experiencia;
+  if (!Array.isArray(exps)) return;
+  secoes.secoes!.experiencia = exps.map(normalizeExperienciaJob);
+}
+
 export function normalizeResume(data: unknown): Resume {
   if (typeof data !== "object" || data === null) throw new Error("Currículo da IA inválido.");
   const copy = deepCopy(data);
   normalizeContatos(copy);
   normalizeHabilidades(copy);
+  normalizeExperiencias(copy);
   return ResumeSchema.parse(copy);
 }
 
@@ -86,6 +157,7 @@ export function normalizeEnvelope(data: unknown): TailorEnvelope {
   const copy = deepCopy(data);
   normalizeContatos(copy);
   normalizeHabilidades(copy);
+  normalizeExperiencias(copy);
   return TailorEnvelopeSchema.parse({
     ...copy,
     cargo: defaulted(copy.cargo, "Vaga"),
