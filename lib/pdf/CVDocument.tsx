@@ -1,5 +1,5 @@
 import React from "react";
-import { Document, Page, Text, View, Link, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Link, StyleSheet, type DocumentProps } from "@react-pdf/renderer";
 import type { Resume } from "@/lib/resume-schema";
 
 const s = StyleSheet.create({
@@ -86,4 +86,8 @@ export function CVDocument({ resume }: { resume: Resume }) {
       </Page>
     </Document>
   );
+}
+
+export function cvElement(resume: Resume): React.ReactElement<DocumentProps> {
+  return React.createElement(CVDocument, { resume }) as unknown as React.ReactElement<DocumentProps>;
 }
