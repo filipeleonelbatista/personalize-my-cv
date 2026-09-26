@@ -90,7 +90,7 @@ export async function tailorResume(jobText: string): Promise<{ ok: true; id: num
         matchPercent: 0, strengths: "[]", weaknesses: "[]", status: "failed", errorLog: msg,
       },
     });
-    return { ok: false, error: `As 3 IAs falharam. Vaga salva como failed para retry. Detalhe: ${msg}`, id: row.id };
+    return { ok: false, error: `Os 3 modelos Gemini falharam. Vaga salva como failed para retry. Detalhe: ${msg}`, id: row.id };
   }
 }
 

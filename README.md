@@ -23,7 +23,7 @@ npm run dev            # http://localhost:3000
 
 ## Fallback de IAs
 
-Ordem: **Zen → Gemini → OpenRouter** (ver `lib/llm/chain.ts`).
+Ordem (só Gemini, configurável via `GEMINI_MODELS`): **gemini-3-flash-preview → gemini-2.5-flash → gemini-2.5-flash-lite** (ver `lib/llm/chain.ts`).
 Se as 3 falharem, a vaga é salva com status `failed` + `errorLog`, e a
 tabela mostra **Tentar novamente**.
 

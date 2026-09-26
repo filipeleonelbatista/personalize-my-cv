@@ -1,49 +1,51 @@
-import { describe, expect, it, vi, afterEach } from "vitest";
+import { describe, expect, it, vi, afterEach, beforeEach } from "vitest";
 import { generateJson } from "@/lib/llm/chain";
-import { chatJsonZen } from "@/lib/llm/zen";
-import { chatJsonGemini } from "@/lib/llm/gemini";
-import { chatJsonOpenrouter } from "@/lib/llm/openrouter";
+import { chatJsonGemini, geminiModels } from "@/lib/llm/gemini";
 
-afterEach(() => vi.unstubAllGlobals());
+const OLD_ENV = process.env.GEMINI_MODELS;
+
+beforeEach(() => {
+  delete process.env.GEMINI_MODELS;
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  if (OLD_ENV === undefined) delete process.env.GEMINI_MODELS;
+  else process.env.GEMINI_MODELS = OLD_ENV;
+});
+
+describe("geminiModels", () => {
+  it("defaults to the 3 free-tier models in quality order", () => {
+    expect(geminiModels()).toEqual(["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]);
+  });
+  it("parses GEMINI_MODELS env list", () => {
+    process.env.GEMINI_MODELS = " gemini-2.5-flash ,, gemini-2.5-flash-lite ";
+    expect(geminiModels()).toEqual(["gemini-2.5-flash", "gemini-2.5-flash-lite"]);
+  });
+});
 
 describe("generateJson fallback", () => {
-  it("uses zen when it succeeds", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ output: [{ type: "message", content: [{ type: "output_text", text: '{"ok":1}' }] }] }) })));
+  it("uses the first model when it succeeds", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"ok":1}' }] } }] }) })));
     const r = await generateJson("s", "u");
-    expect(r.provider).toBe("zen");
+    expect(r.provider).toBe("gemini:gemini-3-flash-preview");
     expect(r.data).toEqual({ ok: 1 });
   });
-  it("falls back zen→gemini→openrouter", async () => {
+  it("falls back across the 3 models", async () => {
     const fetch = vi.fn()
-      .mockRejectedValueOnce(new Error("zen down"))
-      .mockResolvedValueOnce({ ok: false, status: 500, text: async () => "gemini err" } as unknown as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ choices: [{ message: { content: '{"ok":3}' } }] }) } as unknown as Response);
+      .mockRejectedValueOnce(new Error("m1 down"))
+      .mockResolvedValueOnce({ ok: false, status: 429, text: async () => "quota" } as unknown as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"ok":3}' }] } }] }) } as unknown as Response);
     vi.stubGlobal("fetch", fetch);
     const r = await generateJson("s", "u");
-    expect(r.provider).toBe("openrouter");
+    expect(r.provider).toBe("gemini:gemini-2.5-flash-lite");
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
-  it("throws with all three errors", async () => {
+  it("throws with all three model errors", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("down"); }));
-    await expect(generateJson("s", "u")).rejects.toThrow(/zen.*gemini.*openrouter/s);
-  });
-  it("labels empty provider payloads instead of TypeError", async () => {
-    const fetch = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ choices: [] }) } as unknown as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ candidates: [] }) } as unknown as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ choices: [{ message: { content: null } }] }) } as unknown as Response);
-    vi.stubGlobal("fetch", fetch);
-    await expect(generateJson("s", "u")).rejects.toThrow(/zen.*gemini.*openrouter/s);
-  });
-  it("zen rejects empty output with readable error", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ output: [] }) })));
-    await expect(chatJsonZen("s", "u")).rejects.toThrow(/resposta vazia/);
+    await expect(generateJson("s", "u")).rejects.toThrow(/gemini-3-flash-preview.*gemini-2\.5-flash.*gemini-2\.5-flash-lite/s);
   });
   it("gemini rejects empty candidates with readable error", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ candidates: [] }) })));
-    await expect(chatJsonGemini("s", "u")).rejects.toThrow(/resposta vazia/);
-  });
-  it("openrouter rejects null content with readable error", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: null } }] }) })));
-    await expect(chatJsonOpenrouter("s", "u")).rejects.toThrow(/resposta vazia/);
+    await expect(chatJsonGemini("s", "u", "gemini-2.5-flash")).rejects.toThrow(/resposta vazia/);
   });
 });

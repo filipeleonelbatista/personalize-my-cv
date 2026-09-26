@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from "node:fs";
 describe("scaffolding", () => {
   it("has env example with all providers", () => {
     const env = readFileSync(".env.example", "utf8");
-    for (const k of ["OPENCODE_ZEN_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY"]) {
+    for (const k of ["GEMINI_API_KEY", "GEMINI_MODELS"]) {
       expect(env).toContain(k);
     }
   });

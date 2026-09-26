@@ -1,5 +1,11 @@
-export async function chatJsonGemini(system: string, user: string): Promise<unknown> {
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+export const DEFAULT_GEMINI_MODELS = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+
+export function geminiModels(): string[] {
+  const list = (process.env.GEMINI_MODELS || "").split(",").map((s) => s.trim()).filter(Boolean);
+  return list.length ? list : [...DEFAULT_GEMINI_MODELS];
+}
+
+export async function chatJsonGemini(system: string, user: string, model = geminiModels()[0]): Promise<unknown> {
   const key = process.env.GEMINI_API_KEY || "";
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), 60_000);
