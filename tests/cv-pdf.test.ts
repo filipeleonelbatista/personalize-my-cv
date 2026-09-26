@@ -9,17 +9,37 @@ const resume = { cabecalho: { nome: "Filipe de Leonel Batista", titulo_profissio
   secoes: { resumo: "Dev React.", experiencia: [], formacao: [],
     habilidades: [{ nome: "F", itens: ["React"] }],
     certificacoes: [{ nome: "AWS Certified", emissor: "Amazon", ano: 2023, link: null }],
-    idiomas: [{ idioma: "Inglês", nivel: "Avançado" }], projetos: [] } } as never;
+    idiomas: [{ idioma: "Inglês", nivel: "Avançado" }], projetos: [] } };
 
 describe("CVDocument", () => {
   it("renders to buffer", async () => {
-    const buf = await renderToBuffer(cvElement(resume));
+    const buf = await renderToBuffer(cvElement(resume as never));
     expect(buf.length).toBeGreaterThan(1000);
   }, 30000);
   it("includes certificacoes and idiomas text", async () => {
-    const buf = await renderToBuffer(cvElement(resume));
+    const buf = await renderToBuffer(cvElement(resume as never));
     const text = await extractCvText(Buffer.from(buf));
     expect(text).toContain("AWS Certified");
     expect(text).toContain("Inglês");
+  }, 30000);
+  it("renders at most 6 skills", async () => {
+    const many = { ...resume, secoes: { ...resume.secoes,
+      habilidades: [{ nome: "Tudo", itens: ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9"] }] } } as never;
+    const buf = await renderToBuffer(cvElement(many));
+    const text = await extractCvText(Buffer.from(buf));
+    for (const s of ["S1", "S2", "S3", "S4", "S5", "S6"]) expect(text).toContain(s);
+    for (const s of ["S7", "S8", "S9"]) expect(text).not.toContain(s);
+  }, 30000);
+  it("renders dates as 3-letter month and local with city", async () => {
+    const job = { ...resume, secoes: { ...resume.secoes,
+      experiencia: [{ cargo: "Dev", empresa: "CI&T", local: "São Paulo, SP, Brasil (Remoto)",
+        periodo: { inicio: "2025-08", fim: null, atual: true },
+        descricao: "x", realizacoes: [], tecnologias: ["React"] }] } } as never;
+    const buf = await renderToBuffer(cvElement(job));
+    const text = await extractCvText(Buffer.from(buf));
+    expect(text).toContain("Ago 2025");
+    expect(text).toContain("atual");
+    expect(text).toContain("São Paulo, SP, Brasil (Remoto)");
+    expect(text).not.toContain("2025-08");
   }, 30000);
 });

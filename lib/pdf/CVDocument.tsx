@@ -1,6 +1,7 @@
 import React from "react";
 import { Document, Page, Text, View, Link, StyleSheet, type DocumentProps } from "@react-pdf/renderer";
 import type { Resume } from "@/lib/resume-schema";
+import { formatPeriodo } from "./format";
 
 const s = StyleSheet.create({
   page: { padding: 56, fontFamily: "Helvetica", fontSize: 10, lineHeight: 1.4, color: "#000" },
@@ -15,6 +16,7 @@ const s = StyleSheet.create({
   org: { fontStyle: "italic", marginVertical: 2 },
   skills: { flexDirection: "row" },
   col: { width: "50%", paddingRight: 8 },
+  skillCol: { width: "33%", paddingRight: 8 },
   bullet: { marginLeft: 12, marginBottom: 2 },
   comp: { marginTop: 4 },
   bold: { fontWeight: "bold" },
@@ -33,24 +35,23 @@ export function CVDocument({ resume }: { resume: Resume }) {
         <Text style={s.role}>{c.titulo_profissional}</Text>
         <Text style={s.body}>{sec.resumo}</Text>
         <Text style={s.h2}>Habilidades</Text>
-        <View style={s.skills}>
-          {[0, 1].map((col) => (
-            <View key={col} style={s.col}>
-              {sec.habilidades
-                .flatMap((g) => g.itens)
-                .filter((_, i) => i % 2 === col)
-                .map((t) => (
-                  <Text key={t} style={s.bullet}>• {t}</Text>
-                ))}
+        {[0, 1].map((row) => {
+          const items = sec.habilidades.flatMap((g) => g.itens).slice(0, 6).slice(row * 3, row * 3 + 3);
+          if (!items.length) return null;
+          return (
+            <View key={row} style={s.skills}>
+              {items.map((t, j) => (
+                <Text key={`${row}-${j}`} style={s.skillCol}>• {t}</Text>
+              ))}
             </View>
-          ))}
-        </View>
+          );
+        })}
         <Text style={s.h2}>Experiências</Text>
         {sec.experiencia.map((e) => (
           <View key={`${e.cargo}-${e.empresa}-${e.periodo.inicio}`} wrap={false} style={{ marginBottom: 10 }}>
             <View style={s.row}>
               <Text style={s.jobTitle}>{e.cargo}</Text>
-              <Text>{e.periodo.inicio} – {e.periodo.atual ? "atual" : e.periodo.fim}</Text>
+              <Text>{formatPeriodo(e.periodo)}</Text>
             </View>
             <Text style={s.org}>{e.empresa}{e.local ? `. ${e.local}` : ""}</Text>
             <Text style={s.body}>{e.descricao}</Text>
@@ -65,7 +66,7 @@ export function CVDocument({ resume }: { resume: Resume }) {
           <View key={`${f.curso}-${f.instituicao}`} wrap={false} style={{ marginBottom: 8 }}>
             <View style={s.row}>
               <Text style={s.jobTitle}>{f.curso}</Text>
-              <Text>{f.periodo.inicio} - {f.periodo.atual ? "atual" : f.periodo.fim}</Text>
+              <Text>{formatPeriodo(f.periodo)}</Text>
             </View>
             <Text style={s.org}>{f.instituicao}{f.local ? `. ${f.local}` : ""}</Text>
             {f.descricao ? <Text style={s.body}>{f.descricao}</Text> : null}
