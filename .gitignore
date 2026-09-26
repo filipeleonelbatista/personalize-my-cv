@@ -19,3 +19,6 @@ prisma/dev.db*
 node_modules/.cache
 *.tsbuildinfo
 next-env.d.ts
+
+# superpowers scratch
+.superpowers/
