@@ -1,4 +1,5 @@
 import { ResumeSchema, TailorEnvelopeSchema, type Resume, type TailorEnvelope } from "./resume-schema";
+import { MISSING_JOB, type PdfLang } from "./pdf/i18n";
 
 const TIPO_MAP: Record<string, string> = {
   email: "email", "e-mail": "email", "e mail": "email", mail: "email",
@@ -152,15 +153,16 @@ function defaulted(v: unknown, fallback: string): string {
   return typeof v === "string" && v.trim() ? v.trim() : fallback;
 }
 
-export function normalizeEnvelope(data: unknown): TailorEnvelope {
+export function normalizeEnvelope(data: unknown, lang: PdfLang = "pt-BR"): TailorEnvelope {
   if (typeof data !== "object" || data === null) throw new Error("Envelope da IA inválido.");
   const copy = deepCopy(data);
   normalizeContatos(copy);
   normalizeHabilidades(copy);
   normalizeExperiencias(copy);
+  const missing = MISSING_JOB[lang] ?? MISSING_JOB["pt-BR"];
   return TailorEnvelopeSchema.parse({
     ...copy,
-    cargo: defaulted(copy.cargo, "Vaga"),
-    empresa: defaulted(copy.empresa, "Empresa"),
+    cargo: defaulted(copy.cargo, missing.cargo),
+    empresa: defaulted(copy.empresa, missing.empresa),
   });
 }

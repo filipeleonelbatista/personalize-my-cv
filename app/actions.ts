@@ -8,6 +8,7 @@ import { normalizeResume, normalizeEnvelope } from "@/lib/tailor";
 import { generateJson } from "@/lib/llm/chain";
 import { buildBaseExtractSystem, parseBaseLang, buildTailorSystem, buildTailorUser, buildRepairUser, type BaseLang } from "@/lib/llm/prompts";
 import { buildFileName, buildFailedFileName } from "@/lib/filename";
+import { MISSING_JOB } from "@/lib/pdf/i18n";
 import { cvElement } from "@/lib/pdf/CVDocument";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
@@ -93,11 +94,13 @@ export async function tailorResume(jobText: string): Promise<{ ok: true; id: num
     return { ok: true, id: row.id };
   } catch (e) {
     const msg = (e as Error).message.slice(0, 1000);
+    const failLang = await getBaseLang().catch(() => "pt-BR" as const);
+    const missing = MISSING_JOB[failLang] ?? MISSING_JOB["pt-BR"];
     const row = await db.tailoredApplication.create({
       data: {
-        jobText, cargo: "Vaga", empresa: "Empresa", fileName: buildFailedFileName(), pdfPath: "",
+        jobText, cargo: missing.cargo, empresa: missing.empresa, fileName: buildFailedFileName(), pdfPath: "",
         matchPercent: 0, strengths: "[]", weaknesses: "[]", status: "failed", errorLog: msg,
-        lang: await getBaseLang().catch(() => "pt-BR" as const),
+        lang: failLang,
       },
     });
     return { ok: false, error: `Os 3 modelos Gemini falharam. Vaga salva como failed para retry. Detalhe: ${msg}`, id: row.id };

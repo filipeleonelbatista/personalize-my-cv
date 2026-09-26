@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { normalizeEnvelope } from "@/lib/tailor";
-
 const baseResume = { cabecalho: { nome: "N", titulo_profissional: "T", contatos: [{ tipo: "email", valor: "a", link: null }] },
   secoes: { resumo: "r", experiencia: [], formacao: [], habilidades: [], certificacoes: [], idiomas: [], projetos: [] } };
 const full = { resume: baseResume, cargo: "Dev", empresa: "X", matchPercent: 82,
@@ -23,5 +22,11 @@ describe("normalizeEnvelope", () => {
   });
   it("still rejects out-of-range matchPercent", () => {
     expect(() => normalizeEnvelope({ ...full, matchPercent: 150 })).toThrow();
+  });
+  it("defaults missing cargo/empresa per language", () => {
+    const { cargo, empresa, ...rest } = full;
+    expect(normalizeEnvelope(rest, "en").cargo).toBe("Position");
+    expect(normalizeEnvelope(rest, "en").empresa).toBe("Company");
+    expect(normalizeEnvelope(rest, "es").cargo).toBe("Puesto");
   });
 });

@@ -57,3 +57,9 @@ export const MONTHS: Record<PdfLang, string[]> = {
 export function pdfLabels(lang: PdfLang = "pt-BR"): PdfLabels {
   return LABELS[lang] ?? LABELS["pt-BR"];
 }
+
+export const MISSING_JOB: Record<PdfLang, { cargo: string; empresa: string }> = {
+  "pt-BR": { cargo: "Vaga", empresa: "Empresa" },
+  en: { cargo: "Position", empresa: "Company" },
+  es: { cargo: "Puesto", empresa: "Empresa" },
+};
