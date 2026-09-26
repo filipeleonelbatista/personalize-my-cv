@@ -22,13 +22,15 @@ describe("CVDocument", () => {
     expect(text).toContain("AWS Certified");
     expect(text).toContain("Inglês");
   }, 30000);
-  it("renders at most 6 skills", async () => {
+  it("renders at most 6 bullets of up to 3 skills", async () => {
+    const itens = Array.from({ length: 20 }, (_, i) => `SK${i + 1}`);
     const many = { ...resume, secoes: { ...resume.secoes,
-      habilidades: [{ nome: "Tudo", itens: ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9"] }] } } as never;
+      habilidades: [{ nome: "Tudo", itens }] } } as never;
     const buf = await renderToBuffer(cvElement(many));
     const text = await extractCvText(Buffer.from(buf));
-    for (const s of ["S1", "S2", "S3", "S4", "S5", "S6"]) expect(text).toContain(s);
-    for (const s of ["S7", "S8", "S9"]) expect(text).not.toContain(s);
+    expect(text).toContain("SK1, SK2, SK3");
+    expect(text).toContain("SK16, SK17, SK18");
+    expect(text).not.toContain("SK19");
   }, 30000);
   it("renders dates as 3-letter month and local with city", async () => {
     const job = { ...resume, secoes: { ...resume.secoes,

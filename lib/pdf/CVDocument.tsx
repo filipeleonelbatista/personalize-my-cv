@@ -1,7 +1,7 @@
 import React from "react";
 import { Document, Page, Text, View, Link, StyleSheet, type DocumentProps } from "@react-pdf/renderer";
 import type { Resume } from "@/lib/resume-schema";
-import { formatPeriodo } from "./format";
+import { formatPeriodo, skillBullets } from "./format";
 
 const s = StyleSheet.create({
   page: { padding: 56, fontFamily: "Helvetica", fontSize: 10, lineHeight: 1.4, color: "#000" },
@@ -16,7 +16,6 @@ const s = StyleSheet.create({
   org: { fontStyle: "italic", marginVertical: 2 },
   skills: { flexDirection: "row" },
   col: { width: "50%", paddingRight: 8 },
-  skillCol: { width: "33%", paddingRight: 8 },
   bullet: { marginLeft: 12, marginBottom: 2 },
   comp: { marginTop: 4 },
   bold: { fontWeight: "bold" },
@@ -35,13 +34,13 @@ export function CVDocument({ resume }: { resume: Resume }) {
         <Text style={s.role}>{c.titulo_profissional}</Text>
         <Text style={s.body}>{sec.resumo}</Text>
         <Text style={s.h2}>Habilidades</Text>
-        {[0, 1].map((row) => {
-          const items = sec.habilidades.flatMap((g) => g.itens).slice(0, 6).slice(row * 3, row * 3 + 3);
+        {[0, 1].map((col) => {
+          const items = skillBullets(sec.habilidades.flatMap((g) => g.itens)).slice(col * 3, col * 3 + 3);
           if (!items.length) return null;
           return (
-            <View key={row} style={s.skills}>
+            <View key={col} style={s.col}>
               {items.map((t, j) => (
-                <Text key={`${row}-${j}`} style={s.skillCol}>• {t}</Text>
+                <Text key={`${col}-${j}`} style={s.bullet}>• {t}</Text>
               ))}
             </View>
           );

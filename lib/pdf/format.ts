@@ -13,3 +13,12 @@ export function formatPeriodo(p: { inicio: string; fim: string | null; atual: bo
   const fim = p.atual || !p.fim ? "atual" : formatMesAno(p.fim);
   return `${ini} – ${fim}`;
 }
+
+export function skillBullets(itens: string[], perBullet = 3, maxBullets = 6): string[] {
+  const skills = itens.flatMap((s) => s.split(/[,;]/).map((x) => x.trim()).filter(Boolean));
+  const out: string[] = [];
+  for (let i = 0; i < skills.length && out.length < maxBullets; i += perBullet) {
+    out.push(skills.slice(i, i + perBullet).join(", "));
+  }
+  return out;
+}
