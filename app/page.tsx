@@ -1,6 +1,6 @@
 import { LuPrinter } from "react-icons/lu";
 import { getBase, getBaseLang, listApplications } from "./actions";
-import { BaseSetup } from "./components/BaseSetup";
+import { BaseSetupDialog } from "./components/BaseSetupDialog";
 import { VacancyTable } from "./components/VacancyTable";
 import { GenerateModal } from "./components/GenerateModal";
 import { ThemeToggle } from "./components/theme-toggle";
@@ -31,7 +31,14 @@ export default async function Page() {
       </header>
 
       {!base ? (
-        <BaseSetup />
+        <div className="space-y-4 pt-10 text-center">
+          <p className="mx-auto max-w-md text-sm text-muted-foreground">
+            Envie seu currículo em PDF para começar. A IA vai catalogar seus dados e criar o JSON base.
+          </p>
+          <div className="flex justify-center">
+            <BaseSetupDialog label="Enviar currículo base" description="A IA vai catalogar seus dados e criar o JSON base." />
+          </div>
+        </div>
       ) : (
         <>
           <div className="flex flex-wrap gap-2">
@@ -52,7 +59,7 @@ export default async function Page() {
               <CardDescription>Re-envie o PDF para atualizar os dados (novo idioma ou conteúdo).</CardDescription>
             </CardHeader>
             <CardContent>
-              <BaseSetup />
+              <BaseSetupDialog label="Atualizar base" description="A IA vai recatalogar seus dados a partir do novo PDF." />
             </CardContent>
           </Card>
         </>
