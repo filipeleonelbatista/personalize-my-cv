@@ -35,5 +35,8 @@ describe("reports ui contract", () => {
       expect(existsSync(f), f).toBe(true);
     }
     expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("Relatórios");
+    const tabs = readFileSync("app/components/ui/tabs.tsx", "utf8");
+    expect(tabs).toContain("createContext");
+    expect(tabs).not.toContain("cloneElement");
   });
 });
