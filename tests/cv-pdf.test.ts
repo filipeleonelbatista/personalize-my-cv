@@ -32,6 +32,22 @@ describe("CVDocument", () => {
     expect(text).toContain("SK16, SK17, SK18");
     expect(text).not.toContain("SK19");
   }, 30000);
+  it("renders English labels and dates when lang is en", async () => {
+    const en = { ...resume, secoes: { ...resume.secoes,
+      experiencia: [{ cargo: "Dev", empresa: "CI&T", local: "Brazil (Remote)",
+        periodo: { inicio: "2025-08", fim: null, atual: true },
+        descricao: "Working on a project.",
+        realizacoes: ["Building interfaces."],
+        tecnologias: ["React"] }] } } as never;
+    const buf = await renderToBuffer(cvElement(en, "en"));
+    const text = await extractCvText(Buffer.from(buf));
+    expect(text).toContain("Experience");
+    expect(text).toContain("Key activities");
+    expect(text).toContain("Technologies");
+    expect(text).toContain("Aug 2025");
+    expect(text).toContain("Present");
+    expect(text).not.toContain("Experiências");
+  }, 30000);
   it("renders dates as 3-letter month and local with city", async () => {
     const job = { ...resume, secoes: { ...resume.secoes,
       experiencia: [{ cargo: "Dev", empresa: "CI&T", local: "São Paulo, SP, Brasil (Remoto)",
@@ -47,7 +63,7 @@ describe("CVDocument", () => {
     expect(text).not.toContain("2025-08");
     expect(text).toContain("Principais atividades");
     expect(text).toContain("Interfaces modernas em React.");
-    expect(text).toContain("Competências:");
+    expect(text).toContain("Competências");
     expect(text).toContain("React, Context API");
   }, 30000);
 });

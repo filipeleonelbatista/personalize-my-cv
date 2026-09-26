@@ -19,6 +19,14 @@ describe("formatPeriodo", () => {
   it("shows inicio and fim", () => {
     expect(formatPeriodo({ inicio: "2021-07", fim: "2022-09", atual: false })).toBe("Jul 2021 – Set 2022");
   });
+  it("localizes to English", () => {
+    expect(formatPeriodo({ inicio: "2025-08", fim: null, atual: true }, "en")).toBe("Aug 2025 – Present");
+    expect(formatMesAno("2022-09", "en")).toBe("Sep 2022");
+  });
+  it("localizes to Spanish", () => {
+    expect(formatPeriodo({ inicio: "2025-08", fim: null, atual: true }, "es")).toBe("Ago 2025 – actual");
+    expect(formatMesAno("2025-01", "es")).toBe("Ene 2025");
+  });
 });
 
 describe("skillBullets", () => {

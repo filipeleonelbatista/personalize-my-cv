@@ -10,6 +10,7 @@ datasource db {
 model BaseResume {
   id        Int      @id @default(1)
   json      String
+  lang      String   @default("pt-BR")
   updatedAt DateTime @updatedAt
 }
 
@@ -27,5 +28,6 @@ model TailoredApplication {
   chatMessage  String   @default("")
   status       String   @default("done")
   errorLog     String   @default("")
+  lang         String   @default("pt-BR")
   createdAt    DateTime @default(now())
 }

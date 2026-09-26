@@ -2,6 +2,7 @@ import React from "react";
 import { Document, Page, Text, View, Link, StyleSheet, type DocumentProps } from "@react-pdf/renderer";
 import type { Resume } from "@/lib/resume-schema";
 import { formatPeriodo, skillColumns } from "./format";
+import { pdfLabels, type PdfLang } from "./i18n";
 
 const s = StyleSheet.create({
   page: { padding: 56, fontFamily: "Helvetica", fontSize: 10, lineHeight: 1.4, color: "#000" },
@@ -24,9 +25,10 @@ const s = StyleSheet.create({
 
 export const cvStyles = s;
 
-export function CVDocument({ resume }: { resume: Resume }) {
+export function CVDocument({ resume, lang = "pt-BR" }: { resume: Resume; lang?: PdfLang }) {
   const c = resume.cabecalho;
   const sec = resume.secoes;
+  const t = pdfLabels(lang);
   return (
     <Document>
       <Page size="A4" style={s.page}>
@@ -36,7 +38,7 @@ export function CVDocument({ resume }: { resume: Resume }) {
         </View>
         <Text style={s.role}>{c.titulo_profissional}</Text>
         <Text style={s.body}>{sec.resumo}</Text>
-        <Text style={s.h2}>Habilidades</Text>
+        <Text style={s.h2}>{t.skills}</Text>
         <View style={s.skills}>
           {skillColumns(sec.habilidades.flatMap((g) => g.itens)).map((items, col) =>
             items.length ? (
@@ -48,32 +50,32 @@ export function CVDocument({ resume }: { resume: Resume }) {
             ) : null
           )}
         </View>
-        <Text style={s.h2}>Experiências</Text>
+        <Text style={s.h2}>{t.experience}</Text>
         {sec.experiencia.map((e) => (
           <View key={`${e.cargo}-${e.empresa}-${e.periodo.inicio}`} wrap={false} style={{ marginBottom: 10 }}>
             <View style={s.row}>
               <Text style={s.jobTitle}>{e.cargo}</Text>
-              <Text>{formatPeriodo(e.periodo)}</Text>
+              <Text>{formatPeriodo(e.periodo, lang)}</Text>
             </View>
             <Text style={s.org}>{e.empresa}{e.local ? `. ${e.local}` : ""}</Text>
             <Text style={s.body}>{e.descricao}</Text>
             {e.realizacoes.length ? (
               <>
-                <Text style={s.activitiesTitle}>Principais atividades</Text>
+                <Text style={s.activitiesTitle}>{t.activities}</Text>
                 {e.realizacoes.map((r, k) => (
                   <Text key={k} style={s.bullet}>• {r}</Text>
                 ))}
               </>
             ) : null}
-            <Text style={s.comp}><Text style={s.bold}>Competências: </Text>{e.tecnologias.join(", ")}</Text>
+            <Text style={s.comp}><Text style={s.bold}>{t.competencies}: </Text>{e.tecnologias.join(", ")}</Text>
           </View>
         ))}
-        <Text style={s.h2}>Educação</Text>
+        <Text style={s.h2}>{t.education}</Text>
         {sec.formacao.map((f) => (
           <View key={`${f.curso}-${f.instituicao}`} wrap={false} style={{ marginBottom: 8 }}>
             <View style={s.row}>
               <Text style={s.jobTitle}>{f.curso}</Text>
-              <Text>{formatPeriodo(f.periodo)}</Text>
+              <Text>{formatPeriodo(f.periodo, lang)}</Text>
             </View>
             <Text style={s.org}>{f.instituicao}{f.local ? `. ${f.local}` : ""}</Text>
             {f.descricao ? <Text style={s.body}>{f.descricao}</Text> : null}
@@ -81,7 +83,7 @@ export function CVDocument({ resume }: { resume: Resume }) {
         ))}
         {sec.projetos.length ? (
           <>
-            <Text style={s.h2}>Projetos</Text>
+            <Text style={s.h2}>{t.projects}</Text>
             {sec.projetos.map((p) => (
               <View key={p.nome} style={{ marginBottom: 6 }}>
                 <Text style={s.jobTitle}>{p.nome}</Text>
@@ -93,7 +95,7 @@ export function CVDocument({ resume }: { resume: Resume }) {
         ) : null}
         {sec.certificacoes.length ? (
           <>
-            <Text style={s.h2}>Certificações</Text>
+            <Text style={s.h2}>{t.certifications}</Text>
             {sec.certificacoes.map((cert) => (
               <Text key={`${cert.nome}-${cert.ano}`} style={s.bullet}>• {cert.nome} — {cert.emissor} ({cert.ano})</Text>
             ))}
@@ -101,7 +103,7 @@ export function CVDocument({ resume }: { resume: Resume }) {
         ) : null}
         {sec.idiomas.length ? (
           <>
-            <Text style={s.h2}>Idiomas</Text>
+            <Text style={s.h2}>{t.languages}</Text>
             {sec.idiomas.map((idioma) => (
               <Text key={idioma.idioma} style={s.bullet}>• {idioma.idioma}: {idioma.nivel}</Text>
             ))}
@@ -112,6 +114,6 @@ export function CVDocument({ resume }: { resume: Resume }) {
   );
 }
 
-export function cvElement(resume: Resume): React.ReactElement<DocumentProps> {
-  return React.createElement(CVDocument, { resume }) as unknown as React.ReactElement<DocumentProps>;
+export function cvElement(resume: Resume, lang: PdfLang = "pt-BR"): React.ReactElement<DocumentProps> {
+  return React.createElement(CVDocument, { resume, lang }) as unknown as React.ReactElement<DocumentProps>;
 }

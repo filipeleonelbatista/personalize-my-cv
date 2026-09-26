@@ -1,16 +1,17 @@
-const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+import { MONTHS, pdfLabels, type PdfLang } from "./i18n";
 
-export function formatMesAno(yyyyMM: string): string {
+export function formatMesAno(yyyyMM: string, lang: PdfLang = "pt-BR"): string {
   const m = yyyyMM.match(/^(\d{4})-(\d{2})$/);
   if (!m) return yyyyMM;
   const idx = Number(m[2]) - 1;
+  const months = MONTHS[lang] ?? MONTHS["pt-BR"];
   if (idx < 0 || idx > 11) return yyyyMM;
-  return `${MESES[idx]} ${m[1]}`;
+  return `${months[idx]} ${m[1]}`;
 }
 
-export function formatPeriodo(p: { inicio: string; fim: string | null; atual: boolean }): string {
-  const ini = formatMesAno(p.inicio);
-  const fim = p.atual || !p.fim ? "atual" : formatMesAno(p.fim);
+export function formatPeriodo(p: { inicio: string; fim: string | null; atual: boolean }, lang: PdfLang = "pt-BR"): string {
+  const ini = formatMesAno(p.inicio, lang);
+  const fim = p.atual || !p.fim ? pdfLabels(lang).current : formatMesAno(p.fim, lang);
   return `${ini} – ${fim}`;
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { buildBaseExtractSystem, parseBaseLang } from "@/lib/llm/prompts";
+import { buildBaseExtractSystem, buildTailorSystem, parseBaseLang } from "@/lib/llm/prompts";
 
 describe("parseBaseLang", () => {
   it("accepts pt-BR, en and es", () => {
@@ -25,6 +25,15 @@ describe("buildBaseExtractSystem", () => {
   });
   it("instructs Brazilian Portuguese by default", () => {
     expect(buildBaseExtractSystem("pt-BR")).toContain("Português do Brasil");
+  });
+});
+
+describe("buildTailorSystem", () => {
+  it("keeps pt-BR default", () => {
+    expect(buildTailorSystem("pt-BR")).toContain("Português do Brasil");
+  });
+  it("instructs English output for en", () => {
+    expect(buildTailorSystem("en")).toContain("English");
   });
 });
 

@@ -6,7 +6,7 @@ import { extractCvText } from "@/lib/cv-text";
 import { parseResume, type Resume } from "@/lib/resume-schema";
 import { normalizeResume, normalizeEnvelope } from "@/lib/tailor";
 import { generateJson } from "@/lib/llm/chain";
-import { buildBaseExtractSystem, parseBaseLang, TAILOR_SYSTEM, buildTailorUser, buildRepairUser } from "@/lib/llm/prompts";
+import { buildBaseExtractSystem, parseBaseLang, buildTailorSystem, buildTailorUser, buildRepairUser, type BaseLang } from "@/lib/llm/prompts";
 import { buildFileName, buildFailedFileName } from "@/lib/filename";
 import { cvElement } from "@/lib/pdf/CVDocument";
 import { mkdir } from "node:fs/promises";
@@ -22,6 +22,11 @@ export async function getBase(): Promise<Resume | null> {
   }
 }
 
+export async function getBaseLang(): Promise<BaseLang> {
+  const row = await db.baseResume.findUnique({ where: { id: 1 } });
+  return parseBaseLang(row?.lang);
+}
+
 export async function uploadBase(formData: FormData): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const file = formData.get("pdf") as File | null;
@@ -34,8 +39,8 @@ export async function uploadBase(formData: FormData): Promise<{ ok: true } | { o
       const resume = normalizeResume(data);
       await db.baseResume.upsert({
         where: { id: 1 },
-        create: { id: 1, json: JSON.stringify(resume) },
-        update: { json: JSON.stringify(resume) },
+        create: { id: 1, json: JSON.stringify(resume), lang },
+        update: { json: JSON.stringify(resume), lang },
       });
       return { ok: true };
     } catch (zerr) {
@@ -43,8 +48,8 @@ export async function uploadBase(formData: FormData): Promise<{ ok: true } | { o
       const resume = normalizeResume(fixed);
       await db.baseResume.upsert({
         where: { id: 1 },
-        create: { id: 1, json: JSON.stringify(resume) },
-        update: { json: JSON.stringify(resume) },
+        create: { id: 1, json: JSON.stringify(resume), lang },
+        update: { json: JSON.stringify(resume), lang },
       });
       return { ok: true };
     }
@@ -62,25 +67,27 @@ export async function tailorResume(jobText: string): Promise<{ ok: true; id: num
   try {
     const base = await getBase();
     if (!base) return { ok: false, error: "Cadastre o currículo base primeiro." };
+    const lang = await getBaseLang();
+    const tailorSystem = buildTailorSystem(lang);
     const tailorUser = buildTailorUser(JSON.stringify(base), jobText);
-    const { data } = await generateJson(TAILOR_SYSTEM, tailorUser);
+    const { data } = await generateJson(tailorSystem, tailorUser);
     let env;
     try {
       env = normalizeEnvelope(data);
     } catch (zerr) {
-      const { data: fixed } = await generateJson(TAILOR_SYSTEM, buildRepairUser(JSON.stringify(data), String(zerr)));
+      const { data: fixed } = await generateJson(tailorSystem, buildRepairUser(JSON.stringify(data), String(zerr)));
       env = normalizeEnvelope(fixed);
     }
     const fileName = buildFileName(base.cabecalho.nome, env.cargo, env.empresa);
     const outDir = path.join(process.cwd(), "public", "generated");
     await mkdir(outDir, { recursive: true });
-    await renderToFile(cvElement(env.resume), path.join(outDir, fileName));
+    await renderToFile(cvElement(env.resume, lang), path.join(outDir, fileName));
     const row = await db.tailoredApplication.create({
       data: {
         jobText, cargo: env.cargo, empresa: env.empresa, fileName, pdfPath: `/generated/${fileName}`,
         matchPercent: env.matchPercent, strengths: JSON.stringify(env.strengths),
         weaknesses: JSON.stringify(env.weaknesses), emailBody: env.emailBody,
-        chatMessage: env.chatMessage, status: "done", errorLog: "",
+        chatMessage: env.chatMessage, status: "done", errorLog: "", lang,
       },
     });
     return { ok: true, id: row.id };
@@ -90,6 +97,7 @@ export async function tailorResume(jobText: string): Promise<{ ok: true; id: num
       data: {
         jobText, cargo: "Vaga", empresa: "Empresa", fileName: buildFailedFileName(), pdfPath: "",
         matchPercent: 0, strengths: "[]", weaknesses: "[]", status: "failed", errorLog: msg,
+        lang: await getBaseLang().catch(() => "pt-BR" as const),
       },
     });
     return { ok: false, error: `Os 3 modelos Gemini falharam. Vaga salva como failed para retry. Detalhe: ${msg}`, id: row.id };

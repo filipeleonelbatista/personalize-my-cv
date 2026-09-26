@@ -18,7 +18,13 @@ export function buildBaseExtractSystem(lang: BaseLang): string {
 
 export const BASE_EXTRACT_SYSTEM = buildBaseExtractSystem("pt-BR");
 
-export const TAILOR_SYSTEM = `Dado baseJson (ResumeSchema) + jobText, reescreva resumo e realizacoes priorizando keywords da vaga, sem inventar cargos/empresas/locais/datas. Retorne SOMENTE o envelope {resume,cargo,empresa,matchPercent(0-100 honesto),strengths[3-8],weaknesses[3-8],emailBody(pt-BR),chatMessage(pt-BR)}. Se cargo/empresa ausentes na vaga use "Vaga"/"Empresa".`;
+export const TAILOR_SYSTEM = buildTailorSystem("pt-BR");
+
+export function buildTailorSystem(lang: BaseLang): string {
+  const outLang =
+    lang === "en" ? "English" : lang === "es" ? "Español" : "Português do Brasil";
+  return `Dado baseJson (ResumeSchema) + jobText, reescreva resumo e realizacoes priorizando keywords da vaga, sem inventar cargos/empresas/locais/datas. Mantenha TODOS os textos do resume em ${outLang} e escreva emailBody e chatMessage em ${outLang}. Retorne SOMENTE o envelope {resume,cargo,empresa,matchPercent(0-100 honesto),strengths[3-8],weaknesses[3-8],emailBody(${outLang}),chatMessage(${outLang})}. Se cargo/empresa ausentes na vaga use "Vaga"/"Empresa".`;
+}
 
 export const buildTailorUser = (baseJson: string, jobText: string) => `baseJson:\n${baseJson}\n\njobText:\n${jobText}`;
 

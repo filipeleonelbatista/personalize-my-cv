@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { db } from "@/lib/db";
 import { parseResume } from "@/lib/resume-schema";
+import { parseBaseLang } from "@/lib/llm/prompts";
 import { cvElement } from "@/lib/pdf/CVDocument";
 import { sanitizePart } from "@/lib/filename";
 
@@ -14,7 +15,7 @@ export async function GET() {
   } catch {
     return NextResponse.json({ error: "Currículo base inválido. Reenvie o PDF." }, { status: 422 });
   }
-  const buf = await renderToBuffer(cvElement(resume));
+  const buf = await renderToBuffer(cvElement(resume, parseBaseLang(row.lang)));
   const fileName = `${sanitizePart(resume.cabecalho.nome)}_Base.pdf`;
   return new Response(new Uint8Array(buf), {
     headers: {
