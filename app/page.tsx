@@ -1,11 +1,7 @@
-import { LuPrinter } from "react-icons/lu";
 import { getBase, getBaseLang, listApplications } from "./actions";
 import { BaseSetupDialog } from "./components/BaseSetupDialog";
-import { VacancyTable } from "./components/VacancyTable";
-import { GenerateModal } from "./components/GenerateModal";
+import { DashboardTabs } from "./components/DashboardTabs";
 import { ThemeToggle } from "./components/theme-toggle";
-import { buttonVariants } from "./components/ui/button";
-import { cn } from "@/lib/utils";
 
 export default async function Page() {
   const base = await getBase();
@@ -39,21 +35,7 @@ export default async function Page() {
           </div>
         </div>
       ) : (
-        <>
-          <div className="flex flex-wrap gap-2">
-            <GenerateModal defaultLang={lang} />
-            <a
-              href="/api/base/pdf"
-              target="_blank"
-              rel="noopener"
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              <LuPrinter /> Imprimir currículo base
-            </a>
-            <BaseSetupDialog label="Atualizar currículo" description="A IA vai recatalogar seus dados a partir do novo PDF." />
-          </div>
-          <VacancyTable apps={apps} />
-        </>
+        <DashboardTabs apps={apps} lang={lang} />
       )}
     </main>
   );

@@ -9,6 +9,7 @@ import { generateJson } from "@/lib/llm/chain";
 import { buildBaseExtractSystem, parseBaseLang, buildTailorSystem, buildTailorUser, buildRepairUser, type BaseLang } from "@/lib/llm/prompts";
 import { buildFileName, buildFailedFileName } from "@/lib/filename";
 import { MISSING_JOB } from "@/lib/pdf/i18n";
+import { weekRange, bucketByWeekday, weekLabel, WEEKDAY_LABELS } from "@/lib/report";
 import { cvElement } from "@/lib/pdf/CVDocument";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
@@ -120,4 +121,36 @@ export async function retryTailor(id: number): Promise<{ ok: boolean; error?: st
     await db.tailoredApplication.update({ where: { id }, data: { status: "failed", errorLog: r.error || "" } });
   }
   return { ok: false, error: r.error };
+}
+
+export type WeekStats = {
+  startISO: string;
+  endISO: string;
+  label: string;
+  total: number;
+  counts: number[];
+  bestDay: string;
+  avgPerDay: number;
+};
+
+export async function getWeekStats(offsetWeeks: number): Promise<WeekStats> {
+  const { start, end } = weekRange(new Date(), Number.isFinite(offsetWeeks) ? Math.floor(offsetWeeks) : 0);
+  const endExclusive = new Date(end);
+  endExclusive.setDate(endExclusive.getDate() + 1);
+  const rows = await db.tailoredApplication.findMany({
+    where: { createdAt: { gte: start, lt: endExclusive } },
+    select: { createdAt: true },
+  });
+  const counts = bucketByWeekday(rows.map((r) => r.createdAt));
+  const total = rows.length;
+  const best = counts.indexOf(Math.max(...counts));
+  return {
+    startISO: start.toISOString(),
+    endISO: end.toISOString(),
+    label: weekLabel(start, end),
+    total,
+    counts,
+    bestDay: total ? WEEKDAY_LABELS[best] : "—",
+    avgPerDay: Math.round((total / 7) * 10) / 10,
+  };
 }
