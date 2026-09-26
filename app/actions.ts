@@ -6,7 +6,7 @@ import { extractCvText } from "@/lib/cv-text";
 import { parseResume, type Resume } from "@/lib/resume-schema";
 import { normalizeResume, normalizeEnvelope } from "@/lib/tailor";
 import { generateJson } from "@/lib/llm/chain";
-import { BASE_EXTRACT_SYSTEM, TAILOR_SYSTEM, buildTailorUser, buildRepairUser } from "@/lib/llm/prompts";
+import { buildBaseExtractSystem, parseBaseLang, TAILOR_SYSTEM, buildTailorUser, buildRepairUser } from "@/lib/llm/prompts";
 import { buildFileName, buildFailedFileName } from "@/lib/filename";
 import { cvElement } from "@/lib/pdf/CVDocument";
 import { mkdir } from "node:fs/promises";
@@ -26,8 +26,10 @@ export async function uploadBase(formData: FormData): Promise<{ ok: true } | { o
   try {
     const file = formData.get("pdf") as File | null;
     if (!file) return { ok: false, error: "Envie um arquivo PDF." };
+    const lang = parseBaseLang(formData.get("lang"));
+    const system = buildBaseExtractSystem(lang);
     const text = await extractCvText(Buffer.from(await file.arrayBuffer()));
-    const { data } = await generateJson(BASE_EXTRACT_SYSTEM, text.slice(0, 12000));
+    const { data } = await generateJson(system, text.slice(0, 12000));
     try {
       const resume = normalizeResume(data);
       await db.baseResume.upsert({
@@ -37,7 +39,7 @@ export async function uploadBase(formData: FormData): Promise<{ ok: true } | { o
       });
       return { ok: true };
     } catch (zerr) {
-      const { data: fixed } = await generateJson(BASE_EXTRACT_SYSTEM, buildRepairUser(JSON.stringify(data), String(zerr)));
+      const { data: fixed } = await generateJson(system, buildRepairUser(JSON.stringify(data), String(zerr)));
       const resume = normalizeResume(fixed);
       await db.baseResume.upsert({
         where: { id: 1 },
