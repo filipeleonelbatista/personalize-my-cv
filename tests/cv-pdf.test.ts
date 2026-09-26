@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import React from "react";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { CVDocument, cvElement } from "@/lib/pdf/CVDocument";
+import { CVDocument, cvElement, cvStyles } from "@/lib/pdf/CVDocument";
 import { extractCvText } from "@/lib/cv-text";
 
 const resume = { cabecalho: { nome: "Filipe de Leonel Batista", titulo_profissional: "Desenvolvedor Front-end",
@@ -50,4 +50,14 @@ describe("CVDocument", () => {
     expect(text).toContain("Competências:");
     expect(text).toContain("React, Context API");
   }, 30000);
+});
+
+describe("CVDocument spacing", () => {
+  it("gives breathing room after name, role and section titles", () => {
+    expect(cvStyles.name.marginBottom).toBeGreaterThanOrEqual(4);
+    expect(cvStyles.contact.marginTop).toBeGreaterThanOrEqual(4);
+    expect(cvStyles.role.marginBottom).toBeGreaterThanOrEqual(4);
+    expect(cvStyles.h2.marginBottom).toBeGreaterThanOrEqual(6);
+    expect(cvStyles.h2.marginTop).toBeGreaterThanOrEqual(8);
+  });
 });

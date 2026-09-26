@@ -6,11 +6,11 @@ import { formatPeriodo, skillColumns } from "./format";
 const s = StyleSheet.create({
   page: { padding: 56, fontFamily: "Helvetica", fontSize: 10, lineHeight: 1.4, color: "#000" },
   header: { textAlign: "center", marginBottom: 16 },
-  name: { fontSize: 21, fontWeight: "bold" },
+  name: { fontSize: 21, fontWeight: "bold", marginBottom: 6 },
   contact: { fontSize: 9, color: "#0056b3", textDecoration: "underline", marginTop: 4 },
-  role: { fontSize: 14, fontWeight: "bold", marginTop: 8 },
+  role: { fontSize: 14, fontWeight: "bold", marginTop: 8, marginBottom: 6 },
   body: { textAlign: "justify" },
-  h2: { fontSize: 14, fontWeight: "bold", marginTop: 12, marginBottom: 4 },
+  h2: { fontSize: 14, fontWeight: "bold", marginTop: 12, marginBottom: 8 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" },
   jobTitle: { fontSize: 11, fontWeight: "bold" },
   org: { fontStyle: "italic", marginVertical: 2 },
@@ -21,6 +21,8 @@ const s = StyleSheet.create({
   comp: { marginTop: 4 },
   bold: { fontWeight: "bold" },
 });
+
+export const cvStyles = s;
 
 export function CVDocument({ resume }: { resume: Resume }) {
   const c = resume.cabecalho;
