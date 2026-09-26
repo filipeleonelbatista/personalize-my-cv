@@ -16,7 +16,7 @@ describe("ui contract", () => {
   it("base print route exists and dashboard links it", () => {
     expect(existsSync("app/api/base/pdf/route.ts")).toBe(true);
     expect(readFileSync("app/api/base/pdf/route.ts", "utf8")).toContain("application/pdf");
-    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("/api/base/pdf");
+    expect(readFileSync("app/components/BaseMenu.tsx", "utf8")).toContain("/api/base/pdf");
   });
   it("generate modal has short IA label and per-vacancy language select", () => {
     const src = readFileSync("app/components/GenerateModal.tsx", "utf8");
@@ -56,6 +56,18 @@ describe("base setup dialog", () => {
     const page = readFileSync("app/page.tsx", "utf8");
     expect(page).toContain("BaseSetupDialog");
     expect(page).toContain("DashboardTabs");
-    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("Atualizar currículo");
+    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("BaseMenu");
+  });
+});
+
+describe("base gear menu", () => {
+  it("groups print and update actions under a gear dropdown", () => {
+    expect(existsSync("app/components/ui/dropdown.tsx")).toBe(true);
+    expect(existsSync("app/components/BaseMenu.tsx")).toBe(true);
+    const menu = readFileSync("app/components/BaseMenu.tsx", "utf8");
+    expect(menu).toContain("/api/base/pdf");
+    expect(menu).toContain("BaseSetup");
+    expect(menu).toContain("Atualizar currículo");
+    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("BaseMenu");
   });
 });
