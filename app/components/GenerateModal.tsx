@@ -1,8 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { LuSparkles, LuLoaderCircle } from "react-icons/lu";
 import { tailorResume } from "../actions";
 import type { BaseLang } from "../../lib/llm/prompts";
+import { Button } from "./ui/button";
+import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Textarea } from "./ui/textarea";
+import { Select } from "./ui/select";
+import { useStagedSteps } from "./use-staged-steps";
+
+const STAGES = ["Lendo a vaga…", "Reescrevendo com keywords…", "Gerando PDF e análise…"];
 
 export function GenerateModal({ defaultLang = "pt-BR" }: { defaultLang?: BaseLang }) {
   const [open, setOpen] = useState(false);
@@ -10,66 +19,79 @@ export function GenerateModal({ defaultLang = "pt-BR" }: { defaultLang?: BaseLan
   const [lang, setLang] = useState<BaseLang>(defaultLang);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const stage = useStagedSteps(STAGES, loading, 8000);
 
   async function onGenerate() {
     setError("");
     setLoading(true);
     try {
       const r = await tailorResume(jobText, lang);
-      if (r.ok) window.location.reload();
-      else setError(r.error);
+      if (r.ok) {
+        toast.success("Currículo personalizado gerado!");
+        window.location.reload();
+      } else {
+        setError(r.error);
+        toast.error("As IAs falharam — vaga salva para retry", { description: r.error.slice(0, 200) });
+      }
     } catch (err) {
-      setError((err as Error).message);
+      const msg = (err as Error).message;
+      setError(msg);
+      toast.error("Falha ao gerar", { description: msg });
     } finally {
       setLoading(false);
     }
   }
 
-  if (!open) {
-    return (
-      <button onClick={() => setOpen(true)} className="rounded bg-black px-4 py-2 text-sm text-white">
-        Personalizar com IA
-      </button>
-    );
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl space-y-3 rounded bg-white p-6">
-        <h2 className="text-lg font-bold">Nova vaga</h2>
-        <p className="text-sm text-gray-600">Cole o texto da vaga (requisitos, responsabilidades, empresa).</p>
-        <label className="block text-sm">
-          Idioma do currículo
-          <select name="lang" value={lang} onChange={(e) => setLang(e.target.value as BaseLang)} className="ml-2 rounded border p-1 text-sm">
-            <option value="pt-BR">Português (BR)</option>
-            <option value="en">English</option>
-            <option value="es">Español</option>
-          </select>
-        </label>
-        <textarea
-          value={jobText}
-          onChange={(e) => setJobText(e.target.value)}
-          rows={12}
-          placeholder="Cole aqui a descrição da vaga..."
-          className="w-full rounded border p-2 text-sm"
-        />
-        {error ? (
-          <div className="space-y-2">
-            <p className="text-sm text-red-600">{error}</p>
-            <button onClick={() => window.location.reload()} className="rounded border px-4 py-2 text-sm">
-              Atualizar tabela
-            </button>
-          </div>
-        ) : null}
-        <div className="flex justify-end gap-2">
-          <button onClick={() => setOpen(false)} className="rounded border px-4 py-2 text-sm">
-            Cancelar
-          </button>
-          <button onClick={onGenerate} disabled={loading || jobText.trim().length < 20} className="rounded bg-black px-4 py-2 text-sm text-white disabled:opacity-50">
-            {loading ? "Gerando (pode levar 1-2 min)..." : "Gerar currículo"}
-          </button>
+    <>
+      <Button onClick={() => setOpen(true)}>
+        <LuSparkles /> Personalizar com IA
+      </Button>
+      <Dialog open={open} onClose={() => !loading && setOpen(false)}>
+        <DialogHeader>
+          <DialogTitle>Nova vaga</DialogTitle>
+          <DialogDescription>Cole o texto da vaga (requisitos, responsabilidades, empresa).</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-4">
+          <label className="flex items-center gap-2 text-sm">
+            Idioma do currículo
+            <Select name="lang" value={lang} onChange={(e) => setLang(e.target.value as BaseLang)} disabled={loading}>
+              <option value="pt-BR">Português (BR)</option>
+              <option value="en">English</option>
+              <option value="es">Español</option>
+            </Select>
+          </label>
+          <Textarea
+            value={jobText}
+            onChange={(e) => setJobText(e.target.value)}
+            rows={12}
+            placeholder="Cole aqui a descrição da vaga..."
+            disabled={loading}
+          />
+          {loading ? (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <LuLoaderCircle className="animate-spin" /> {STAGES[stage]} (pode levar 1–2 min)
+            </p>
+          ) : null}
+          {error ? (
+            <div className="space-y-2">
+              <p className="text-sm text-destructive">{error}</p>
+              <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                Atualizar tabela
+              </Button>
+            </div>
+          ) : null}
         </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button onClick={onGenerate} disabled={loading || jobText.trim().length < 20}>
+            {loading && <LuLoaderCircle className="animate-spin" />}
+            {loading ? "Gerando…" : "Gerar currículo"}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+    </>
   );
 }
