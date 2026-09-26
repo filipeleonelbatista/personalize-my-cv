@@ -19,9 +19,13 @@ describe("buildBaseExtractSystem", () => {
     const s = buildBaseExtractSystem("en");
     expect(s).toContain("English");
     expect(s).toContain("ResumeSchema");
+    expect(s).toContain("Translate cargo");
+    expect(s).toContain("Brazil");
   });
   it("instructs Spanish output for es", () => {
-    expect(buildBaseExtractSystem("es")).toContain("Español");
+    const s = buildBaseExtractSystem("es");
+    expect(s).toContain("Español");
+    expect(s).toContain("cargo");
   });
   it("instructs Brazilian Portuguese by default", () => {
     expect(buildBaseExtractSystem("pt-BR")).toContain("Português do Brasil");

@@ -43,7 +43,8 @@ describe("CVDocument", () => {
     const text = await extractCvText(Buffer.from(buf));
     expect(text).toContain("Experience");
     expect(text).toContain("Key activities");
-    expect(text).toContain("Technologies");
+    expect(text).toContain("Skills");
+    expect(text).not.toContain("Technologies");
     expect(text).toContain("Aug 2025");
     expect(text).toContain("Present");
     expect(text).not.toContain("Experiências");

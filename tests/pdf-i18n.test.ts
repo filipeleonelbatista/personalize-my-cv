@@ -12,6 +12,7 @@ describe("pdfLabels", () => {
     const l = pdfLabels("en");
     expect(l.experience).toBe("Experience");
     expect(l.skills).toBe("Skills");
+    expect(l.competencies).toBe("Skills");
     expect(l.activities).toBe("Key activities");
     expect(l.current).toBe("Present");
   });
@@ -19,6 +20,7 @@ describe("pdfLabels", () => {
     const l = pdfLabels("es");
     expect(l.experience).toBe("Experiencia");
     expect(l.education).toBe("Educación");
+    expect(l.competencies).toBe("Competencias");
     expect(l.activities).toBe("Actividades principales");
     expect(l.current).toBe("actual");
   });

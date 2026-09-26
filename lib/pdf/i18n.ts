@@ -32,7 +32,7 @@ const LABELS: Record<PdfLang, PdfLabels> = {
     certifications: "Certifications",
     languages: "Languages",
     activities: "Key activities",
-    competencies: "Technologies",
+    competencies: "Skills",
     current: "Present",
   },
   es: {
@@ -43,7 +43,7 @@ const LABELS: Record<PdfLang, PdfLabels> = {
     certifications: "Certificaciones",
     languages: "Idiomas",
     activities: "Actividades principales",
-    competencies: "Tecnologías",
+    competencies: "Competencias",
     current: "actual",
   },
 };
