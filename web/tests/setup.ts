@@ -1,8 +1,9 @@
 // Polyfill global localStorage from the test environment's own jsdom window.
 // Node >= 22 declares globalThis.localStorage (gated behind --localstorage-file,
 // left undefined without the flag); vitest's jsdom integration then skips copying
-// the window's working localStorage, which breaks SecureLS (module-level
-// `new SecureLS()` reads localStorage at import time) and any store code.
+// the window's working localStorage, which breaks store/secure-store code that
+// touches localStorage on first use (`secure-store.ts` instantiates SecureLS
+// lazily, but the underlying storage must still exist).
 // No-op in non-jsdom environments (g.jsdom is only set by vitest's jsdom env).
 const g = globalThis as unknown as Record<string, unknown>;
 if (typeof g["localStorage"] === "undefined") {

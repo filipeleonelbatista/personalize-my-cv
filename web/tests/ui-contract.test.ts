@@ -116,3 +116,33 @@ describe("client dashboard", () => {
     expect(s).not.toContain("../actions");
   });
 });
+
+describe("settings dialog (post-onboarding)", () => {
+  it("is mounted on the dashboard toolbar", () => {
+    const tabs = readFileSync("app/components/DashboardTabs.tsx", "utf8");
+    expect(tabs).toContain("SettingsDialog");
+    expect(tabs).toContain("<SettingsDialog />");
+    expect(readFileSync("app/components/SettingsDialog.tsx", "utf8")).toContain("Configurações");
+  });
+  it("has models selector, clear-key and backup export/import", () => {
+    const s = readFileSync("app/components/SettingsDialog.tsx", "utf8");
+    expect(s).toContain("loadSettings");
+    expect(s).toContain("saveSettings");
+    expect(s).toContain("clearSettings");
+    expect(s).toContain("exportBackup");
+    expect(s).toContain("importBackup");
+    expect(s).toMatch(/Models|models/);
+    expect(s).toContain("key.trim()");
+  });
+  it("quota failures surface backup guidance where saves can throw", () => {
+    for (const f of ["app/components/GenerateModal.tsx", "app/components/Onboarding.tsx", "app/components/BaseSetup.tsx", "app/components/VacancyTable.tsx"]) {
+      expect(readFileSync(f, "utf8"), f).toContain("Armazenamento cheio");
+    }
+    expect(readFileSync("lib/store.ts", "utf8")).toContain("QUOTA_MESSAGE");
+  });
+  it("page gates on isOnboarded with cross-tab storage sync", () => {
+    const s = readFileSync("app/page.tsx", "utf8");
+    expect(s).toContain("isOnboarded");
+    expect(s).toContain("storage");
+  });
+});

@@ -51,12 +51,25 @@ export function VacancyTable({ apps, onChanged }: { apps: StoredApp[]; onChanged
       const r = await retryStoredApp(id);
       if (r.ok) {
         toast.success("Currículo regenerado!");
+      } else if (/Armazenamento cheio/.test(r.error)) {
+        toast.error("Armazenamento cheio", {
+          description: `${r.error} Exporte o backup em Configurações e apague currículos antigos.`,
+          duration: 10000,
+        });
       } else {
         toast.error("Retry falhou", { description: r.error });
       }
       refresh();
     } catch (err) {
-      toast.error("Retry falhou", { description: (err as Error).message });
+      const msg = (err as Error).message;
+      if (/Armazenamento cheio/.test(msg)) {
+        toast.error("Armazenamento cheio", {
+          description: `${msg} Exporte o backup em Configurações e apague currículos antigos.`,
+          duration: 10000,
+        });
+      } else {
+        toast.error("Retry falhou", { description: msg });
+      }
     } finally {
       setBusyId(null);
     }

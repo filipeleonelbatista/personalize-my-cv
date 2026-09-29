@@ -14,6 +14,9 @@ describe("geminiModels", () => {
   it("trims and filters a caller-provided list", () => {
     expect(geminiModels([" gemini-2.5-flash ", "", " gemini-2.5-flash-lite "])).toEqual(["gemini-2.5-flash", "gemini-2.5-flash-lite"]);
   });
+  it("falls back to defaults when the list is empty after filtering", () => {
+    expect(geminiModels(["", "   ", ""])).toEqual(["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]);
+  });
 });
 
 describe("generateJson fallback", () => {

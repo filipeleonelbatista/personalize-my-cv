@@ -47,7 +47,14 @@ export function BaseSetup({ onDone }: { onDone?: () => void }) {
     } catch (err) {
       const msg = (err as Error).message;
       setError(msg);
-      toast.error("Falha ao atualizar base", { description: msg });
+      if (/Armazenamento cheio/.test(msg)) {
+        toast.error("Armazenamento cheio", {
+          description: `${msg} Exporte o backup em Configurações e apague currículos antigos.`,
+          duration: 10000,
+        });
+      } else {
+        toast.error("Falha ao atualizar base", { description: msg });
+      }
     } finally {
       setLoading(false);
     }

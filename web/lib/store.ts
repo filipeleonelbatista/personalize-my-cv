@@ -23,11 +23,19 @@ function readArr(key: string): StoredApp[] {
   } catch { return []; }
 }
 export function loadBase(): StoredBase | null { try { const raw = localStorage.getItem("pmcv:base"); if (!raw) return null; return StoredBaseSchema.parse(JSON.parse(raw)); } catch { return null; } }
-export function saveBase(b: StoredBase): void { localStorage.setItem("pmcv:base", JSON.stringify(StoredBaseSchema.parse(b))); }
+export const QUOTA_MESSAGE = "Armazenamento cheio — exporte o backup e limpe itens antigos.";
+function throwQuota(e: unknown): never {
+  if (e instanceof DOMException && e.name === "QuotaExceededError") throw new Error(QUOTA_MESSAGE);
+  throw e;
+}
+export function saveBase(b: StoredBase): void {
+  try { localStorage.setItem("pmcv:base", JSON.stringify(StoredBaseSchema.parse(b))); }
+  catch (e) { throwQuota(e); }
+}
 export function loadApps(): StoredApp[] { return readArr("pmcv:apps"); }
 export function saveApps(a: StoredApp[]): void {
   try { localStorage.setItem("pmcv:apps", JSON.stringify(a)); }
-  catch (e) { if (e instanceof DOMException && e.name === "QuotaExceededError") throw new Error("Armazenamento cheio — exporte o backup e limpe itens antigos."); throw e; }
+  catch (e) { throwQuota(e); }
 }
 export function loadSettings(): Settings { try { const s = getSecure("pmcv:settings"); if (!s) return SettingsSchema.parse({}); return SettingsSchema.parse(JSON.parse(s)); } catch { return SettingsSchema.parse({}); } }
 export function saveSettings(s: Settings): void { setSecure("pmcv:settings", JSON.stringify(SettingsSchema.parse(s))); }

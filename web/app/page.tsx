@@ -7,7 +7,7 @@ import { Onboarding } from "./components/Onboarding";
 import { ThemeToggle } from "./components/theme-toggle";
 import type { BaseLang } from "@/lib/llm/prompts";
 import type { Resume } from "@/lib/resume-schema";
-import { loadApps, loadBase, loadSettings, type StoredApp } from "@/lib/store";
+import { isOnboarded, loadApps, loadBase, loadSettings, setOnboarded, type StoredApp } from "@/lib/store";
 import Loading from "./loading";
 
 export default function Page() {
@@ -22,18 +22,14 @@ export default function Page() {
       setBase(stored ? stored.resume : null);
       setLang(stored ? stored.lang : "pt-BR");
       setApps(loadApps());
-    }
-    const key = loadSettings().geminiKey;
-    const stored = loadBase();
-    if (!key || !stored) {
-      setPhase("onboarding");
-      return;
+      // Self-heal legado: chave + base válidas sem a flag (estado pré-onboarding).
+      if (!isOnboarded() && loadSettings().geminiKey && stored) setOnboarded(true);
+      setPhase(isOnboarded() ? "dashboard" : "onboarding");
     }
     refreshFromStore();
-    setPhase("dashboard");
-    const onStorage = () => refreshFromStore();
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    // Cross-tab: outra aba pode concluir o onboarding ou mudar base/apps.
+    window.addEventListener("storage", refreshFromStore);
+    return () => window.removeEventListener("storage", refreshFromStore);
   }, []);
 
   if (phase === "loading") return <Loading />;

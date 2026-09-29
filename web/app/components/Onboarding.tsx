@@ -55,7 +55,16 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       setOnboarded(true);
       toast.success("Currículo base criado!");
       onDone();
-    } catch (e) { setError((e instanceof Error ? e.message : String(e)).slice(0, 500)); }
+    } catch (e) {
+      const msg = ((e instanceof Error ? e.message : String(e)) || "Falha desconhecida.").slice(0, 500);
+      setError(msg);
+      if (/Armazenamento cheio/.test(msg)) {
+        toast.error("Armazenamento cheio", {
+          description: `${msg} Exporte o backup em Configurações e apague currículos antigos.`,
+          duration: 10000,
+        });
+      }
+    }
     finally { setLoading(false); }
   }
 

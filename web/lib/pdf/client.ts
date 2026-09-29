@@ -9,6 +9,15 @@ export async function resumeToBlob(resume: Resume, lang: BaseLang): Promise<Blob
 export async function openResumePdf(resume: Resume, lang: BaseLang): Promise<void> {
   const blob = await resumeToBlob(resume, lang);
   const url = URL.createObjectURL(blob);
-  window.open(url, "_blank", "noopener");
+  const win = window.open(url, "_blank", "noopener");
+  if (!win) {
+    // Popup bloqueado — baixa o arquivo em vez de perder o PDF.
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "curriculo.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

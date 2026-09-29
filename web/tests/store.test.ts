@@ -49,4 +49,9 @@ describe("store", () => {
     saveSettings({ geminiKey: "K", models: ["m1", "m2"] });
     expect(loadSettings()).toEqual({ geminiKey: "K", models: ["m1", "m2"] });
   });
+  it("saveBase surfaces quota errors with guidance", () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => { throw new DOMException("full", "QuotaExceededError"); });
+    expect(() => saveBase(base)).toThrow(/Armazenamento cheio/);
+    setItem.mockRestore();
+  });
 });

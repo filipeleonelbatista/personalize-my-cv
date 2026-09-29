@@ -1,7 +1,10 @@
 export const DEFAULT_GEMINI_MODELS = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
 export function geminiModels(models?: string[]): string[] {
-  if (models && models.length) return models.map((s) => s.trim()).filter(Boolean);
+  if (models && models.length) {
+    const clean = models.map((s) => s.trim()).filter(Boolean);
+    if (clean.length) return clean;
+  }
   return [...DEFAULT_GEMINI_MODELS];
 }
 
