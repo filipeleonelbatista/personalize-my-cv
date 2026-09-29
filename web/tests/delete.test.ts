@@ -1,10 +1,26 @@
-import { describe, expect, it } from "vitest";
+// @vitest-environment jsdom
+import { describe, expect, it, beforeEach } from "vitest";
 import { readFileSync } from "node:fs";
-import { deleteApplication } from "@/app/actions";
+import { saveApps, loadApps, type StoredApp } from "@/lib/store";
 
-describe("deleteApplication", () => {
-  it("returns not found for unknown id", async () => {
-    await expect(deleteApplication(999999)).resolves.toEqual({ ok: false, error: "Registro não encontrado." });
+beforeEach(() => localStorage.clear());
+
+const resume: StoredApp["resume"] = { cabecalho: { nome: "Ana", titulo_profissional: "Dev", contatos: [{ tipo: "email", valor: "a@a.com", link: null }] }, secoes: { resumo: "X", experiencia: [], formacao: [], habilidades: [], certificacoes: [], idiomas: [], projetos: [] } };
+
+function app(id: string): StoredApp {
+  return { id, jobText: "vaga com texto suficiente", fileName: `${id}.pdf`, resume, cargo: "Dev", empresa: "X", matchPercent: 80, strengths: ["React"], weaknesses: ["Inglês"], emailBody: "Olá", chatMessage: "Oi", status: "done", errorLog: "", lang: "pt-BR", createdAt: new Date().toISOString() };
+}
+
+describe("deleteApplication (store)", () => {
+  it("removes the app from the store", () => {
+    saveApps([app("a"), app("b")]);
+    saveApps(loadApps().filter((a) => a.id !== "a"));
+    expect(loadApps().map((a) => a.id)).toEqual(["b"]);
+  });
+  it("returns empty when deleting an unknown id (no-op)", () => {
+    saveApps([app("b")]);
+    saveApps(loadApps().filter((a) => a.id !== "zzz"));
+    expect(loadApps()).toHaveLength(1);
   });
   it("table row has a delete action", () => {
     expect(readFileSync("app/components/VacancyTable.tsx", "utf8")).toContain("Excluir");

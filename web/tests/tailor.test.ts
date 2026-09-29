@@ -1,7 +1,10 @@
-import { describe, expect, it } from "vitest";
+// @vitest-environment jsdom
+import { describe, expect, it, beforeEach } from "vitest";
 import { buildFileName } from "@/lib/filename";
 import { parseEnvelope } from "@/lib/resume-schema";
-import { tailorResume, retryTailor } from "@/app/actions";
+import { runTailorJob, retryStoredApp } from "@/lib/tailor-client";
+
+beforeEach(() => localStorage.clear());
 
 describe("tailor envelope", () => {
   it("parses envelope with match bounds", () => {
@@ -13,15 +16,13 @@ describe("tailor envelope", () => {
     expect(buildFileName("N", "Dev", "X", new Date("2026-09-25T00:00:00")).endsWith(".pdf")).toBe(true);
   });
   it("rejects jobText too short without calling LLMs", async () => {
-    const r = await tailorResume("curto");
-    expect(r.ok).toBe(false);
+    await expect(runTailorJob("curto", "pt-BR")).rejects.toThrow(/20 caracteres/);
   });
   it("accepts a language override without calling LLMs on short input", async () => {
-    const r = await tailorResume("curto", "en");
-    expect(r.ok).toBe(false);
+    await expect(runTailorJob("curto", "en")).rejects.toThrow(/20 caracteres/);
   });
   it("retry on unknown id returns not found", async () => {
-    const r = await retryTailor(999999);
+    const r = await retryStoredApp("missing-id");
     expect(r.ok).toBe(false);
   });
 });

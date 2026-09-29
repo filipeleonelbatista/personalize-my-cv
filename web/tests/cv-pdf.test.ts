@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import React from "react";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { CVDocument, cvElement, cvStyles } from "@/lib/pdf/CVDocument";
-import { extractCvText } from "@/lib/cv-text";
+import { extractCvTextFromFile } from "@/lib/cv-text-client";
+
+async function pdfText(buf: Buffer): Promise<string> {
+  const bytes = new Uint8Array(buf.length);
+  bytes.set(buf);
+  return extractCvTextFromFile(new File([bytes], "t.pdf", { type: "application/pdf" }));
+}
 
 const resume = { cabecalho: { nome: "Filipe de Leonel Batista", titulo_profissional: "Desenvolvedor Front-end",
   contatos: [{ tipo: "email", valor: "a@b.com", link: "mailto:a@b.com" }] },
@@ -18,7 +24,7 @@ describe("CVDocument", () => {
   }, 30000);
   it("includes certificacoes and idiomas text", async () => {
     const buf = await renderToBuffer(cvElement(resume as never));
-    const text = await extractCvText(Buffer.from(buf));
+    const text = await pdfText(Buffer.from(buf));
     expect(text).toContain("AWS Certified");
     expect(text).toContain("Inglês");
   }, 30000);
@@ -27,7 +33,7 @@ describe("CVDocument", () => {
     const many = { ...resume, secoes: { ...resume.secoes,
       habilidades: [{ nome: "Tudo", itens }] } } as never;
     const buf = await renderToBuffer(cvElement(many));
-    const text = await extractCvText(Buffer.from(buf));
+    const text = await pdfText(Buffer.from(buf));
     expect(text).toContain("SK1, SK2, SK3");
     expect(text).toContain("SK16, SK17, SK18");
     expect(text).not.toContain("SK19");
@@ -40,7 +46,7 @@ describe("CVDocument", () => {
         realizacoes: ["Building interfaces."],
         tecnologias: ["React"] }] } } as never;
     const buf = await renderToBuffer(cvElement(en, "en"));
-    const text = await extractCvText(Buffer.from(buf));
+    const text = await pdfText(Buffer.from(buf));
     expect(text).toContain("Experience");
     expect(text).toContain("Key activities");
     expect(text).toContain("Skills");
@@ -57,7 +63,7 @@ describe("CVDocument", () => {
         realizacoes: ["Interfaces modernas em React.", "Integração com APIs REST."],
         tecnologias: ["React", "Context API"] }] } } as never;
     const buf = await renderToBuffer(cvElement(job));
-    const text = await extractCvText(Buffer.from(buf));
+    const text = await pdfText(Buffer.from(buf));
     expect(text).toContain("Ago 2025");
     expect(text).toContain("atual");
     expect(text).toContain("São Paulo, SP, Brasil (Remoto)");

@@ -1,19 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
-
-describe("scaffolding", () => {
-  it("has env example with all providers", () => {
-    const env = readFileSync(".env.example", "utf8");
-    for (const k of ["GEMINI_API_KEY", "GEMINI_MODELS"]) {
-      expect(env).toContain(k);
-    }
+describe("static byok", () => {
+  it("next config is export", () => {
+    expect(readFileSync("next.config.ts", "utf8")).toContain('output: "export"');
   });
-  it("has prisma schema with both models", () => {
-    const s = readFileSync("prisma/schema.prisma", "utf8");
-    expect(s).toContain("model BaseResume");
-    expect(s).toContain("model TailoredApplication");
+  it("no server leftovers", () => {
+    expect(existsSync("lib/db.ts")).toBe(false);
+    expect(existsSync("prisma")).toBe(false);
+    expect(existsSync("app/actions.ts")).toBe(false);
+    expect(existsSync("app/api")).toBe(false);
   });
-  it("has generated dir gitkeep", () => {
-    expect(existsSync("public/generated/.gitkeep")).toBe(true);
+  it("store keys documented", () => {
+    expect(readFileSync("lib/store.ts", "utf8")).toContain("pmcv:base");
   });
 });
