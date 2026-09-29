@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { LuSparkles, LuLoaderCircle } from "react-icons/lu";
-import { uploadBase } from "../actions";
-import type { BaseLang } from "../../lib/llm/prompts";
+import { generateJson } from "@/lib/llm/chain";
+import { buildBaseExtractSystem, buildRepairUser, type BaseLang } from "@/lib/llm/prompts";
+import { extractCvTextFromFile } from "@/lib/cv-text-client";
+import { normalizeResume } from "@/lib/tailor";
+import { loadSettings, saveBase } from "@/lib/store";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Select } from "./ui/select";
@@ -13,7 +16,7 @@ import { useStagedSteps } from "./use-staged-steps";
 
 const STAGES = ["Extraindo texto do PDF…", "IA catalogando experiências…", "Validando e salvando base…"];
 
-export function BaseSetup() {
+export function BaseSetup({ onDone }: { onDone?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [lang, setLang] = useState<BaseLang>("pt-BR");
   const [error, setError] = useState("");
@@ -26,21 +29,25 @@ export function BaseSetup() {
     setError("");
     setLoading(true);
     try {
-      const fd = new FormData();
-      fd.set("pdf", file);
-      fd.set("lang", lang);
-      const r = await uploadBase(fd);
-      if (r.ok) {
-        toast.success("Currículo base criado!");
-        window.location.reload();
-      } else {
-        setError(r.error);
-        toast.error("Falha ao criar base", { description: r.error });
+      const settings = loadSettings();
+      const text = await extractCvTextFromFile(file);
+      const system = buildBaseExtractSystem(lang);
+      const { data } = await generateJson(system, text.slice(0, 12000), settings.geminiKey, settings.models);
+      let resume;
+      try {
+        resume = normalizeResume(data);
+      } catch (zerr) {
+        const { data: fixed } = await generateJson(system, buildRepairUser(JSON.stringify(data), String(zerr)), settings.geminiKey, settings.models);
+        resume = normalizeResume(fixed);
       }
+      saveBase({ resume, lang, updatedAt: new Date().toISOString() });
+      toast.success("Currículo base atualizado!");
+      if (onDone) onDone();
+      else window.location.reload();
     } catch (err) {
       const msg = (err as Error).message;
       setError(msg);
-      toast.error("Falha ao criar base", { description: msg });
+      toast.error("Falha ao atualizar base", { description: msg });
     } finally {
       setLoading(false);
     }

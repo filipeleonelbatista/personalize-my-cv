@@ -3,40 +3,41 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { LuEye, LuDownload, LuPrinter, LuRotateCcw, LuLoaderCircle, LuTrash2, LuChevronLeft, LuChevronRight } from "react-icons/lu";
-import { retryTailor, deleteApplication } from "../actions";
+import { loadApps, saveApps, type StoredApp } from "@/lib/store";
+import { retryStoredApp } from "@/lib/tailor-client";
+import { resumeToBlob, openResumePdf } from "@/lib/pdf/client";
 import { paginate, PAGE_SIZES, DEFAULT_PAGE_SIZE } from "@/lib/pagination";
-import { Button, buttonVariants } from "./ui/button";
+import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Card, CardContent } from "./ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Select } from "./ui/select";
 import { Progress } from "./ui/progress";
-import { DetailDrawer, type AppRow } from "./DetailDrawer";
-import { cn } from "@/lib/utils";
+import { DetailDrawer } from "./DetailDrawer";
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleString("pt-BR");
 }
 
-export function VacancyTable({ apps }: { apps: AppRow[] }) {
-  const [selected, setSelected] = useState<AppRow | null>(null);
-  const [busyId, setBusyId] = useState<number | null>(null);
+export function VacancyTable({ apps, onChanged }: { apps: StoredApp[]; onChanged?: (apps: StoredApp[]) => void }) {
+  const [selected, setSelected] = useState<StoredApp | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const { page: current, pageCount, start, end } = paginate(apps.length, page, pageSize);
   const visible = apps.slice(start - 1, end);
 
-  async function onDelete(id: number) {
-    if (!window.confirm("Excluir este currículo? O PDF também será apagado.")) return;
+  function refresh() {
+    onChanged?.(loadApps());
+  }
+
+  async function onDelete(id: string) {
+    if (!window.confirm("Excluir este currículo?")) return;
     setBusyId(id);
     try {
-      const r = await deleteApplication(id);
-      if (r.ok) {
-        toast.success("Currículo excluído!");
-        window.location.reload();
-      } else {
-        toast.error("Falha ao excluir", { description: r.error });
-      }
+      saveApps(loadApps().filter((a) => a.id !== id));
+      toast.success("Currículo excluído!");
+      refresh();
     } catch (err) {
       toast.error("Falha ao excluir", { description: (err as Error).message });
     } finally {
@@ -44,20 +45,42 @@ export function VacancyTable({ apps }: { apps: AppRow[] }) {
     }
   }
 
-  async function onRetry(id: number) {
+  async function onRetry(id: string) {
     setBusyId(id);
     try {
-      const r = await retryTailor(id);
+      const r = await retryStoredApp(id);
       if (r.ok) {
         toast.success("Currículo regenerado!");
-        window.location.reload();
       } else {
         toast.error("Retry falhou", { description: r.error });
       }
+      refresh();
     } catch (err) {
       toast.error("Retry falhou", { description: (err as Error).message });
     } finally {
       setBusyId(null);
+    }
+  }
+
+  async function onDownload(app: StoredApp) {
+    try {
+      const blob = await resumeToBlob(app.resume, app.lang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = app.fileName;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch (err) {
+      toast.error("Falha ao gerar PDF", { description: (err as Error).message });
+    }
+  }
+
+  async function onPrint(app: StoredApp) {
+    try {
+      await openResumePdf(app.resume, app.lang);
+    } catch (err) {
+      toast.error("Falha ao abrir PDF", { description: (err as Error).message });
     }
   }
 
@@ -110,25 +133,14 @@ export function VacancyTable({ apps }: { apps: AppRow[] }) {
                   <Button variant="ghost" size="icon" title="Ver" onClick={() => setSelected(app)}>
                     <LuEye />
                   </Button>
-                  {app.pdfPath ? (
+                  {app.status === "done" ? (
                     <>
-                      <a
-                        href={app.pdfPath}
-                        download={app.fileName}
-                        title="Baixar"
-                        className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
-                      >
+                      <Button variant="ghost" size="icon" title="Baixar" onClick={() => onDownload(app)}>
                         <LuDownload />
-                      </a>
-                      <a
-                        href={`/api/applications/${app.id}/pdf`}
-                        target="_blank"
-                        rel="noopener"
-                        title="Imprimir"
-                        className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
-                      >
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Imprimir" onClick={() => onPrint(app)}>
                         <LuPrinter />
-                      </a>
+                      </Button>
                     </>
                   ) : null}
                   {app.status === "failed" ? (

@@ -1,38 +1,39 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getBase, getBaseLang, listApplications } from "./actions";
 import { BaseSetupDialog } from "./components/BaseSetupDialog";
 import { DashboardTabs } from "./components/DashboardTabs";
 import { Onboarding } from "./components/Onboarding";
 import { ThemeToggle } from "./components/theme-toggle";
-import type { AppRow } from "./components/DetailDrawer";
 import type { BaseLang } from "@/lib/llm/prompts";
 import type { Resume } from "@/lib/resume-schema";
-import { loadBase, loadSettings } from "@/lib/store";
+import { loadApps, loadBase, loadSettings, type StoredApp } from "@/lib/store";
 import Loading from "./loading";
 
 export default function Page() {
   const [phase, setPhase] = useState<"loading" | "onboarding" | "dashboard">("loading");
   const [base, setBase] = useState<Resume | null>(null);
-  const [apps, setApps] = useState<AppRow[]>([]);
+  const [apps, setApps] = useState<StoredApp[]>([]);
   const [lang, setLang] = useState<BaseLang>("pt-BR");
 
   useEffect(() => {
+    function refreshFromStore() {
+      const stored = loadBase();
+      setBase(stored ? stored.resume : null);
+      setLang(stored ? stored.lang : "pt-BR");
+      setApps(loadApps());
+    }
     const key = loadSettings().geminiKey;
     const stored = loadBase();
     if (!key || !stored) {
       setPhase("onboarding");
       return;
     }
-    (async () => {
-      const b = await getBase();
-      const rows = b ? await listApplications() : [];
-      setBase(b);
-      setApps(rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })));
-      setLang(b ? await getBaseLang() : stored.lang);
-      setPhase("dashboard");
-    })().catch(() => setPhase("dashboard"));
+    refreshFromStore();
+    setPhase("dashboard");
+    const onStorage = () => refreshFromStore();
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   if (phase === "loading") return <Loading />;

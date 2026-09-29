@@ -30,7 +30,10 @@ export function Dropdown({ trigger, children, align = "right" }: { trigger: Reac
             {React.Children.map(children, (child) =>
               React.isValidElement(child)
                 ? React.cloneElement(child as React.ReactElement<{ onSelect?: () => void }>, {
-                    onSelect: () => setOpen(false),
+                    onSelect: () => {
+                      (child as React.ReactElement<{ onSelect?: () => void }>).props.onSelect?.();
+                      setOpen(false);
+                    },
                   })
                 : child
             )}

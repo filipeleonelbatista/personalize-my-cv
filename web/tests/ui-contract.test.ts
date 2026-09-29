@@ -13,10 +13,11 @@ describe("ui contract", () => {
     expect(src).toContain("setError(r.error)");
     expect(src).not.toContain("if (r.id)");
   });
-  it("base print route exists and dashboard links it", () => {
-    expect(existsSync("app/api/base/pdf/route.ts")).toBe(true);
-    expect(readFileSync("app/api/base/pdf/route.ts", "utf8")).toContain("application/pdf");
-    expect(readFileSync("app/components/BaseMenu.tsx", "utf8")).toContain("/api/base/pdf");
+  it("base print is client-side via openResumePdf (no server route)", () => {
+    const menu = readFileSync("app/components/BaseMenu.tsx", "utf8");
+    expect(menu).toContain("openResumePdf");
+    expect(menu).not.toContain("/api/");
+    expect(menu).not.toContain("../actions");
   });
   it("generate modal has short IA label and per-vacancy language select", () => {
     const src = readFileSync("app/components/GenerateModal.tsx", "utf8");
@@ -24,10 +25,16 @@ describe("ui contract", () => {
     expect(src).not.toContain("Gerar outro currículo");
     expect(src).toContain('name="lang"');
   });
-  it("tailored print route exists and table links it", () => {
-    expect(existsSync("app/api/applications/[id]/pdf/route.ts")).toBe(true);
-    expect(readFileSync("app/api/applications/[id]/pdf/route.ts", "utf8")).toContain("application/pdf");
-    expect(readFileSync("app/components/VacancyTable.tsx", "utf8")).toContain("/api/applications/");
+  it("tailored download is client-side via blob URL (no server route)", () => {
+    const table = readFileSync("app/components/VacancyTable.tsx", "utf8");
+    expect(table).toContain("resumeToBlob");
+    expect(table).not.toContain("/api/applications/");
+    expect(table).not.toContain("../actions");
+    const drawer = readFileSync("app/components/DetailDrawer.tsx", "utf8");
+    expect(drawer).toContain("StoredApp");
+    expect(drawer).not.toContain("pdfPath");
+    expect(drawer).not.toContain("id: number");
+    expect(drawer).not.toContain("/api/");
   });
   it("redesign system exists (ui kit, dark mode, theme toggle)", () => {    for (const f of ["app/components/ui/button.tsx", "app/components/ui/card.tsx", "app/components/ui/dialog.tsx",
       "app/components/ui/table.tsx", "app/components/ui/badge.tsx", "app/components/ui/select.tsx",
@@ -65,9 +72,47 @@ describe("base gear menu", () => {
     expect(existsSync("app/components/ui/dropdown.tsx")).toBe(true);
     expect(existsSync("app/components/BaseMenu.tsx")).toBe(true);
     const menu = readFileSync("app/components/BaseMenu.tsx", "utf8");
-    expect(menu).toContain("/api/base/pdf");
+    expect(menu).toContain("openResumePdf");
     expect(menu).toContain("BaseSetup");
     expect(menu).toContain("Atualizar currículo");
     expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("BaseMenu");
+  });
+});
+
+describe("client dashboard", () => {
+  it("GenerateModal uses store+generateJson, not actions", () => {
+    const s = readFileSync("app/components/GenerateModal.tsx", "utf8");
+    expect(s).toContain("@/lib/store");
+    expect(s).not.toContain("../actions");
+  });
+  it("VacancyTable deletes from store", () => {
+    const s = readFileSync("app/components/VacancyTable.tsx", "utf8");
+    expect(s).toContain("saveApps");
+  });
+  it("dashboard syncs across tabs", () => {
+    const s = readFileSync("app/components/DashboardTabs.tsx", "utf8");
+    expect(s).toContain("storage");
+  });
+  it("no dashboard component imports server actions or /api/ routes", () => {
+    for (const f of [
+      "app/page.tsx",
+      "app/components/GenerateModal.tsx",
+      "app/components/VacancyTable.tsx",
+      "app/components/DetailDrawer.tsx",
+      "app/components/ReportsSection.tsx",
+      "app/components/DashboardTabs.tsx",
+      "app/components/BaseMenu.tsx",
+      "app/components/BaseSetup.tsx",
+    ]) {
+      const s = readFileSync(f, "utf8");
+      expect(s, f).not.toContain("../actions");
+      expect(s, f).not.toContain("/api/");
+    }
+  });
+  it("reports are computed client-side from the store", () => {
+    const s = readFileSync("app/components/ReportsSection.tsx", "utf8");
+    expect(s).toContain("loadApps");
+    expect(s).toContain("bucketByWeekday");
+    expect(s).not.toContain("../actions");
   });
 });

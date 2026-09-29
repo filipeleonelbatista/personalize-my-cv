@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { LuSparkles, LuLoaderCircle } from "react-icons/lu";
-import { tailorResume } from "../actions";
+import { loadApps, type StoredApp } from "@/lib/store";
+import { runTailorJob } from "@/lib/tailor-client";
 import type { BaseLang } from "../../lib/llm/prompts";
 import { Button } from "./ui/button";
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -13,7 +14,7 @@ import { useStagedSteps } from "./use-staged-steps";
 
 const STAGES = ["Lendo a vaga…", "Reescrevendo com keywords…", "Gerando PDF e análise…"];
 
-export function GenerateModal({ defaultLang = "pt-BR" }: { defaultLang?: BaseLang }) {
+export function GenerateModal({ defaultLang = "pt-BR", onChanged }: { defaultLang?: BaseLang; onChanged?: (apps: StoredApp[]) => void }) {
   const [open, setOpen] = useState(false);
   const [jobText, setJobText] = useState("");
   const [lang, setLang] = useState<BaseLang>(defaultLang);
@@ -25,13 +26,16 @@ export function GenerateModal({ defaultLang = "pt-BR" }: { defaultLang?: BaseLan
     setError("");
     setLoading(true);
     try {
-      const r = await tailorResume(jobText, lang);
+      const r = await runTailorJob(jobText, lang);
       if (r.ok) {
         toast.success("Currículo personalizado gerado!");
-        window.location.reload();
+        onChanged?.(loadApps());
+        setOpen(false);
+        setJobText("");
       } else {
         setError(r.error);
         toast.error("As IAs falharam — vaga salva para retry", { description: r.error.slice(0, 200) });
+        onChanged?.(loadApps());
       }
     } catch (err) {
       const msg = (err as Error).message;
@@ -76,7 +80,14 @@ export function GenerateModal({ defaultLang = "pt-BR" }: { defaultLang?: BaseLan
           {error ? (
             <div className="space-y-2">
               <p className="text-sm text-destructive">{error}</p>
-              <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onChanged?.(loadApps());
+                  setOpen(false);
+                }}
+              >
                 Atualizar tabela
               </Button>
             </div>

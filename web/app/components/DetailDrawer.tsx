@@ -3,37 +3,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { LuCopy, LuCheck, LuDownload, LuPrinter } from "react-icons/lu";
-import { Button, buttonVariants } from "./ui/button";
+import { resumeToBlob, openResumePdf } from "@/lib/pdf/client";
+import type { StoredApp } from "@/lib/store";
+import { Button } from "./ui/button";
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
-import { cn } from "@/lib/utils";
 
-export type AppRow = {
-  id: number;
-  jobText: string;
-  cargo: string;
-  empresa: string;
-  fileName: string;
-  pdfPath: string;
-  matchPercent: number;
-  strengths: string;
-  weaknesses: string;
-  emailBody: string;
-  chatMessage: string;
-  status: string;
-  errorLog: string;
-  createdAt: string;
-};
-
-function parseList(json: string): string[] {
-  try {
-    const v = JSON.parse(json) as unknown;
-    return Array.isArray(v) ? v.map(String) : [];
-  } catch {
-    return [];
-  }
-}
+export type AppRow = StoredApp;
 
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [done, setDone] = useState(false);
@@ -60,8 +37,27 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 }
 
 export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => void }) {
-  const strengths = parseList(app.strengths);
-  const weaknesses = parseList(app.weaknesses);
+  async function onDownload() {
+    try {
+      const blob = await resumeToBlob(app.resume, app.lang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = app.fileName;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch (err) {
+      toast.error("Falha ao gerar PDF", { description: (err as Error).message });
+    }
+  }
+
+  async function onPrint() {
+    try {
+      await openResumePdf(app.resume, app.lang);
+    } catch (err) {
+      toast.error("Falha ao abrir PDF", { description: (err as Error).message });
+    }
+  }
 
   return (
     <Dialog open onClose={onClose}>
@@ -75,26 +71,15 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
       </DialogHeader>
 
       <div className="space-y-4 py-4">
-        {app.pdfPath ? (
+        {app.status === "done" ? (
           <div className="flex gap-2">
-            <a
-              href={app.pdfPath}
-              download={app.fileName}
-              className={cn(buttonVariants({ size: "sm" }))}
-            >
+            <Button size="sm" onClick={onDownload}>
               <LuDownload /> Baixar PDF
-            </a>
-            <a
-              href={`/api/applications/${app.id}/pdf`}
-              target="_blank"
-              rel="noopener"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
+            </Button>
+            <Button variant="outline" size="sm" onClick={onPrint}>
               <LuPrinter /> Imprimir
-            </a>
-            <Badge variant={app.status === "done" ? "success" : "destructive"}>
-              {app.status === "done" ? "Pronto" : "Falhou"}
-            </Badge>
+            </Button>
+            <Badge variant="success">Pronto</Badge>
           </div>
         ) : (
           <p className="text-sm text-destructive">PDF não gerado. Erro: {app.errorLog}</p>
@@ -110,7 +95,7 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
               <div>
                 <p className="text-sm font-bold">Pontos fortes</p>
                 <ul className="list-disc pl-5 text-sm">
-                  {strengths.map((s) => (
+                  {app.strengths.map((s) => (
                     <li key={s}>{s}</li>
                   ))}
                 </ul>
@@ -118,7 +103,7 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
               <div>
                 <p className="text-sm font-bold">Pontos fracos</p>
                 <ul className="list-disc pl-5 text-sm">
-                  {weaknesses.map((w) => (
+                  {app.weaknesses.map((w) => (
                     <li key={w}>{w}</li>
                   ))}
                 </ul>

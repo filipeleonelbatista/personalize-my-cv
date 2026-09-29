@@ -3,25 +3,50 @@
 import { useEffect, useState } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { LuChevronLeft, LuChevronRight, LuTrendingUp } from "react-icons/lu";
-import { getWeekStats, type WeekStats } from "../actions";
-import { WEEKDAY_LABELS } from "@/lib/report";
+import { loadApps } from "@/lib/store";
+import { WEEKDAY_LABELS, bucketByWeekday, weekLabel, weekRange } from "@/lib/report";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 
+type ClientWeekStats = {
+  label: string;
+  total: number;
+  counts: number[];
+  bestDay: string;
+  avgPerDay: number;
+};
+
+function computeWeekStats(offset: number): ClientWeekStats {
+  const { start, end } = weekRange(new Date(), offset);
+  const endExclusive = new Date(end);
+  endExclusive.setDate(endExclusive.getDate() + 1);
+  const dates = loadApps()
+    .map((a) => new Date(a.createdAt))
+    .filter((d) => !Number.isNaN(d.getTime()) && d >= start && d < endExclusive);
+  const counts = bucketByWeekday(dates);
+  const total = dates.length;
+  const best = counts.indexOf(Math.max(...counts));
+  return {
+    label: weekLabel(start, end),
+    total,
+    counts,
+    bestDay: total ? WEEKDAY_LABELS[best] : "—",
+    avgPerDay: Math.round((total / 7) * 10) / 10,
+  };
+}
+
 export function ReportsSection() {
   const [offset, setOffset] = useState(0);
-  const [stats, setStats] = useState<WeekStats | null>(null);
+  const [stats, setStats] = useState<ClientWeekStats | null>(null);
 
   useEffect(() => {
-    let live = true;
-    setStats(null);
-    getWeekStats(offset).then((s) => {
-      if (live) setStats(s);
-    });
-    return () => {
-      live = false;
+    setStats(computeWeekStats(offset));
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "pmcv:apps" || e.key === null) setStats(computeWeekStats(offset));
     };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, [offset]);
 
   const data = (stats?.counts ?? []).map((count, i) => ({ dia: WEEKDAY_LABELS[i], total: count }));
