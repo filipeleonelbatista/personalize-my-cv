@@ -23,14 +23,16 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const stage = useStagedSteps(STAGES, loading && step === 2);
+  const trimmedKey = key.trim();
 
   async function onValidateSave() {
     setError(""); setLoading(true);
     try {
-      const v = await validateGeminiKey(key);
+      const trimmed = key.trim();
+      const v = await validateGeminiKey(trimmed);
       if (!v.ok) { setError(v.error); return; }
       const cur = loadSettings();
-      saveSettings({ ...cur, geminiKey: key.trim() });
+      saveSettings({ ...cur, geminiKey: trimmed });
       setStep(2);
     } finally { setLoading(false); }
   }
@@ -53,7 +55,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       setOnboarded(true);
       toast.success("Currículo base criado!");
       onDone();
-    } catch (e) { setError((e as Error).message.slice(0, 500)); }
+    } catch (e) { setError((e instanceof Error ? e.message : String(e)).slice(0, 500)); }
     finally { setLoading(false); }
   }
 
@@ -78,7 +80,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex gap-2">
         <Button variant="outline" onClick={() => setStep(0)} disabled={loading}>Voltar</Button>
-        <Button onClick={onValidateSave} disabled={loading || !key.trim()}>{loading ? "Validando…" : "Validar e continuar"}</Button>
+        <Button onClick={onValidateSave} disabled={loading || !trimmedKey}>{loading ? "Validando…" : "Validar e continuar"}</Button>
       </div>
     </CardContent></Card>
   );
