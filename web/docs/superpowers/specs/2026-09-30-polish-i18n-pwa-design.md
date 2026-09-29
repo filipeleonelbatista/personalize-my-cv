@@ -17,7 +17,7 @@ Path: architectural → abordagem B libs (next-intl provider-only + @serwist/nex
 
 ## 2. Arquitetura
 
-- `next-intl` provider-only: `messages/pt-BR.json`, `messages/en.json`, `messages/es.json`; `lib/i18n/config.ts` (`locales = ["pt-BR","en","es"]`, default `pt-BR`); locale em estado React + `pmcv:locale` (Zod-validado no load, fallback `pt-BR`); sem middleware/redirect; `<html lang>` dinâmico.
+- `next-intl` provider-only: `messages/pt-BR.json`, `messages/en-US.json`, `messages/es-ES.json`; `lib/i18n/config.ts` (`locales = ["pt-BR","en-US","es-ES"]`, default `pt-BR`); locale em estado React + `pmcv:locale` (Zod-validado no load, fallback `pt-BR`); sem middleware/redirect; `<html lang>` dinâmico.
 - PWA via `@serwist/next`: `sw.js` gerado no build; runtime caching (cache-first `_next/static`, fontes, `pdf.worker.min.mjs`; NetworkFirst + fallback offline para navegação); `public/manifest.webmanifest` (nome curto/longo, `icons` 192/512 + maskable, `theme_color` `#ffffff`/`#09090b`, `background_color`, `display: standalone`, `start_url: "/"`).
 - Tudo continua `output: export`; nenhuma Server Action nova.
 
