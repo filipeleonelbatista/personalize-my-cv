@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
+import { I18nProvider } from "@/lib/i18n/provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <I18nProvider>
           <div className="flex min-h-screen flex-col">
             <div className="flex-1">{children}</div>
             <footer className="border-t border-border py-4 text-center text-xs text-muted-foreground">
@@ -27,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </a>
             </footer>
           </div>
+          </I18nProvider>
           <Toaster richColors position="top-center" />
         </ThemeProvider>
       </body>

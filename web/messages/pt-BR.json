@@ -1,0 +1,20 @@
+{
+  "Common": { "back": "Voltar", "cancel": "Cancelar", "save": "Salvar", "close": "Fechar", "retry": "Tentar novamente", "loading": "Carregando…" },
+  "Locale": { "label": "Idioma", "aria": "Trocar idioma" },
+  "Errors": {
+    "noKey": "Configure a chave Gemini no onboarding.",
+    "invalidKey": "Chave Gemini inválida (401/403). Confira em https://aistudio.google.com/apikey",
+    "emptyResponse": "gemini: resposta vazia da IA.",
+    "validateFailed": "Falha ao validar: {status}",
+    "pasteKey": "Cole uma chave.",
+    "noBase": "Cadastre o currículo base primeiro.",
+    "jobShort": "Cole o texto da vaga (mín. 20 caracteres).",
+    "notFound": "Registro não encontrado.",
+    "unknownFail": "Falha desconhecida.",
+    "invalidPdf": "Envie um arquivo PDF.",
+    "emptyPdf": "PDF inválido ou vazio.",
+    "unscannedPdf": "PDF sem texto selecionável — envie um PDF com texto, não escaneado.",
+    "quota": "Armazenamento cheio — exporte o backup e limpe itens antigos.",
+    "offline": "Sem conexão — a IA precisa de internet. Tente de novo online."
+  }
+}

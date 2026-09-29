@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ResumeSchema, TailorEnvelopeSchema } from "./resume-schema";
 import { parseBaseLang, type BaseLang } from "./llm/prompts";
 import { getSecure, setSecure, removeSecure } from "./secure-store";
+import { DEFAULT_LOCALE, type UiLocale } from "./i18n/config";
 
 export const StoredBaseSchema = z.object({ resume: ResumeSchema, lang: z.enum(["pt-BR", "en", "es"]), updatedAt: z.string() });
 export type StoredBase = z.infer<typeof StoredBaseSchema>;
@@ -42,6 +43,18 @@ export function saveSettings(s: Settings): void { setSecure("pmcv:settings", JSO
 export function clearSettings(): void { removeSecure("pmcv:settings"); }
 export function isOnboarded(): boolean { return localStorage.getItem("pmcv:onboarded") === "1" && !!loadSettings().geminiKey && !!loadBase(); }
 export function setOnboarded(v: boolean): void { localStorage.setItem("pmcv:onboarded", v ? "1" : "0"); }
+export function loadLocale(): UiLocale {
+  try {
+    const raw = localStorage.getItem("pmcv:locale");
+    if (raw === "pt-BR" || raw === "en-US" || raw === "es-ES") return raw;
+    return DEFAULT_LOCALE;
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
+export function saveLocale(l: UiLocale): void {
+  localStorage.setItem("pmcv:locale", l);
+}
 export function exportBackup(): string { return JSON.stringify({ base: loadBase(), apps: loadApps(), exportedAt: new Date().toISOString() }); }
 export function importBackup(json: string): void {
   const parsed = z.object({ base: StoredBaseSchema.nullable(), apps: z.array(StoredAppSchema) }).parse(JSON.parse(json));

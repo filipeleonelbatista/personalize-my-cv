@@ -1,0 +1,20 @@
+{
+  "Common": { "back": "Go back", "cancel": "Cancel", "save": "Save", "close": "Close", "retry": "Try again", "loading": "Loading…" },
+  "Locale": { "label": "Language", "aria": "Change language" },
+  "Errors": {
+    "noKey": "Set your Gemini key in onboarding.",
+    "invalidKey": "Invalid Gemini key (401/403). Check https://aistudio.google.com/apikey",
+    "emptyResponse": "gemini: empty AI response.",
+    "validateFailed": "Validation failed: {status}",
+    "pasteKey": "Paste a key.",
+    "noBase": "Register your base resume first.",
+    "jobShort": "Paste the job text (min. 20 characters).",
+    "notFound": "Record not found.",
+    "unknownFail": "Unknown failure.",
+    "invalidPdf": "Send a PDF file.",
+    "emptyPdf": "Invalid or empty PDF.",
+    "unscannedPdf": "PDF has no selectable text — send a text PDF, not a scan.",
+    "quota": "Storage full — export a backup and delete old items.",
+    "offline": "Offline — the AI needs internet. Try again online."
+  }
+}
