@@ -1,0 +1,51 @@
+// web/lib/store.ts
+import { z } from "zod";
+import { ResumeSchema, TailorEnvelopeSchema } from "./resume-schema";
+import { parseBaseLang, type BaseLang } from "./llm/prompts";
+import { getSecure, setSecure, removeSecure } from "./secure-store";
+
+export const StoredBaseSchema = z.object({ resume: ResumeSchema, lang: z.enum(["pt-BR", "en", "es"]), updatedAt: z.string() });
+export type StoredBase = z.infer<typeof StoredBaseSchema>;
+export const StoredAppSchema = TailorEnvelopeSchema.extend({ id: z.string().min(1), jobText: z.string(), fileName: z.string(), status: z.enum(["done", "failed"]), errorLog: z.string().default(""), createdAt: z.string() });
+export type StoredApp = z.infer<typeof StoredAppSchema>;
+export const SettingsSchema = z.object({ geminiKey: z.string().default(""), models: z.array(z.string()).min(1).default(["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]) });
+export type Settings = z.infer<typeof SettingsSchema>;
+
+function read<T>(key: string, schema: z.ZodType<T>, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return schema.parse(JSON.parse(raw));
+  } catch { return fallback; }
+}
+function readArr(key: string): StoredApp[] {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    const out: StoredApp[] = [];
+    for (const item of arr) { try { out.push(StoredAppSchema.parse(item)); } catch { /* descarta item inválido */ } }
+    return out;
+  } catch { return []; }
+}
+export function loadBase(): StoredBase | null { try { const raw = localStorage.getItem("pmcv:base"); if (!raw) return null; return StoredBaseSchema.parse(JSON.parse(raw)); } catch { return null; } }
+export function saveBase(b: StoredBase): void { localStorage.setItem("pmcv:base", JSON.stringify(StoredBaseSchema.parse(b))); }
+export function loadApps(): StoredApp[] { return readArr("pmcv:apps"); }
+export function saveApps(a: StoredApp[]): void {
+  try { localStorage.setItem("pmcv:apps", JSON.stringify(a)); }
+  catch (e) { if (e instanceof DOMException && e.name === "QuotaExceededError") throw new Error("Armazenamento cheio — exporte o backup e limpe itens antigos."); throw e; }
+}
+export function loadSettings(): Settings { try { const s = getSecure("pmcv:settings"); if (!s) return SettingsSchema.parse({}); return SettingsSchema.parse(JSON.parse(s)); } catch { return SettingsSchema.parse({}); } }
+export function saveSettings(s: Settings): void { setSecure("pmcv:settings", JSON.stringify(SettingsSchema.parse(s))); }
+export function clearSettings(): void { removeSecure("pmcv:settings"); }
+export function isOnboarded(): boolean { return localStorage.getItem("pmcv:onboarded") === "1" && !!loadSettings().geminiKey && !!loadBase(); }
+export function setOnboarded(v: boolean): void { localStorage.setItem("pmcv:onboarded", v ? "1" : "0"); }
+export function exportBackup(): string { return JSON.stringify({ base: loadBase(), apps: loadApps(), exportedAt: new Date().toISOString() }); }
+export function importBackup(json: string): void {
+  const parsed = z.object({ base: StoredBaseSchema.nullable(), apps: z.array(StoredAppSchema) }).parse(JSON.parse(json));
+  if (parsed.base) saveBase(parsed.base); localStorage.setItem("pmcv:apps", JSON.stringify(parsed.apps));
+}
+export function touchUpdatedAt(): string { return new Date().toISOString(); }
+export type { BaseLang };
+export { parseBaseLang };
