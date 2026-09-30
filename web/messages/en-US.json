@@ -74,6 +74,11 @@
   "Dashboard": { "resumes": "Resumes", "reports": "Reports" },
   "Theme": { "toggle": "Toggle theme" },
   "Splash": { "loading": "Loading your data…" },
+  "Offline": {
+    "title": "You're offline",
+    "desc": "The app opens without internet, but generating resumes needs a Gemini API connection.",
+    "retry": "Try again"
+  },
   "Dropzone": {
     "cta": "Drag the PDF here or click to select",
     "onlyPdf": "Only .pdf files",

@@ -74,6 +74,11 @@
   "Dashboard": { "resumes": "Currículos", "reports": "Relatórios" },
   "Theme": { "toggle": "Alternar tema" },
   "Splash": { "loading": "Carregando seus dados…" },
+  "Offline": {
+    "title": "Você está offline",
+    "desc": "O app abre sem internet, mas gerar currículos precisa de conexão com a API Gemini.",
+    "retry": "Tentar de novo"
+  },
   "Dropzone": {
     "cta": "Arraste o PDF aqui ou clique para selecionar",
     "onlyPdf": "Apenas arquivos .pdf",
