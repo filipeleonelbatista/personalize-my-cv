@@ -36,6 +36,7 @@ export function PdfExtractorHost() {
       source={{ uri }}
       originWhitelist={["*"]}
       javaScriptEnabled
+      allowFileAccess={true}
       domStorageEnabled={false}
       style={{ width: 0, height: 0, position: "absolute" }}
       onMessage={onMessage}

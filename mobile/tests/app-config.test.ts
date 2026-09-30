@@ -6,6 +6,7 @@ describe("app config", () => {
     const app = JSON.parse(readFileSync("app.json", "utf8")).expo;
     expect(app.android.package).toBe("com.pmcv.app");
     expect(app.version).toBe("1.0.0");
+    expect(app.scheme).toMatch(/^[a-z][a-z0-9.+-]*$/);
     for (const f of ["assets/icon.png", "assets/adaptive-icon.png", "assets/splash.png"]) {
       expect(existsSync(f), f).toBe(true);
     }

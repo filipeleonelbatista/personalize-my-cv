@@ -6,7 +6,7 @@ const resume: any = {
   cabecalho: {
     nome: "Ana",
     titulo_profissional: "Dev",
-    contatos: [{ tipo: "email", valor: "a@a.com", link: null }],
+    contatos: [{ tipo: "email" as const, valor: "a@a.com", link: null }],
   },
   secoes: {
     resumo: "X",
@@ -58,13 +58,37 @@ describe("pdf pipeline", () => {
       expect(existsSync(f), f).toBe(true);
     }
   });
-  it("pipeline modules expose Task 3 contract", async () => {
-    const ex = await import("../lib/pdf-extract");
-    const sh = await import("../lib/pdf-share");
-    const bk = await import("../lib/backup-files");
-    expect(typeof ex.createBaseFromFile).toBe("function");
-    expect(typeof sh.shareResumePdf).toBe("function");
-    expect(typeof bk.exportBackupToFile).toBe("function");
-    expect(typeof bk.importBackupFromFile).toBe("function");
+  it("pdf-share never statically imports media-library (route must load without it)", () => {
+    const s = readFileSync("lib/pdf-share.ts", "utf8");
+    expect(s).not.toContain('from "expo-media-library"');
+    expect(s).toMatch(/await import\("expo-media-library"\)/);
+  });
+  it("downloadResumePdf saves via the device library", async () => {
+    const { downloadResumePdf } = await import("../lib/pdf-share");
+    const app = {
+      id: "1",
+      jobText: "job",
+      fileName: "cv.pdf",
+      status: "done" as const,
+      errorLog: "",
+      lang: "pt-BR" as const,
+      createdAt: new Date().toISOString(),
+      resume: {
+        cabecalho: { nome: "Ana", titulo_profissional: "Dev", contatos: [{ tipo: "email" as const, valor: "a@a.com", link: null }] },
+        secoes: { resumo: "X", experiencia: [], formacao: [], habilidades: [], certificacoes: [], idiomas: [], projetos: [] },
+      },
+      cargo: "Dev",
+      empresa: "Acme",
+      matchPercent: 80,
+      strengths: ["a"],
+      weaknesses: ["b"],
+      emailBody: "e",
+      chatMessage: "c",
+    };
+    await expect(downloadResumePdf(app)).resolves.toBe("/mock-documents/cv.pdf");
+  });
+  it("extractor WebView allows local file access", () => {
+    const s = readFileSync("components/PdfExtractorHost.tsx", "utf8");
+    expect(s).toMatch(/allowFileAccess=\{true\}/);
   });
 });
