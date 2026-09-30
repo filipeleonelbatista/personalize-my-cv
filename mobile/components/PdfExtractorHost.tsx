@@ -38,7 +38,9 @@ export function PdfExtractorHost() {
       javaScriptEnabled
       allowFileAccess={true}
       domStorageEnabled={false}
-      style={{ width: 0, height: 0, position: "absolute" }}
+      scrollEnabled={false}
+      pointerEvents="none"
+      style={{ width: 0, height: 0, opacity: 0, position: "absolute" }}
       onMessage={onMessage}
     />
   );

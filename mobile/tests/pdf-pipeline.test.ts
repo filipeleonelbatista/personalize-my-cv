@@ -91,4 +91,10 @@ describe("pdf pipeline", () => {
     const s = readFileSync("components/PdfExtractorHost.tsx", "utf8");
     expect(s).toMatch(/allowFileAccess=\{true\}/);
   });
+  it("extractor WebView is provably non-visual", () => {
+    const s = readFileSync("components/PdfExtractorHost.tsx", "utf8");
+    expect(s).toMatch(/pointerEvents="none"/);
+    expect(s).toMatch(/opacity:\s*0/);
+    expect(s).toMatch(/scrollEnabled=\{false\}/);
+  });
 });
