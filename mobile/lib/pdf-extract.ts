@@ -12,15 +12,30 @@ import { extractCvTextFromUri } from "./webview-extract";
 export type PdfFile = { uri: string; name: string };
 
 export async function pickPdf(): Promise<PdfFile | null> {
-  const r = await DocumentPicker.getDocumentAsync({ type: "application/pdf", copyToCacheDirectory: true });
+  // No copyToCacheDirectory: we copy the original (often content://) into
+  // our own documentDirectory ourselves — the picker's cache copy proved
+  // unreliable on some devices (unreadable file:// cache path).
+  const r = await DocumentPicker.getDocumentAsync({ type: "application/pdf", copyToCacheDirectory: false });
   if (r.canceled || !r.assets?.[0]) return null;
   return { uri: r.assets[0].uri, name: r.assets[0].name ?? "cv.pdf" };
 }
 
-export async function createBaseFromFile(file: PdfFile, lang: BaseLang, locale: UiLocale = getLocale()): Promise<void> {
-  const info = await FileSystem.getInfoAsync(file.uri);
+/** Copies the picked file into app storage; throws guided error if unreadable. */
+async function ensureLocalCopy(file: PdfFile, locale: UiLocale): Promise<string> {
+  const dest = `${FileSystem.documentDirectory}incoming-${Date.now()}.pdf`;
+  try {
+    await FileSystem.copyAsync({ from: file.uri, to: dest });
+  } catch {
+    throw new Error(tErr(locale, "fileUnreadable"));
+  }
+  const info = await FileSystem.getInfoAsync(dest);
   if (!info.exists || (info.size ?? 0) === 0) throw new Error(tErr(locale, "fileUnreadable"));
-  const text = await extractCvTextFromUri(file.uri, locale);
+  return dest;
+}
+
+export async function createBaseFromFile(file: PdfFile, lang: BaseLang, locale: UiLocale = getLocale()): Promise<void> {
+  const localUri = await ensureLocalCopy(file, locale);
+  const text = await extractCvTextFromUri(localUri, locale);
   const settings = await loadSettings();
   const key = await getApiKey();
   if (!key) throw new Error(tErr(locale, "noKey"));

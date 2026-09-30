@@ -107,4 +107,17 @@ describe("pdf pipeline", () => {
       /Não foi possível ler/,
     );
   });
+  it("copies the picked file into app storage before reading", async () => {
+    const fs = await import("./__mocks__/file-system");
+    const files = (fs as unknown as { __getFiles: () => Map<string, string> }).__getFiles();
+    files.clear();
+    files.set("content://provider/doc.pdf", "PDFBYTES");
+    const { createBaseFromFile } = await import("../lib/pdf-extract");
+    // No WebView host in tests → fails at extraction, but only AFTER a
+    // successful local copy (proves the copy path, not the picker cache).
+    await expect(createBaseFromFile({ uri: "content://provider/doc.pdf", name: "doc.pdf" }, "pt-BR")).rejects.toThrow(
+      /Extrator de PDF indisponível/,
+    );
+    expect([...files.keys()].some((k) => k.includes("incoming-") && k.endsWith(".pdf"))).toBe(true);
+  });
 });

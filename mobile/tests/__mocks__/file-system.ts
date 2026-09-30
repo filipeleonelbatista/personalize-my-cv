@@ -6,13 +6,16 @@ export async function getInfoAsync(uri: string): Promise<{ exists: boolean; size
   const c = files.get(uri);
   return { exists: c !== undefined, size: c?.length ?? 0, uri };
 }
+export async function makeDirectoryAsync(): Promise<void> {}
+export async function copyAsync({ from, to }: { from: string; to: string }): Promise<void> {
+  files.set(to, files.get(from) ?? "");
+}
 export async function readAsStringAsync(): Promise<string> {
   return "";
 }
 export async function writeAsStringAsync(uri: string, contents: string): Promise<void> {
   files.set(uri, contents);
 }
-export async function copyAsync(): Promise<void> {}
 export function __getFiles(): Map<string, string> {
   return files;
 }
