@@ -3,6 +3,7 @@
 // the user's Gemini key and persists the result in the store. No server calls.
 import { loadApps, loadBase, loadSettings, saveApps, type StoredApp } from "./store";
 import { generateJson } from "./llm/chain";
+import { getLocale, tErr, type UiLocale } from "./i18n/locale";
 import { buildRepairUser, buildTailorSystem, buildTailorUser, type BaseLang } from "./llm/prompts";
 import { normalizeEnvelope } from "./tailor";
 import { buildFailedFileName, buildFileName } from "./filename";
@@ -30,17 +31,17 @@ export function newId(): string {
   return `pmcv-${Date.now().toString(36)}-${fallbackSeq.toString(36)}-${Math.floor(Math.random() * 0xffffffff).toString(36)}`;
 }
 
-async function generateEnvelope(jobText: string, lang: BaseLang): Promise<TailorEnvelope> {
+async function generateEnvelope(jobText: string, lang: BaseLang, locale: UiLocale): Promise<TailorEnvelope> {
   const base = loadBase();
-  if (!base) throw new Error("Cadastre o currículo base primeiro.");
+  if (!base) throw new Error(tErr(locale, "noBase"));
   const settings = loadSettings();
   const system = buildTailorSystem(lang);
-  const { data } = await generateJson(system, buildTailorUser(JSON.stringify(base.resume), jobText), settings.geminiKey, settings.models);
+  const { data } = await generateJson(system, buildTailorUser(JSON.stringify(base.resume), jobText), settings.geminiKey, settings.models, locale);
   let env;
   try {
     env = normalizeEnvelope(data, lang, base.resume);
   } catch (zerr) {
-    const { data: fixed } = await generateJson(system, buildRepairUser(JSON.stringify(data), String(zerr)), settings.geminiKey, settings.models);
+    const { data: fixed } = await generateJson(system, buildRepairUser(JSON.stringify(data), String(zerr)), settings.geminiKey, settings.models, locale);
     env = normalizeEnvelope(fixed, lang, base.resume);
   }
   return env;
@@ -71,12 +72,12 @@ function failedApp(jobText: string, lang: BaseLang, msg: string): StoredApp {
   };
 }
 
-export async function runTailorJob(jobText: string, lang: BaseLang): Promise<TailorResult> {
+export async function runTailorJob(jobText: string, lang: BaseLang, locale: UiLocale = getLocale()): Promise<TailorResult> {
   if (!jobText || jobText.trim().length < 20) {
-    throw new Error("Cole o texto da vaga (mín. 20 caracteres).");
+    throw new Error(tErr(locale, "jobShort"));
   }
   try {
-    const env = await generateEnvelope(jobText, lang);
+    const env = await generateEnvelope(jobText, lang, locale);
     const app: StoredApp = {
       ...env,
       id: newId(),
@@ -91,18 +92,18 @@ export async function runTailorJob(jobText: string, lang: BaseLang): Promise<Tai
     return { ok: true, app };
   } catch (e) {
     if (!loadBase()) throw e;
-    const msg = ((e instanceof Error ? e.message : String(e)) || "Falha desconhecida.").slice(0, 1000);
+    const msg = ((e instanceof Error ? e.message : String(e)) || tErr(locale, "unknownFail")).slice(0, 1000);
     const app = failedApp(jobText, lang, msg);
     saveApps([app, ...loadApps()]);
-    return { ok: false, error: `As IAs falharam. Vaga salva como failed para retry. Detalhe: ${msg}`, app };
+    return { ok: false, error: tErr(locale, "tailFail", { msg }), app };
   }
 }
 
-export async function retryStoredApp(id: string): Promise<{ ok: true; app: StoredApp } | { ok: false; error: string }> {
+export async function retryStoredApp(id: string, locale: UiLocale = getLocale()): Promise<{ ok: true; app: StoredApp } | { ok: false; error: string }> {
   const current = loadApps().find((a) => a.id === id);
-  if (!current) return { ok: false, error: "Registro não encontrado." };
+  if (!current) return { ok: false, error: tErr(locale, "notFound") };
   try {
-    const env = await generateEnvelope(current.jobText, current.lang);
+    const env = await generateEnvelope(current.jobText, current.lang, locale);
     const app: StoredApp = {
       ...env,
       id: newId(),
@@ -116,8 +117,8 @@ export async function retryStoredApp(id: string): Promise<{ ok: true; app: Store
     saveApps([app, ...loadApps().filter((a) => a.id !== id)]);
     return { ok: true, app };
   } catch (e) {
-    const msg = ((e instanceof Error ? e.message : String(e)) || "Falha desconhecida.").slice(0, 1000);
+    const msg = ((e instanceof Error ? e.message : String(e)) || tErr(locale, "unknownFail")).slice(0, 1000);
     saveApps(loadApps().map((a) => (a.id === id ? { ...a, status: "failed" as const, errorLog: msg } : a)));
-    return { ok: false, error: `Retry falhou. Detalhe: ${msg}` };
+    return { ok: false, error: tErr(locale, "retryFailDetail", { msg }) };
   }
 }

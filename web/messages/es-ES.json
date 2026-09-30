@@ -15,6 +15,67 @@
     "emptyPdf": "PDF inválido o vacío.",
     "unscannedPdf": "El PDF no tiene texto seleccionable — envía un PDF con texto, no escaneado.",
     "quota": "Almacenamiento lleno — exporta una copia y borra elementos antiguos.",
-    "offline": "Sin conexión — la IA necesita internet. Inténtalo en línea."
+    "offline": "Sin conexión — la IA necesita internet. Inténtalo en línea.",
+    "tailFail": "Las IAs fallaron. Vacante guardada como failed para reintentar. Detalle: {msg}",
+    "retryFailDetail": "Reintento fallido. Detalle: {msg}"
+  },
+  "Page": {
+    "tagline": "Currículums a medida con IA",
+    "baseLine": "Base: {nome} — {titulo}",
+    "noBaseCta": "Sube tu CV base en PDF para empezar. La IA catalogará tus datos y creará el JSON base.",
+    "sendBase": "Subir CV base",
+    "catalogDesc": "La IA catalogará tus datos y creará el JSON base."
+  },
+  "Onboarding": {
+    "stage1": "Extrayendo texto del PDF…",
+    "stage2": "IA catalogando experiencia…",
+    "stage3": "Validando y guardando base…",
+    "welcomeTitle": "Bienvenido a Personalize My CV",
+    "howItWorks": "Cómo funciona",
+    "stepOf": "Paso {n} de 3",
+    "b1": "1. Registras tu CV base en PDF — la IA lo cataloga todo en JSON.",
+    "b2": "2. Para cada vacante, generamos un CV a medida con match, fortalezas/debilidades, email y mensaje.",
+    "b3": "3. Todo queda en tu navegador (localStorage) con tu propia clave de Gemini.",
+    "start": "Empezar",
+    "connectTitle": "Conectar Gemini",
+    "connectDesc": "Crea tu clave y pégala abajo",
+    "createKeyLink": "Crear una clave en aistudio.google.com/apikey",
+    "keyPlaceholder": "Pega la GEMINI_API_KEY",
+    "validate": "Validar y continuar",
+    "validating": "Validando…",
+    "createTitle": "Crear base",
+    "createDesc": "Sube tu CV en PDF para que la IA lo catalogue",
+    "cvLang": "Idioma del currículum",
+    "createBtn": "Crear CV base",
+    "baseCreated": "¡CV base creado!",
+    "storageFull": "Almacenamiento lleno",
+    "unknownFail": "Fallo desconocido."
+  },
+  "Base": {
+    "title": "Crear CV base",
+    "desc": "Sube tu CV en PDF. La IA catalogará tus datos y creará el JSON base.",
+    "cvLang": "Idioma del currículum",
+    "submit": "Crear CV base",
+    "stage1": "Extrayendo texto del PDF…",
+    "stage2": "IA catalogando experiencia…",
+    "stage3": "Validando y guardando base…",
+    "failTitle": "No se pudo crear la base",
+    "options": "Opciones del CV base",
+    "print": "Imprimir CV base",
+    "update": "Actualizar currículum",
+    "updateTitle": "Actualizar currículum",
+    "updateDesc": "La IA recatalogará tus datos desde el nuevo PDF.",
+    "updated": "¡CV base actualizado!",
+    "failUpdate": "No se pudo actualizar la base",
+    "openPdfFail": "No se pudo abrir el PDF",
+    "storageFull": "Almacenamiento lleno",
+    "unknownFail": "Fallo desconocido."
+  },
+  "Dashboard": { "resumes": "Currículums", "reports": "Informes" },
+  "Theme": { "toggle": "Cambiar tema" },
+  "Dropzone": {
+    "cta": "Arrastra el PDF aquí o haz clic para seleccionar",
+    "onlyPdf": "Solo archivos .pdf",
+    "remove": "Quitar archivo"
   }
 }

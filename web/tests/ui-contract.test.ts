@@ -74,7 +74,9 @@ describe("base gear menu", () => {
     const menu = readFileSync("app/components/BaseMenu.tsx", "utf8");
     expect(menu).toContain("openResumePdf");
     expect(menu).toContain("BaseSetup");
-    expect(menu).toContain("Atualizar currículo");
+    expect(menu).toContain('useTranslations("Base")');
+    const pt = JSON.parse(readFileSync("messages/pt-BR.json", "utf8"));
+    expect(pt.Base.update).toBe("Atualizar currículo");
     expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("BaseMenu");
   });
 });
@@ -136,7 +138,7 @@ describe("settings dialog (post-onboarding)", () => {
   });
   it("quota failures surface backup guidance where saves can throw", () => {
     for (const f of ["app/components/GenerateModal.tsx", "app/components/Onboarding.tsx", "app/components/BaseSetup.tsx", "app/components/VacancyTable.tsx"]) {
-      expect(readFileSync(f, "utf8"), f).toContain("Armazenamento cheio");
+      expect(readFileSync(f, "utf8"), f).toMatch(/quotaMessage|QUOTA_MESSAGE|Armazenamento cheio/);
     }
     expect(readFileSync("lib/store.ts", "utf8")).toContain("QUOTA_MESSAGE");
   });

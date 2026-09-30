@@ -15,6 +15,67 @@
     "emptyPdf": "Invalid or empty PDF.",
     "unscannedPdf": "PDF has no selectable text — send a text PDF, not a scan.",
     "quota": "Storage full — export a backup and delete old items.",
-    "offline": "Offline — the AI needs internet. Try again online."
+    "offline": "Offline — the AI needs internet. Try again online.",
+    "tailFail": "The AIs failed. Job saved as failed for retry. Detail: {msg}",
+    "retryFailDetail": "Retry failed. Detail: {msg}"
+  },
+  "Page": {
+    "tagline": "Tailored resumes with AI",
+    "baseLine": "Base: {nome} — {titulo}",
+    "noBaseCta": "Upload your base resume PDF to start. The AI will catalog your data and create the base JSON.",
+    "sendBase": "Upload base resume",
+    "catalogDesc": "The AI will catalog your data and create the base JSON."
+  },
+  "Onboarding": {
+    "stage1": "Extracting PDF text…",
+    "stage2": "AI cataloging experience…",
+    "stage3": "Validating and saving base…",
+    "welcomeTitle": "Welcome to Personalize My CV",
+    "howItWorks": "How it works",
+    "stepOf": "Step {n} of 3",
+    "b1": "1. You register your base resume PDF — the AI catalogs everything into JSON.",
+    "b2": "2. For each job, we generate a tailored CV with match, strengths/weaknesses, email and message.",
+    "b3": "3. Everything stays in your browser (localStorage) with your own Gemini key.",
+    "start": "Get started",
+    "connectTitle": "Connect Gemini",
+    "connectDesc": "Create your key and paste it below",
+    "createKeyLink": "Create a key at aistudio.google.com/apikey",
+    "keyPlaceholder": "Paste the GEMINI_API_KEY",
+    "validate": "Validate and continue",
+    "validating": "Validating…",
+    "createTitle": "Create base",
+    "createDesc": "Upload your resume PDF for the AI to catalog",
+    "cvLang": "Resume language",
+    "createBtn": "Create base resume",
+    "baseCreated": "Base resume created!",
+    "storageFull": "Storage full",
+    "unknownFail": "Unknown failure."
+  },
+  "Base": {
+    "title": "Create base resume",
+    "desc": "Upload your resume PDF. The AI will catalog your data and create the base JSON.",
+    "cvLang": "Resume language",
+    "submit": "Create base resume",
+    "stage1": "Extracting PDF text…",
+    "stage2": "AI cataloging experience…",
+    "stage3": "Validating and saving base…",
+    "failTitle": "Failed to create base",
+    "options": "Base resume options",
+    "print": "Print base resume",
+    "update": "Update resume",
+    "updateTitle": "Update resume",
+    "updateDesc": "The AI will re-catalog your data from the new PDF.",
+    "updated": "Base resume updated!",
+    "failUpdate": "Failed to update base",
+    "openPdfFail": "Failed to open PDF",
+    "storageFull": "Storage full",
+    "unknownFail": "Unknown failure."
+  },
+  "Dashboard": { "resumes": "Resumes", "reports": "Reports" },
+  "Theme": { "toggle": "Toggle theme" },
+  "Dropzone": {
+    "cta": "Drag the PDF here or click to select",
+    "onlyPdf": "Only .pdf files",
+    "remove": "Remove file"
   }
 }

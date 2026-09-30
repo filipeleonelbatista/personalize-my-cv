@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { LuUpload, LuFileText, LuX } from "react-icons/lu";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ export function Dropzone({
 }) {
   const [dragging, setDragging] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const t = useTranslations("Dropzone");
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
@@ -55,8 +57,8 @@ export function Dropzone({
           )}
         >
           <LuUpload className="size-8 text-muted-foreground" />
-          <span className="text-sm font-medium">Arraste o PDF aqui ou clique para selecionar</span>
-          <span className="text-xs text-muted-foreground">Apenas arquivos .pdf</span>
+          <span className="text-sm font-medium">{t("cta")}</span>
+          <span className="text-xs text-muted-foreground">{t("onlyPdf")}</span>
         </button>
       ) : (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
@@ -66,7 +68,7 @@ export function Dropzone({
             <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
           </div>
           {!disabled ? (
-            <button type="button" onClick={onClear} aria-label="Remover arquivo" className="rounded p-1 hover:bg-accent">
+            <button type="button" onClick={onClear} aria-label={t("remove")} className="rounded p-1 hover:bg-accent">
               <LuX className="size-4" />
             </button>
           ) : null}

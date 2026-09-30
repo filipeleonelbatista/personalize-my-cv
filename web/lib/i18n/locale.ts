@@ -7,6 +7,8 @@ import enUS from "@/messages/en-US.json";
 import esES from "@/messages/es-ES.json";
 import { DEFAULT_LOCALE, type UiLocale } from "./config";
 
+export type { UiLocale } from "./config";
+
 const LocaleSchema = z.enum(["pt-BR", "en-US", "es-ES"]);
 const TABLES: Record<UiLocale, unknown> = { "pt-BR": ptBR, "en-US": enUS, "es-ES": esES };
 

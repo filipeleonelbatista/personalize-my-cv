@@ -2,27 +2,29 @@
 "use client";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { validateGeminiKey, generateJson } from "@/lib/llm/chain";
 import { buildBaseExtractSystem, buildRepairUser, type BaseLang } from "@/lib/llm/prompts";
 import { extractCvTextFromFile } from "@/lib/cv-text-client";
 import { normalizeResume } from "@/lib/tailor";
-import { loadSettings, saveSettings, saveBase, setOnboarded } from "@/lib/store";
+import { loadSettings, saveSettings, saveBase, setOnboarded, quotaMessage } from "@/lib/store";
+import { getLocale } from "@/lib/i18n/locale";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Select } from "./ui/select";
 import { Dropzone } from "./ui/dropzone";
 import { useStagedSteps } from "./use-staged-steps";
 
-const STAGES = ["Extraindo texto do PDF…", "IA catalogando experiências…", "Validando e salvando base…"];
-
 export function Onboarding({ onDone }: { onDone: () => void }) {
+  const t = useTranslations("Onboarding");
+  const tc = useTranslations("Common");
   const [step, setStep] = useState(0);
   const [key, setKey] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [lang, setLang] = useState<BaseLang>("pt-BR");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const stage = useStagedSteps(STAGES, loading && step === 2);
+  const stage = useStagedSteps([t("stage1"), t("stage2"), t("stage3")], loading && step === 2);
   const trimmedKey = key.trim();
 
   async function onValidateSave() {
@@ -53,54 +55,52 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       }
       saveBase({ resume, lang, updatedAt: new Date().toISOString() });
       setOnboarded(true);
-      toast.success("Currículo base criado!");
+      toast.success(t("baseCreated"));
       onDone();
     } catch (e) {
-      const msg = ((e instanceof Error ? e.message : String(e)) || "Falha desconhecida.").slice(0, 500);
+      const msg = ((e instanceof Error ? e.message : String(e)) || t("unknownFail")).slice(0, 500);
       setError(msg);
-      if (/Armazenamento cheio/.test(msg)) {
-        toast.error("Armazenamento cheio", {
-          description: `${msg} Exporte o backup em Configurações e apague currículos antigos.`,
-          duration: 10000,
-        });
+      if (e instanceof Error && e.message === quotaMessage(getLocale())) {
+        toast.error(t("storageFull"), { description: msg, duration: 10000 });
       }
     }
     finally { setLoading(false); }
   }
 
   if (step === 0) return (
-    <Card><CardHeader><CardTitle>Bem-vindo ao Personalize My CV</CardTitle>
-    <CardDescription>Como funciona</CardDescription></CardHeader>
+    <Card><CardHeader><CardTitle>{t("welcomeTitle")}</CardTitle>
+    <CardDescription>{t("howItWorks")}</CardDescription></CardHeader>
     <CardContent className="space-y-2 text-sm">
-      <p>Passo 1 de 3</p>
-      <p>1. Você cadastra seu currículo base em PDF — a IA cataloga tudo em JSON.</p>
-      <p>2. Para cada vaga, geramos um CV sob medida com match, pontos fortes/fracos, email e mensagem.</p>
-      <p>3. Tudo fica no seu browser (localStorage) com sua própria chave Gemini.</p>
-      <Button onClick={() => setStep(1)}>Começar</Button>
+      <p>{t("stepOf", { n: 1 })}</p>
+      <p>{t("b1")}</p>
+      <p>{t("b2")}</p>
+      <p>{t("b3")}</p>
+      <Button onClick={() => setStep(1)}>{t("start")}</Button>
     </CardContent></Card>
   );
   if (step === 1) return (
-    <Card><CardHeader><CardTitle>Conectar Gemini</CardTitle>
-    <CardDescription>Crie sua chave e cole abaixo</CardDescription></CardHeader>
+    <Card><CardHeader><CardTitle>{t("connectTitle")}</CardTitle>
+    <CardDescription>{t("connectDesc")}</CardDescription></CardHeader>
     <CardContent className="space-y-3">
-      <p className="text-sm text-muted-foreground">Passo 2 de 3</p>
-      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="text-sm underline">Criar chave em aistudio.google.com/apikey</a>
-      <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="Cole a GEMINI_API_KEY" className="w-full rounded border p-2 text-sm" disabled={loading} />
+      <p className="text-sm text-muted-foreground">{t("stepOf", { n: 2 })}</p>
+      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="text-sm underline">{t("createKeyLink")}</a>
+      <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={t("keyPlaceholder")} className="w-full rounded border p-2 text-sm" disabled={loading} />
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex gap-2">
-        <Button variant="outline" onClick={() => setStep(0)} disabled={loading}>Voltar</Button>
-        <Button onClick={onValidateSave} disabled={loading || !trimmedKey}>{loading ? "Validando…" : "Validar e continuar"}</Button>
+        <Button variant="outline" onClick={() => setStep(0)} disabled={loading}>{tc("back")}</Button>
+        <Button onClick={onValidateSave} disabled={loading || !trimmedKey}>{loading ? t("validating") : t("validate")}</Button>
       </div>
     </CardContent></Card>
   );
+  const stages = [t("stage1"), t("stage2"), t("stage3")];
   return (
-    <Card><CardHeader><CardTitle>Criar base</CardTitle>
-    <CardDescription>Envie seu currículo em PDF para a IA catalogar</CardDescription></CardHeader>
+    <Card><CardHeader><CardTitle>{t("createTitle")}</CardTitle>
+    <CardDescription>{t("createDesc")}</CardDescription></CardHeader>
     <CardContent className="space-y-3">
-      <p className="text-sm text-muted-foreground">Passo 3 de 3</p>
+      <p className="text-sm text-muted-foreground">{t("stepOf", { n: 3 })}</p>
       <Dropzone file={file} onFile={setFile} onClear={() => setFile(null)} disabled={loading} />
       <label className="flex items-center gap-2 text-sm">
-        Idioma do currículo
+        {t("cvLang")}
         <Select value={lang} onChange={(e) => setLang(e.target.value as BaseLang)} disabled={loading}>
           <option value="pt-BR">Português (BR)</option>
           <option value="en">English</option>
@@ -109,8 +109,8 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       </label>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex gap-2">
-        <Button variant="outline" onClick={() => setStep(1)} disabled={loading}>Voltar</Button>
-        <Button onClick={onCreateBase} disabled={loading || !file}>{loading ? STAGES[stage] : "Criar currículo base"}</Button>
+        <Button variant="outline" onClick={() => setStep(1)} disabled={loading}>{tc("back")}</Button>
+        <Button onClick={onCreateBase} disabled={loading || !file}>{loading ? stages[stage] : t("createBtn")}</Button>
       </div>
     </CardContent></Card>
   );

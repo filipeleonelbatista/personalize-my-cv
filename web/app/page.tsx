@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { BaseSetupDialog } from "./components/BaseSetupDialog";
 import { DashboardTabs } from "./components/DashboardTabs";
 import { Onboarding } from "./components/Onboarding";
@@ -11,6 +12,7 @@ import { isOnboarded, loadApps, loadBase, loadSettings, setOnboarded, type Store
 import Loading from "./loading";
 
 export default function Page() {
+  const t = useTranslations("Page");
   const [phase, setPhase] = useState<"loading" | "onboarding" | "dashboard">("loading");
   const [base, setBase] = useState<Resume | null>(null);
   const [apps, setApps] = useState<StoredApp[]>([]);
@@ -40,7 +42,7 @@ export default function Page() {
         <header className="flex items-center justify-between gap-2">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Personalize My CV</h1>
-            <p className="text-sm text-muted-foreground">Currículos sob medida com IA</p>
+            <p className="text-sm text-muted-foreground">{t("tagline")}</p>
           </div>
           <ThemeToggle />
         </header>
@@ -56,10 +58,10 @@ export default function Page() {
           <h1 className="text-2xl font-bold tracking-tight">Personalize My CV</h1>
           {base ? (
             <p className="text-sm text-muted-foreground">
-              Base: {base.cabecalho.nome} — {base.cabecalho.titulo_profissional}
+              {t("baseLine", { nome: base.cabecalho.nome, titulo: base.cabecalho.titulo_profissional })}
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">Currículos sob medida com IA</p>
+            <p className="text-sm text-muted-foreground">{t("tagline")}</p>
           )}
         </div>
         <ThemeToggle />
@@ -68,10 +70,10 @@ export default function Page() {
       {!base ? (
         <div className="space-y-4 pt-10 text-center">
           <p className="mx-auto max-w-md text-sm text-muted-foreground">
-            Envie seu currículo em PDF para começar. A IA vai catalogar seus dados e criar o JSON base.
+            {t("noBaseCta")}
           </p>
           <div className="flex justify-center">
-            <BaseSetupDialog label="Enviar currículo base" description="A IA vai catalogar seus dados e criar o JSON base." />
+            <BaseSetupDialog label={t("sendBase")} description={t("catalogDesc")} />
           </div>
         </div>
       ) : (

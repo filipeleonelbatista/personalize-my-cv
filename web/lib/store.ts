@@ -4,6 +4,7 @@ import { ResumeSchema, TailorEnvelopeSchema } from "./resume-schema";
 import { parseBaseLang, type BaseLang } from "./llm/prompts";
 import { getSecure, setSecure, removeSecure } from "./secure-store";
 import { DEFAULT_LOCALE, type UiLocale } from "./i18n/config";
+import { tErr } from "./i18n/locale";
 
 export const StoredBaseSchema = z.object({ resume: ResumeSchema, lang: z.enum(["pt-BR", "en", "es"]), updatedAt: z.string() });
 export type StoredBase = z.infer<typeof StoredBaseSchema>;
@@ -24,9 +25,12 @@ function readArr(key: string): StoredApp[] {
   } catch { return []; }
 }
 export function loadBase(): StoredBase | null { try { const raw = localStorage.getItem("pmcv:base"); if (!raw) return null; return StoredBaseSchema.parse(JSON.parse(raw)); } catch { return null; } }
-export const QUOTA_MESSAGE = "Armazenamento cheio — exporte o backup e limpe itens antigos.";
+export function quotaMessage(locale: UiLocale = DEFAULT_LOCALE): string {
+  return tErr(locale, "quota");
+}
+export const QUOTA_MESSAGE = quotaMessage("pt-BR");
 function throwQuota(e: unknown): never {
-  if (e instanceof DOMException && e.name === "QuotaExceededError") throw new Error(QUOTA_MESSAGE);
+  if (e instanceof DOMException && e.name === "QuotaExceededError") throw new Error(quotaMessage(loadLocale()));
   throw e;
 }
 export function saveBase(b: StoredBase): void {

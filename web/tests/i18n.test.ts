@@ -39,4 +39,10 @@ describe("i18n", () => {
     expect(tErr("pt-BR", "noKey")).toMatch(/chave/i);
     expect(tErr("en-US", "missing.key" as never)).toBe(tErr("pt-BR", "missing.key" as never));
   });
+  it("lib errors resolve per locale", async () => {
+    const { validateGeminiKey } = await import("@/lib/llm/chain");
+    const en = await validateGeminiKey("", "en-US");
+    expect(en.ok).toBe(false);
+    if (!en.ok) expect(en.error).toMatch(/Paste a key/);
+  });
 });

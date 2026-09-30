@@ -2,26 +2,28 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { LuSparkles, LuLoaderCircle } from "react-icons/lu";
 import { generateJson } from "@/lib/llm/chain";
 import { buildBaseExtractSystem, buildRepairUser, type BaseLang } from "@/lib/llm/prompts";
 import { extractCvTextFromFile } from "@/lib/cv-text-client";
 import { normalizeResume } from "@/lib/tailor";
-import { loadSettings, saveBase } from "@/lib/store";
+import { loadSettings, saveBase, quotaMessage } from "@/lib/store";
+import { getLocale } from "@/lib/i18n/locale";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Select } from "./ui/select";
 import { Dropzone } from "./ui/dropzone";
 import { useStagedSteps } from "./use-staged-steps";
 
-const STAGES = ["Extraindo texto do PDF…", "IA catalogando experiências…", "Validando e salvando base…"];
-
 export function BaseSetup({ onDone }: { onDone?: () => void }) {
+  const t = useTranslations("Base");
   const [file, setFile] = useState<File | null>(null);
   const [lang, setLang] = useState<BaseLang>("pt-BR");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const stage = useStagedSteps(STAGES, loading);
+  const stages = [t("stage1"), t("stage2"), t("stage3")];
+  const stage = useStagedSteps(stages, loading);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,19 +43,16 @@ export function BaseSetup({ onDone }: { onDone?: () => void }) {
         resume = normalizeResume(fixed);
       }
       saveBase({ resume, lang, updatedAt: new Date().toISOString() });
-      toast.success("Currículo base atualizado!");
+      toast.success(t("updated"));
       if (onDone) onDone();
       else window.location.reload();
     } catch (err) {
-      const msg = (err as Error).message;
+      const msg = ((err instanceof Error ? err.message : String(err)) || t("unknownFail")).slice(0, 500);
       setError(msg);
-      if (/Armazenamento cheio/.test(msg)) {
-        toast.error("Armazenamento cheio", {
-          description: `${msg} Exporte o backup em Configurações e apague currículos antigos.`,
-          duration: 10000,
-        });
+      if (err instanceof Error && err.message === quotaMessage(getLocale())) {
+        toast.error(t("storageFull"), { description: msg, duration: 10000 });
       } else {
-        toast.error("Falha ao atualizar base", { description: msg });
+        toast.error(t("failUpdate"), { description: msg });
       }
     } finally {
       setLoading(false);
@@ -63,14 +62,14 @@ export function BaseSetup({ onDone }: { onDone?: () => void }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Criar currículo base</CardTitle>
-        <CardDescription>Envie seu currículo em PDF. A IA vai catalogar seus dados e criar o JSON base.</CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("desc")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           <Dropzone file={file} onFile={setFile} onClear={() => setFile(null)} disabled={loading} />
           <label className="flex items-center gap-2 text-sm">
-            Idioma do currículo
+            {t("cvLang")}
             <Select name="lang" value={lang} onChange={(e) => setLang(e.target.value as BaseLang)} disabled={loading}>
               <option value="pt-BR">Português (BR)</option>
               <option value="en">English</option>
@@ -79,7 +78,7 @@ export function BaseSetup({ onDone }: { onDone?: () => void }) {
           </label>
           <Button type="submit" disabled={loading || !file}>
             {loading ? <LuLoaderCircle className="animate-spin" /> : <LuSparkles />}
-            {loading ? STAGES[stage] : "Criar currículo base"}
+            {loading ? stages[stage] : t("submit")}
           </Button>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </form>

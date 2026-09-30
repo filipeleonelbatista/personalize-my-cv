@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LuFileText, LuChartColumn } from "react-icons/lu";
+import { useTranslations } from "next-intl";
 import { loadApps, type StoredApp } from "@/lib/store";
 import { GenerateModal } from "./GenerateModal";
 import { VacancyTable } from "./VacancyTable";
@@ -12,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import type { BaseLang } from "../../lib/llm/prompts";
 
 export function DashboardTabs({ apps: initialApps, lang }: { apps: StoredApp[]; lang: BaseLang }) {
+  const t = useTranslations("Dashboard");
   const [tab, setTab] = useState("curriculos");
   const [apps, setApps] = useState<StoredApp[]>(initialApps);
 
@@ -32,10 +34,10 @@ export function DashboardTabs({ apps: initialApps, lang }: { apps: StoredApp[]; 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <TabsList>
           <TabsTrigger value="curriculos">
-            <LuFileText /> Currículos
+            <LuFileText /> {t("resumes")}
           </TabsTrigger>
           <TabsTrigger value="relatorios">
-            <LuChartColumn /> Relatórios
+            <LuChartColumn /> {t("reports")}
           </TabsTrigger>
         </TabsList>
         <div className="flex flex-wrap gap-2">

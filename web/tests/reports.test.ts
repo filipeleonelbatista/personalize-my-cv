@@ -34,7 +34,9 @@ describe("reports ui contract", () => {
     for (const f of ["app/components/ui/tabs.tsx", "app/components/ReportsSection.tsx", "app/components/DashboardTabs.tsx", "lib/report.ts"]) {
       expect(existsSync(f), f).toBe(true);
     }
-    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("Relatórios");
+    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain('useTranslations("Dashboard")');
+    const pt = JSON.parse(readFileSync("messages/pt-BR.json", "utf8"));
+    expect(pt.Dashboard.reports).toBe("Relatórios");
     const tabs = readFileSync("app/components/ui/tabs.tsx", "utf8");
     expect(tabs).toContain("createContext");
     expect(tabs).not.toContain("cloneElement");
