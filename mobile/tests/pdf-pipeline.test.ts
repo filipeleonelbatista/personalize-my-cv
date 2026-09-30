@@ -96,5 +96,7 @@ describe("pdf pipeline", () => {
     expect(s).toMatch(/pointerEvents="none"/);
     expect(s).toMatch(/opacity:\s*0/);
     expect(s).toMatch(/scrollEnabled=\{false\}/);
+    expect(s).toMatch(/overflow:\s*"hidden"/);
+    expect(s).not.toMatch(/position:\s*"absolute"/);
   });
 });

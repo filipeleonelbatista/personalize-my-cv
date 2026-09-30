@@ -80,4 +80,9 @@ describe("screens contract", () => {
       expect(readFileSync(f, "utf8"), f).toMatch(/KeyboardAvoidingView/);
     }
   });
+  it("settings scrolls focused inputs above the keyboard", () => {
+    const s = readFileSync("components/SettingsSheet.tsx", "utf8");
+    expect(s).toMatch(/scrollToEnd/);
+    expect(s).toMatch(/keyboardShouldPersistTaps="handled"/);
+  });
 });

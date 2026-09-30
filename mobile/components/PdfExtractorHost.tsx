@@ -1,6 +1,9 @@
 // mobile/components/PdfExtractorHost.tsx
 // Hidden WebView owning the vendored pdf.js harness. Mount once in _layout.
+// Containment is structural (0x0 overflow-hidden wrapper in normal flow),
+// never positional — so sibling order in the layout cannot affect visuals.
 import { useEffect, useRef, useState } from "react";
+import { View } from "react-native";
 import { Asset } from "expo-asset";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { registerExtractorHost, resolveExtractorJob } from "../lib/webview-extract";
@@ -31,17 +34,18 @@ export function PdfExtractorHost() {
 
   if (!uri) return null;
   return (
-    <WebView
-      ref={ref}
-      source={{ uri }}
-      originWhitelist={["*"]}
-      javaScriptEnabled
-      allowFileAccess={true}
-      domStorageEnabled={false}
-      scrollEnabled={false}
-      pointerEvents="none"
-      style={{ width: 0, height: 0, opacity: 0, position: "absolute" }}
-      onMessage={onMessage}
-    />
+    <View pointerEvents="none" style={{ width: 0, height: 0, overflow: "hidden", opacity: 0 }}>
+      <WebView
+        ref={ref}
+        source={{ uri }}
+        originWhitelist={["*"]}
+        javaScriptEnabled
+        allowFileAccess={true}
+        domStorageEnabled={false}
+        scrollEnabled={false}
+        style={{ width: 0, height: 0 }}
+        onMessage={onMessage}
+      />
+    </View>
   );
 }

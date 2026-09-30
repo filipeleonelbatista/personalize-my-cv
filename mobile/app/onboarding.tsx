@@ -9,11 +9,19 @@ import { OnboardingWizard } from "../components/OnboardingWizard";
 export default function OnboardingScreen() {
   const t = useTranslations("Page");
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-black">
+    <SafeAreaView
+      edges={["top", "bottom"]}
+      className="flex-1 bg-white dark:bg-black"
+    >
       <Header title="Personalize My CV" subtitle={t("tagline")} />
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
         <ScrollView keyboardShouldPersistTaps="handled">
-          <OnboardingWizard onDone={() => router.replace("/(tabs)/curriculos")} />
+          <OnboardingWizard
+            onDone={() => router.replace("/(tabs)/curriculos")}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

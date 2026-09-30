@@ -1,6 +1,6 @@
 // mobile/components/SettingsSheet.tsx — key, models, backup.
-import { useEffect, useState } from "react";
-import { Linking, Pressable, ScrollView, Text, View, Alert } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Keyboard, Linking, Pressable, ScrollView, Text, View, Alert } from "react-native";
 import { FormInput } from "./FormInput";
 import { useTranslations } from "../lib/i18n-provider";
 import { clearSettings, exportBackup, importBackup, loadSettings, saveSettings, setOnboarded } from "../lib/store";
@@ -17,6 +17,15 @@ export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
   const [custom, setCustom] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", () => {
+      if (focused) scrollRef.current?.scrollToEnd({ animated: true });
+    });
+    return () => show.remove();
+  }, [focused]);
 
   useEffect(() => {
     (async () => {
@@ -93,7 +102,12 @@ export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
   const options = Array.from(new Set([...DEFAULT_GEMINI_MODELS, ...models]));
 
   return (
-    <ScrollView contentContainerClassName="gap-3 p-4" className="flex-1">
+    <ScrollView
+      ref={scrollRef}
+      contentContainerClassName="gap-3 p-4"
+      className="flex-1"
+      keyboardShouldPersistTaps="handled"
+    >
       <Text className="text-sm text-zinc-500">{t("desc")}</Text>
       <Text className="text-sm text-blue-600 underline" onPress={() => Linking.openURL("https://aistudio.google.com/apikey")}>
         {t("createKeyLink")}
@@ -104,6 +118,8 @@ export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
         placeholder={t("keyPlaceholder")}
         secureTextEntry
         editable={!loading}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
       />
       <Text className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{t("modelsLegend")}</Text>
       {options.map((m) => (
@@ -117,6 +133,8 @@ export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
         onChangeText={setCustom}
         placeholder={t("customPlaceholder")}
         editable={!loading}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
       />
       {error ? <Text className="text-sm text-red-600">{error}</Text> : null}
       <View className="flex-row gap-2">
