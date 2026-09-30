@@ -26,6 +26,9 @@
     "unscannedPdf": "PDF has no selectable text — send a text PDF, not a scan.",
     "quota": "Storage full — export a backup and delete old items.",
     "offline": "Offline — the AI needs internet. Try again online.",
+    "extractUnavailable": "PDF extractor unavailable.",
+    "extractTimeout": "Timed out reading the PDF.",
+    "shareUnavailable": "Sharing is unavailable on this device.",
     "tailFail": "The AIs failed. Job saved as failed for retry. Detail: {msg}",
     "retryFailDetail": "Retry failed. Detail: {msg}"
   },

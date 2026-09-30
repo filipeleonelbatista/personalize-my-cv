@@ -1,0 +1,44 @@
+// mobile/assets/pdfjs/extract.template.html
+// Template for the vendored single-file harness. scripts/vendor-pdfjs.mjs
+// inlines pdf.min.mjs + worker below. Placeholders: /*__PDFJS__*/ /*__WORKER__*/
+<!doctype html>
+<html>
+  <head><meta charset="utf-8" /></head>
+  <body>
+    <script type="module">
+      /*__PDFJS__*/
+      const workerCode = `/*__WORKER__*/`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+        new Blob([workerCode], { type: "text/javascript" }),
+      );
+
+      function b64ToBytes(b64) {
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return bytes;
+      }
+
+      window.__extract = async function (dataB64, jobId) {
+        try {
+          const doc = await pdfjsLib.getDocument({ data: b64ToBytes(dataB64) }).promise;
+          let out = "";
+          for (let i = 1; i <= doc.numPages; i++) {
+            const page = await doc.getPage(i);
+            const tc = await page.getTextContent();
+            out += tc.items.map((it) => it.str || "").join(" ") + "\n";
+          }
+          await doc.destroy();
+          const text = out.trim();
+          if (!text) throw new Error("EMPTY_TEXT");
+          window.ReactNativeWebView.postMessage(JSON.stringify({ id: jobId, ok: true, text }));
+        } catch (e) {
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({ id: jobId, ok: false, error: String((e && e.message) || e) }),
+          );
+        }
+      };
+      window.ReactNativeWebView.postMessage(JSON.stringify({ id: 0, ok: true, ready: true }));
+    </script>
+  </body>
+</html>

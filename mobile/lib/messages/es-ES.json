@@ -26,6 +26,9 @@
     "unscannedPdf": "El PDF no tiene texto seleccionable — envía un PDF con texto, no escaneado.",
     "quota": "Almacenamiento lleno — exporta una copia y borra elementos antiguos.",
     "offline": "Sin conexión — la IA necesita internet. Inténtalo en línea.",
+    "extractUnavailable": "Extractor de PDF no disponible.",
+    "extractTimeout": "Tiempo agotado al leer el PDF.",
+    "shareUnavailable": "Compartir no está disponible en este dispositivo.",
     "tailFail": "Las IAs fallaron. Vacante guardada como failed para reintentar. Detalle: {msg}",
     "retryFailDetail": "Reintento fallido. Detalle: {msg}"
   },

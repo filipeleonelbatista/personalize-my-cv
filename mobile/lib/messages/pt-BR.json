@@ -26,6 +26,9 @@
     "unscannedPdf": "PDF sem texto selecionável — envie um PDF com texto, não escaneado.",
     "quota": "Armazenamento cheio — exporte o backup e limpe itens antigos.",
     "offline": "Sem conexão — a IA precisa de internet. Tente de novo online.",
+    "extractUnavailable": "Extrator de PDF indisponível.",
+    "extractTimeout": "Tempo esgotado ao ler o PDF.",
+    "shareUnavailable": "Compartilhamento indisponível neste aparelho.",
     "tailFail": "As IAs falharam. Vaga salva como failed para retry. Detalhe: {msg}",
     "retryFailDetail": "Retry falhou. Detalhe: {msg}"
   },

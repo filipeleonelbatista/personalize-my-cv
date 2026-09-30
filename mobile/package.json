@@ -5,6 +5,7 @@
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.26",
+    "expo-asset": "~57.0.18",
     "expo-clipboard": "~57.0.2",
     "expo-constants": "~57.0.20",
     "expo-document-picker": "~57.0.3",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "pdfjs-dist": "^6.3.289",
     "typescript": "~6.0.3",
     "vite": "^8.3.1",
     "vitest": "^5.0.3"
