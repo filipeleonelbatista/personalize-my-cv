@@ -24,4 +24,13 @@ describe("pwa", () => {
   it("offline fallback route exists", () => {
     expect(existsSync("app/offline/page.tsx")).toBe(true);
   });
+  it("seo essentials present", () => {
+    const layout = readFileSync("app/layout.tsx", "utf8");
+    for (const needle of ["openGraph", "twitter", "robots", "manifest", "application/ld+json", "themeColor"]) {
+      expect(layout, needle).toContain(needle);
+    }
+    expect(existsSync("app/sitemap.ts")).toBe(true);
+    expect(existsSync("app/robots.ts")).toBe(true);
+    expect(existsSync("public/opengraph-image.png")).toBe(true);
+  });
 });

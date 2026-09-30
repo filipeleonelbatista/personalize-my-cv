@@ -6,8 +6,13 @@ import { SwRegister } from "./components/SwRegister";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Personalize My CV",
-  description: "Gerador de currículos otimizados por vaga (MVP)",
+  title: { default: "Personalize My CV", template: "%s — Personalize My CV" },
+  description:
+    "Gerador de currículos sob medida com IA: cadastre o CV base, gere versões por vaga com match, email e mensagem. Seus dados ficam no browser.",
+  keywords: ["currículo", "CV", "vagas", "emprego", "IA", "Gemini", "resume", "currículum"],
+  authors: [{ name: "filipeleonelbatista", url: "https://linkedin.com/in/filipeleonelbatista" }],
+  creator: "filipeleonelbatista",
+  robots: { index: true, follow: true },
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -16,12 +21,46 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    alternateLocale: ["en_US", "es_ES"],
+    siteName: "Personalize My CV",
+    title: "Personalize My CV",
+    description: "Currículos sob medida com IA, no seu browser.",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "Personalize My CV" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Personalize My CV",
+    description: "Currículos sob medida com IA, no seu browser.",
+    images: ["/opengraph-image.png"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "Personalize My CV",
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              inLanguage: ["pt-BR", "en-US", "es-ES"],
+              offers: { "@type": "Offer", price: "0" },
+              description: "Gerador de currículos sob medida com IA. Seus dados ficam no browser.",
+            }),
+          }}
+        />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <I18nProvider>
           <SwRegister />

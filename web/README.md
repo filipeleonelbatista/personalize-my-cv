@@ -32,6 +32,19 @@ A base e as vagas ficam nas chaves `pmcv:base` e `pmcv:apps` do
 com tudo e `importBackup(json)` para restaurar — útil para trocar de
 navegador ou limpar espaço.
 
+## Assets visuais (para criar/substituir)
+
+| Arquivo | Tamanho | Uso |
+|---|---|---|
+| `public/favicon.ico` | 48px | Fallback navegadores antigos (opcional; o SVG já cobre os modernos) |
+| `public/opengraph-image.png` | 1200×630, <300KB | Banner de compartilhamento (placeholder gerado via `npm run icons`; substitua pelo banner desenhado) |
+| `public/icon-192.png` / `public/icon-512.png` | 192 / 512 | PWA + favicon (gerados de `app/icon.svg` via `npm run icons`) |
+| `public/maskable-512.png` | 512 com safe-zone | Ícone maskable Android |
+| `public/apple-touch-icon.png` | 180 | iOS home screen |
+
+Regenerar: `npm run icons` (usa sharp). Para SEO completo, adicione
+`metadataBase` + canonical no `layout.tsx` quando o domínio final existir.
+
 ## Aviso de segurança
 
 A chave Gemini fica guardada via `secure-ls` (ofuscação com AES + chave

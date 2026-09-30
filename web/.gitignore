@@ -5,6 +5,11 @@
 /.next/
 /out/
 
+# serwist (gerado no build via withSerwist)
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
+
 # env
 .env
 .env*.local

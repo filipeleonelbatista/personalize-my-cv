@@ -16,3 +16,11 @@ for (const [src, dest, size, pad] of jobs) {
   }
   console.log("wrote", dest);
 }
+
+// Banner de compartilhamento (placeholder — texto exige fonte; o usuário
+// substitui pelo banner desenhado; ver README "Assets visuais").
+await sharp({ create: { width: 1200, height: 630, channels: 4, background: { r: 9, g: 9, b: 11, alpha: 1 } } })
+  .composite([{ input: await sharp("app/icon.svg").resize(256, 256).png().toBuffer(), left: 120, top: 187 }])
+  .png()
+  .toFile("public/opengraph-image.png");
+console.log("wrote public/opengraph-image.png");
