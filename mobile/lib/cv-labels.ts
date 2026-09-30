@@ -16,6 +16,8 @@ export type CvSectionTitles = {
   certificacoes: string;
   idiomas: string;
   projetos: string;
+  present: string;
+  competencias: string;
 };
 
 const TITLES: Record<BaseLang, CvSectionTitles> = {
@@ -27,6 +29,8 @@ const TITLES: Record<BaseLang, CvSectionTitles> = {
     certificacoes: "Certificações",
     idiomas: "Idiomas",
     projetos: "Projetos",
+    present: "atual",
+    competencias: "Competências",
   },
   en: {
     resumo: "Summary",
@@ -36,6 +40,8 @@ const TITLES: Record<BaseLang, CvSectionTitles> = {
     certificacoes: "Certifications",
     idiomas: "Languages",
     projetos: "Projects",
+    present: "Present",
+    competencias: "Skills",
   },
   es: {
     resumo: "Resumen",
@@ -45,6 +51,8 @@ const TITLES: Record<BaseLang, CvSectionTitles> = {
     certificacoes: "Certificaciones",
     idiomas: "Idiomas",
     projetos: "Proyectos",
+    present: "actual",
+    competencias: "Competencias",
   },
 };
 

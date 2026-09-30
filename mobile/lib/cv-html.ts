@@ -9,9 +9,12 @@ function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function periodo(e: Resume["secoes"]["experiencia"][number] | Resume["secoes"]["formacao"][number]): string {
+function periodo(
+  e: Resume["secoes"]["experiencia"][number] | Resume["secoes"]["formacao"][number],
+  present: string,
+): string {
   const p = e.periodo;
-  const fim = p.atual ? "atual" : (p.fim ?? "");
+  const fim = p.atual ? present : (p.fim ?? "");
   return `${esc(p.inicio)} – ${esc(fim)}`;
 }
 
@@ -23,18 +26,18 @@ export function cvHtml(resume: Resume, lang: BaseLang): string {
   const exp = s.experiencia
     .map(
       (e) => `<div class="job">
-        <div class="row"><span class="cargo">${esc(e.cargo)}</span><span class="periodo">${periodo(e)}</span></div>
+        <div class="row"><span class="cargo">${esc(e.cargo)}</span><span class="periodo">${periodo(e, L.present)}</span></div>
         <div class="org">${esc(e.empresa)}${e.local ? ` — <em>${esc(e.local)}</em>` : ""}</div>
         ${e.descricao ? `<p>${esc(e.descricao)}</p>` : ""}
         ${e.realizacoes.length ? `<ul>${e.realizacoes.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>` : ""}
-        ${e.tecnologias.length ? `<p><strong>Competências:</strong> ${e.tecnologias.map(esc).join(", ")}</p>` : ""}
+        ${e.tecnologias.length ? `<p><strong>${esc(L.competencias)}:</strong> ${e.tecnologias.map(esc).join(", ")}</p>` : ""}
       </div>`,
     )
     .join("");
   const edu = s.formacao
     .map(
       (f) => `<div class="job">
-        <div class="row"><span class="cargo">${esc(f.curso)}</span><span class="periodo">${periodo(f)}</span></div>
+        <div class="row"><span class="cargo">${esc(f.curso)}</span><span class="periodo">${periodo(f, L.present)}</span></div>
         <div class="org">${esc(f.instituicao)}${f.local ? ` — <em>${esc(f.local)}</em>` : ""}</div>
         ${f.descricao ? `<p>${esc(f.descricao)}</p>` : ""}
       </div>`,
@@ -46,7 +49,7 @@ export function cvHtml(resume: Resume, lang: BaseLang): string {
   const proj = s.projetos
     .map(
       (p) => `<div class="job"><span class="cargo">${esc(p.nome)}</span><p>${esc(p.descricao)}</p>${
-        p.tecnologias.length ? `<p><strong>Competências:</strong> ${p.tecnologias.map(esc).join(", ")}</p>` : ""
+        p.tecnologias.length ? `<p><strong>${esc(L.competencias)}:</strong> ${p.tecnologias.map(esc).join(", ")}</p>` : ""
       }</div>`,
     )
     .join("");
@@ -72,6 +75,7 @@ export function cvHtml(resume: Resume, lang: BaseLang): string {
   <h1>${esc(h.nome)}</h1>
   <div class="contacts">${contacts}</div>
   <h2>${esc(h.titulo_profissional)}</h2>
+  <h2>${esc(L.resumo)}</h2>
   <p>${esc(s.resumo)}</p>
   ${s.experiencia.length ? `<h2>${esc(L.experiencia)}</h2>${exp}` : ""}
   ${s.formacao.length ? `<h2>${esc(L.formacao)}</h2>${edu}` : ""}

@@ -36,6 +36,17 @@ describe("pdf pipeline", () => {
     expect(html).toContain("Experiência");
     expect(cvHtml(resume, "en")).toContain("Experience");
   });
+  it("cv html uses the CV language for periodo and trophies", () => {
+    const html = cvHtml(resume, "en");
+    expect(html).toContain("Present");
+    expect(html).toContain("Skills:");
+    expect(html).not.toContain("Competências");
+    expect(html).not.toContain("atual");
+  });
+  it("cv html titles the resumo section", () => {
+    expect(cvHtml(resume, "pt-BR")).toContain("<h2>Resumo</h2>");
+    expect(cvHtml(resume, "es")).toContain("<h2>Resumen</h2>");
+  });
   it("long content cannot overflow the page", () => {
     const big = { ...resume, secoes: { ...resume.secoes, resumo: "x".repeat(5000) } };
     const html = cvHtml(big, "pt-BR");
