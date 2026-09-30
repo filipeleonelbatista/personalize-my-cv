@@ -1,6 +1,7 @@
 // mobile/components/OnboardingWizard.tsx — 3 steps mirroring web onboarding.
 import { useState } from "react";
-import { Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { FormInput } from "./FormInput";
 import { useTranslations } from "../lib/i18n-provider";
 import { validateGeminiKey } from "../lib/llm/chain";
 import { loadSettings, saveSettings } from "../lib/store";
@@ -59,13 +60,12 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
         <Text className="text-sm text-blue-600 underline" onPress={() => Linking.openURL("https://aistudio.google.com/apikey")}>
           {t("createKeyLink")}
         </Text>
-        <TextInput
+        <FormInput
           value={key}
           onChangeText={setKey}
           placeholder={t("keyPlaceholder")}
           secureTextEntry
           editable={!loading}
-          className="rounded-xl border border-zinc-300 p-3 text-zinc-900 dark:border-zinc-700 dark:text-zinc-50"
         />
         {error ? <Text className="text-sm text-red-600">{error}</Text> : null}
         <View className="flex-row gap-2">

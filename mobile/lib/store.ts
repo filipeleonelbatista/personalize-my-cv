@@ -4,7 +4,6 @@
 // here they pass through as unknown JSON.
 import { z } from "zod";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SecureStore from "expo-secure-store";
 import { DEFAULT_LOCALE, type UiLocale } from "./i18n-config";
 import { tErr } from "./i18n-locale";
 import { getApiKey } from "./secure-key";
@@ -93,7 +92,7 @@ export async function saveApps(a: StoredApp[]): Promise<void> {
 
 export async function loadSettings(): Promise<Settings> {
   try {
-    const s = await SecureStore.getItemAsync("pmcv:settings");
+    const s = await AsyncStorage.getItem("pmcv:settings");
     if (!s) return SettingsSchema.parse({});
     return SettingsSchema.parse(JSON.parse(s));
   } catch {
@@ -102,12 +101,12 @@ export async function loadSettings(): Promise<Settings> {
 }
 
 export async function saveSettings(s: Settings): Promise<void> {
-  await SecureStore.setItemAsync("pmcv:settings", JSON.stringify(SettingsSchema.parse(s)));
+  await AsyncStorage.setItem("pmcv:settings", JSON.stringify(SettingsSchema.parse(s)));
 }
 
 export async function clearSettings(): Promise<void> {
   try {
-    await SecureStore.deleteItemAsync("pmcv:settings");
+    await AsyncStorage.removeItem("pmcv:settings");
   } catch {
     /* already gone */
   }

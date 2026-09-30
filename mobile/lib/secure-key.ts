@@ -1,23 +1,26 @@
 // mobile/lib/secure-key.ts
-import * as SecureStore from "expo-secure-store";
+// Gemini key storage. Deliberately AsyncStorage (plaintext) per product
+// decision — NOT the OS keychain. Same interface as before so callers
+// don't change; see PROJECT.md warnings.
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const KEY = "pmcv:gemini-key";
 
 export async function getApiKey(): Promise<string | null> {
   try {
-    return await SecureStore.getItemAsync(KEY);
+    return await AsyncStorage.getItem(KEY);
   } catch {
     return null;
   }
 }
 
 export async function setApiKey(key: string): Promise<void> {
-  await SecureStore.setItemAsync(KEY, key);
+  await AsyncStorage.setItem(KEY, key);
 }
 
 export async function clearApiKey(): Promise<void> {
   try {
-    await SecureStore.deleteItemAsync(KEY);
+    await AsyncStorage.removeItem(KEY);
   } catch {
     /* already gone */
   }

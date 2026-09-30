@@ -1,6 +1,7 @@
 // mobile/app/(tabs)/curriculos.tsx — resume list + generate + detail.
 import { useCallback, useState } from "react";
 import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, router } from "expo-router";
 import { useTranslations } from "../../lib/i18n-provider";
 import { loadApps, loadBase, type StoredApp } from "../../lib/store";
@@ -41,7 +42,7 @@ export default function CurriculosScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white dark:bg-black">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-black">
       <Header
         title="Personalize My CV"
         subtitle={baseName && baseTitle ? t("baseLine", { nome: baseName, titulo: baseTitle }) : t("tagline")}
@@ -62,6 +63,7 @@ export default function CurriculosScreen() {
         <FlatList
           data={apps}
           keyExtractor={(a) => a.id}
+          className="flex-1"
           contentContainerClassName="p-4"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={({ item }) => <VacancyCard app={item} onOpen={() => setSelected(item)} />}
@@ -69,6 +71,6 @@ export default function CurriculosScreen() {
       )}
       <GenerateSheet visible={generating} onClose={() => setGenerating(false)} onChanged={refresh} />
       {selected ? <DetailSheet app={selected} onClose={() => setSelected(null)} onChanged={refresh} /> : null}
-    </View>
+    </SafeAreaView>
   );
 }

@@ -1,6 +1,7 @@
 // mobile/components/GenerateSheet.tsx
 import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { FormInput } from "./FormInput";
 import { useTranslations } from "../lib/i18n-provider";
 import { runTailorJob } from "../lib/tailor-client";
 import { loadApps, quotaMessage } from "../lib/store";
@@ -63,7 +64,7 @@ export function GenerateSheet({ visible, onClose, onChanged }: { visible: boolea
             </Pressable>
           ))}
         </View>
-        <TextInput
+        <FormInput
           value={jobText}
           onChangeText={setJobText}
           placeholder={t("placeholder")}
@@ -71,7 +72,7 @@ export function GenerateSheet({ visible, onClose, onChanged }: { visible: boolea
           numberOfLines={8}
           editable={!loading}
           textAlignVertical="top"
-          className="mb-2 min-h-[160px] rounded-xl border border-zinc-300 p-3 text-zinc-900 dark:border-zinc-700 dark:text-zinc-50"
+          className="mb-2 min-h-[160px]"
         />
         {loading ? (
           <Text className="mb-2 text-sm text-zinc-500">

@@ -1,6 +1,7 @@
 // mobile/components/SettingsSheet.tsx — key, models, backup.
 import { useEffect, useState } from "react";
-import { Linking, Pressable, ScrollView, Text, TextInput, View, Alert } from "react-native";
+import { Linking, Pressable, ScrollView, Text, View, Alert } from "react-native";
+import { FormInput } from "./FormInput";
 import { useTranslations } from "../lib/i18n-provider";
 import { clearSettings, exportBackup, importBackup, loadSettings, saveSettings, setOnboarded } from "../lib/store";
 import { clearApiKey, getApiKey, setApiKey } from "../lib/secure-key";
@@ -92,18 +93,17 @@ export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
   const options = Array.from(new Set([...DEFAULT_GEMINI_MODELS, ...models]));
 
   return (
-    <ScrollView contentContainerClassName="gap-3 p-4">
+    <ScrollView contentContainerClassName="gap-3 p-4" className="flex-1">
       <Text className="text-sm text-zinc-500">{t("desc")}</Text>
       <Text className="text-sm text-blue-600 underline" onPress={() => Linking.openURL("https://aistudio.google.com/apikey")}>
         {t("createKeyLink")}
       </Text>
-      <TextInput
+      <FormInput
         value={key}
         onChangeText={setKey}
         placeholder={t("keyPlaceholder")}
         secureTextEntry
         editable={!loading}
-        className="rounded-xl border border-zinc-300 p-3 text-zinc-900 dark:border-zinc-700 dark:text-zinc-50"
       />
       <Text className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{t("modelsLegend")}</Text>
       {options.map((m) => (
@@ -112,12 +112,11 @@ export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
           <Text className="text-sm text-zinc-700 dark:text-zinc-300">{m}</Text>
         </Pressable>
       ))}
-      <TextInput
+      <FormInput
         value={custom}
         onChangeText={setCustom}
         placeholder={t("customPlaceholder")}
         editable={!loading}
-        className="rounded-xl border border-zinc-300 p-3 text-zinc-900 dark:border-zinc-700 dark:text-zinc-50"
       />
       {error ? <Text className="text-sm text-red-600">{error}</Text> : null}
       <View className="flex-row gap-2">
