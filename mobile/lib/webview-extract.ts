@@ -10,6 +10,7 @@ const pending = new Map<number, Pending>();
 let seq = 0;
 let poster: ((js: string) => void) | null = null;
 let harnessReady = false;
+let loadError: string | null = null;
 
 export function registerExtractorHost(poster_: (js: string) => void): () => void {
   poster = poster_;
@@ -24,15 +25,22 @@ export function registerExtractorHost(poster_: (js: string) => void): () => void
 /** Called by the host when the harness posts {ready:true}. */
 export function notifyExtractorReady(): void {
   harnessReady = true;
+  loadError = null;
+}
+
+/** Called by the host when the harness asset/page fails to load. */
+export function notifyExtractorFailed(msg: string): void {
+  loadError = msg;
 }
 
 export function isExtractorReady(): boolean {
   return harnessReady;
 }
 
-/** Test-only reset for module state (ready flag + pending jobs). */
+/** Test-only reset for module state (ready flag, load error, pending jobs). */
 export function __resetExtractorState(): void {
   harnessReady = false;
+  loadError = null;
   for (const [, p] of pending) clearTimeout(p.timer);
   pending.clear();
 }
@@ -52,6 +60,7 @@ function escapeForJs(s: string): string {
 
 export async function extractCvTextFromUri(uri: string, locale: UiLocale = getLocale(), timeoutMs = 60_000): Promise<string> {
   if (!poster) throw new Error(tErr(locale, "extractUnavailable"));
+  if (loadError) throw new Error(loadError);
   if (!harnessReady) {
     const becameReady = await new Promise<boolean>((resolve) => {
       const t0 = Date.now();
@@ -62,7 +71,10 @@ export async function extractCvTextFromUri(uri: string, locale: UiLocale = getLo
       };
       tick();
     });
-    if (!becameReady) throw new Error(tErr(locale, "extractNotReady"));
+    if (!becameReady) {
+      if (loadError) throw new Error(loadError);
+      throw new Error(tErr(locale, "extractNotReady"));
+    }
   }
   let b64: string;
   try {

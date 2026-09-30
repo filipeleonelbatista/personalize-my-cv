@@ -21,6 +21,23 @@ describe("ai log", () => {
     }
     expect((await loadAiLog())).toHaveLength(100);
   });
+  it("mirrors entries to the expo terminal in dev", async () => {
+    const g = globalThis as unknown as { __DEV__?: boolean };
+    const prevDev = g.__DEV__;
+    const prevLog = console.log;
+    const seen: string[] = [];
+    console.log = (...a: unknown[]) => {
+      seen.push(a.map(String).join(" "));
+    };
+    g.__DEV__ = true;
+    try {
+      await appendAiLog({ label: "tailor", provider: "gemini:m1", ms: 5, ok: false, error: "boom" });
+    } finally {
+      console.log = prevLog;
+      g.__DEV__ = prevDev;
+    }
+    expect(seen.some((l) => l.includes("[ai]") && l.includes("tailor") && l.includes("FAIL"))).toBe(true);
+  });
 
   it("generateJson logs each attempt", async () => {
     const { generateJson } = await import("../lib/llm/chain");

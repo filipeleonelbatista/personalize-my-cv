@@ -46,6 +46,17 @@ export async function appendAiLog(e: Omit<AiLogEntry, "id" | "at" | "error"> & {
     id: `${Date.now().toString(36)}-${seq.toString(36)}`,
     at: e.at ?? new Date().toISOString(),
   });
+  // Mirror to the Expo terminal in dev (Metro forwards console to the CLI).
+  try {
+    const g = globalThis as unknown as { __DEV__?: boolean };
+    if (g.__DEV__) {
+      console.log(
+        `[ai] ${entry.label} ${entry.provider || "—"} ${entry.ms}ms ${entry.ok ? "ok" : "FAIL"}${entry.error ? ` :: ${entry.error}` : ""}`,
+      );
+    }
+  } catch {
+    /* logging must never break the flow */
+  }
   try {
     const raw = await AsyncStorage.getItem(KEY);
     const arr: unknown = raw ? JSON.parse(raw) : [];

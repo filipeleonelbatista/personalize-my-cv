@@ -134,4 +134,16 @@ describe("pdf pipeline", () => {
       wv.__resetExtractorState();
     }
   });
+  it("harness load failure fails fast with the load error", async () => {
+    const wv = await import("../lib/webview-extract");
+    wv.__resetExtractorState();
+    const unregister = wv.registerExtractorHost(() => {});
+    try {
+      wv.notifyExtractorFailed("Falha ao carregar o extrator: boom");
+      await expect(wv.extractCvTextFromUri("/x.pdf", "pt-BR", 5000)).rejects.toThrow(/Falha ao carregar o extrator/);
+    } finally {
+      unregister();
+      wv.__resetExtractorState();
+    }
+  });
 });
