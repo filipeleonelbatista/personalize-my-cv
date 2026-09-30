@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { LuSparkles, LuLoaderCircle } from "react-icons/lu";
-import { loadApps, type StoredApp } from "@/lib/store";
+import { loadApps, quotaMessage, type StoredApp } from "@/lib/store";
+import { getLocale, tErr } from "@/lib/i18n/locale";
 import { runTailorJob } from "@/lib/tailor-client";
 import type { BaseLang } from "../../lib/llm/prompts";
 import { Button } from "./ui/button";
@@ -12,41 +14,44 @@ import { Textarea } from "./ui/textarea";
 import { Select } from "./ui/select";
 import { useStagedSteps } from "./use-staged-steps";
 
-const STAGES = ["Lendo a vaga…", "Reescrevendo com keywords…", "Gerando PDF e análise…"];
-
 export function GenerateModal({ defaultLang = "pt-BR", onChanged }: { defaultLang?: BaseLang; onChanged?: (apps: StoredApp[]) => void }) {
+  const t = useTranslations("Generate");
   const [open, setOpen] = useState(false);
   const [jobText, setJobText] = useState("");
   const [lang, setLang] = useState<BaseLang>(defaultLang);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const stage = useStagedSteps(STAGES, loading, 8000);
+  const stages = [t("stage1"), t("stage2"), t("stage3")];
+  const stage = useStagedSteps(stages, loading, 8000);
 
   async function onGenerate() {
+    if (!navigator.onLine) {
+      const msg = tErr(getLocale(), "offline");
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     setError("");
     setLoading(true);
     try {
       const r = await runTailorJob(jobText, lang);
       if (r.ok) {
-        toast.success("Currículo personalizado gerado!");
+        toast.success(t("success"));
         onChanged?.(loadApps());
         setOpen(false);
         setJobText("");
       } else {
         setError(r.error);
-        toast.error("As IAs falharam — vaga salva para retry", { description: r.error.slice(0, 200) });
+        toast.error(t("failSaved"), { description: r.error.slice(0, 200) });
         onChanged?.(loadApps());
       }
     } catch (err) {
-      const msg = (err as Error).message;
+      const msg = ((err instanceof Error ? err.message : String(err)) || t("unknownFail")).slice(0, 500);
       setError(msg);
-      if (/Armazenamento cheio/.test(msg)) {
-        toast.error("Armazenamento cheio", {
-          description: `${msg} Exporte o backup em Configurações e apague currículos antigos.`,
-          duration: 10000,
-        });
+      if (err instanceof Error && err.message === quotaMessage(getLocale())) {
+        toast.error(t("storageFull"), { description: msg, duration: 10000 });
       } else {
-        toast.error("Falha ao gerar", { description: msg });
+        toast.error(t("failGeneric"), { description: msg });
       }
     } finally {
       setLoading(false);
@@ -56,16 +61,16 @@ export function GenerateModal({ defaultLang = "pt-BR", onChanged }: { defaultLan
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <LuSparkles /> Personalizar com IA
+        <LuSparkles /> {t("open")}
       </Button>
       <Dialog open={open} onClose={() => !loading && setOpen(false)}>
         <DialogHeader>
-          <DialogTitle>Nova vaga</DialogTitle>
-          <DialogDescription>Cole o texto da vaga (requisitos, responsabilidades, empresa).</DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("desc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-4">
           <label className="flex items-center gap-2 text-sm">
-            Idioma do currículo
+            {t("cvLang")}
             <Select name="lang" value={lang} onChange={(e) => setLang(e.target.value as BaseLang)} disabled={loading}>
               <option value="pt-BR">Português (BR)</option>
               <option value="en">English</option>
@@ -76,12 +81,12 @@ export function GenerateModal({ defaultLang = "pt-BR", onChanged }: { defaultLan
             value={jobText}
             onChange={(e) => setJobText(e.target.value)}
             rows={12}
-            placeholder="Cole aqui a descrição da vaga..."
+            placeholder={t("placeholder")}
             disabled={loading}
           />
           {loading ? (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <LuLoaderCircle className="animate-spin" /> {STAGES[stage]} (pode levar 1–2 min)
+              <LuLoaderCircle className="animate-spin" /> {stages[stage]} {t("loadingNote")}
             </p>
           ) : null}
           {error ? (
@@ -95,18 +100,18 @@ export function GenerateModal({ defaultLang = "pt-BR", onChanged }: { defaultLan
                   setOpen(false);
                 }}
               >
-                Atualizar tabela
+                {t("refreshTable")}
               </Button>
             </div>
           ) : null}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
-            Cancelar
+            {t("cancel")}
           </Button>
           <Button onClick={onGenerate} disabled={loading || jobText.trim().length < 20}>
             {loading && <LuLoaderCircle className="animate-spin" />}
-            {loading ? "Gerando…" : "Gerar currículo"}
+            {loading ? t("generating") : t("submit")}
           </Button>
         </DialogFooter>
       </Dialog>

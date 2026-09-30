@@ -6,7 +6,8 @@ describe("ui contract", () => {
     for (const f of ["app/page.tsx", "app/components/BaseSetup.tsx", "app/components/VacancyTable.tsx", "app/components/GenerateModal.tsx", "app/components/DetailDrawer.tsx"]) {
       expect(existsSync(f), f).toBe(true);
     }
-    expect(readFileSync("app/components/VacancyTable.tsx", "utf8")).toContain("Tentar novamente");
+    expect(readFileSync("app/components/VacancyTable.tsx", "utf8")).toContain('t("retry")');
+    expect(JSON.parse(readFileSync("messages/pt-BR.json", "utf8")).Vacancy.retry).toBe("Tentar novamente");
   });
   it("generate modal keeps the error visible on failure", () => {
     const src = readFileSync("app/components/GenerateModal.tsx", "utf8");
@@ -21,7 +22,8 @@ describe("ui contract", () => {
   });
   it("generate modal has short IA label and per-vacancy language select", () => {
     const src = readFileSync("app/components/GenerateModal.tsx", "utf8");
-    expect(src).toContain("Personalizar com IA");
+    expect(src).toContain('t("open")');
+    expect(JSON.parse(readFileSync("messages/pt-BR.json", "utf8")).Generate.open).toBe("Personalizar com IA");
     expect(src).not.toContain("Gerar outro currículo");
     expect(src).toContain('name="lang"');
   });
@@ -124,7 +126,8 @@ describe("settings dialog (post-onboarding)", () => {
     const tabs = readFileSync("app/components/DashboardTabs.tsx", "utf8");
     expect(tabs).toContain("SettingsDialog");
     expect(tabs).toContain("<SettingsDialog />");
-    expect(readFileSync("app/components/SettingsDialog.tsx", "utf8")).toContain("Configurações");
+    expect(readFileSync("app/components/SettingsDialog.tsx", "utf8")).toContain('t("open")');
+    expect(JSON.parse(readFileSync("messages/pt-BR.json", "utf8")).Settings.open).toBe("Configurações");
   });
   it("has models selector, clear-key and backup export/import", () => {
     const s = readFileSync("app/components/SettingsDialog.tsx", "utf8");
@@ -138,7 +141,7 @@ describe("settings dialog (post-onboarding)", () => {
   });
   it("quota failures surface backup guidance where saves can throw", () => {
     for (const f of ["app/components/GenerateModal.tsx", "app/components/Onboarding.tsx", "app/components/BaseSetup.tsx", "app/components/VacancyTable.tsx"]) {
-      expect(readFileSync(f, "utf8"), f).toMatch(/quotaMessage|QUOTA_MESSAGE|Armazenamento cheio/);
+      expect(readFileSync(f, "utf8"), f).toMatch(/quotaMessage|QUOTA_MESSAGE/);
     }
     expect(readFileSync("lib/store.ts", "utf8")).toContain("QUOTA_MESSAGE");
   });
@@ -146,5 +149,17 @@ describe("settings dialog (post-onboarding)", () => {
     const s = readFileSync("app/page.tsx", "utf8");
     expect(s).toContain("isOnboarded");
     expect(s).toContain("storage");
+  });
+  it("header has locale selector, help and theme", () => {
+    const s = readFileSync("app/page.tsx", "utf8");
+    expect(s).toContain("LocaleSelector");
+    expect(s).toContain("HelpDialog");
+    expect(s).toContain("ThemeToggle");
+  });
+  it("no hardcoded PT UI strings remain in flows", () => {
+    for (const f of ["app/components/GenerateModal.tsx", "app/components/VacancyTable.tsx", "app/components/DetailDrawer.tsx", "app/components/ReportsSection.tsx", "app/components/SettingsDialog.tsx"]) {
+      const s = readFileSync(f, "utf8");
+      expect(s, f).not.toMatch(/Currículos|Relatórios|Personalizar com IA|Baixar|Excluir|Configurações/);
+    }
   });
 });

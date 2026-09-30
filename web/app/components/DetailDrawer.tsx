@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { LuCopy, LuCheck, LuDownload, LuPrinter } from "react-icons/lu";
 import { resumeToBlob, openResumePdf } from "@/lib/pdf/client";
+import { getLocale } from "@/lib/i18n/locale";
 import type { StoredApp } from "@/lib/store";
 import { Button } from "./ui/button";
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -13,6 +15,7 @@ import { Progress } from "./ui/progress";
 export type AppRow = StoredApp;
 
 function CopyButton({ text, label }: { text: string; label: string }) {
+  const t = useTranslations("Detail");
   const [done, setDone] = useState(false);
   async function copy() {
     try {
@@ -26,17 +29,18 @@ function CopyButton({ text, label }: { text: string; label: string }) {
       document.body.removeChild(ta);
     }
     setDone(true);
-    toast.success(`${label} copiado!`);
+    toast.success(t("copied", { label }));
     setTimeout(() => setDone(false), 1500);
   }
   return (
     <Button variant="ghost" size="sm" onClick={copy}>
-      {done ? <LuCheck /> : <LuCopy />} Copiar
+      {done ? <LuCheck /> : <LuCopy />} {t("copy")}
     </Button>
   );
 }
 
 export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => void }) {
+  const t = useTranslations("Detail");
   async function onDownload() {
     try {
       const blob = await resumeToBlob(app.resume, app.lang);
@@ -47,7 +51,7 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (err) {
-      toast.error("Falha ao gerar PDF", { description: (err as Error).message });
+      toast.error(t("downloadFail"), { description: (err as Error).message });
     }
   }
 
@@ -55,7 +59,7 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
     try {
       await openResumePdf(app.resume, app.lang);
     } catch (err) {
-      toast.error("Falha ao abrir PDF", { description: (err as Error).message });
+      toast.error(t("printFail"), { description: (err as Error).message });
     }
   }
 
@@ -66,7 +70,7 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
           {app.cargo} — {app.empresa}
         </DialogTitle>
         <DialogDescription>
-          Gerado em {new Date(app.createdAt).toLocaleString("pt-BR")} • {app.fileName}
+          {t("generatedAt", { date: new Date(app.createdAt).toLocaleString(getLocale()), file: app.fileName })}
         </DialogDescription>
       </DialogHeader>
 
@@ -74,26 +78,26 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
         {app.status === "done" ? (
           <div className="flex gap-2">
             <Button size="sm" onClick={onDownload}>
-              <LuDownload /> Baixar PDF
+              <LuDownload /> {t("download")}
             </Button>
             <Button variant="outline" size="sm" onClick={onPrint}>
-              <LuPrinter /> Imprimir
+              <LuPrinter /> {t("print")}
             </Button>
-            <Badge variant="success">Pronto</Badge>
+            <Badge variant="success">{t("done")}</Badge>
           </div>
         ) : (
-          <p className="text-sm text-destructive">PDF não gerado. Erro: {app.errorLog}</p>
+          <p className="text-sm text-destructive">{t("noPdf", { error: app.errorLog })}</p>
         )}
 
         {app.status === "done" ? (
           <>
             <div className="space-y-1">
-              <p className="text-sm font-bold">Afinidade com a vaga: {app.matchPercent}%</p>
+              <p className="text-sm font-bold">{t("affinity", { n: app.matchPercent })}</p>
               <Progress value={app.matchPercent} />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <p className="text-sm font-bold">Pontos fortes</p>
+                <p className="text-sm font-bold">{t("strengths")}</p>
                 <ul className="list-disc pl-5 text-sm">
                   {app.strengths.map((s) => (
                     <li key={s}>{s}</li>
@@ -101,7 +105,7 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
                 </ul>
               </div>
               <div>
-                <p className="text-sm font-bold">Pontos fracos</p>
+                <p className="text-sm font-bold">{t("weaknesses")}</p>
                 <ul className="list-disc pl-5 text-sm">
                   {app.weaknesses.map((w) => (
                     <li key={w}>{w}</li>
@@ -111,15 +115,15 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
             </div>
             <div>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-bold">Email de apresentação</p>
-                <CopyButton text={app.emailBody} label="Email" />
+                <p className="text-sm font-bold">{t("email")}</p>
+                <CopyButton text={app.emailBody} label={t("emailShort")} />
               </div>
               <pre className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{app.emailBody}</pre>
             </div>
             <div>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-bold">Mensagem instantânea</p>
-                <CopyButton text={app.chatMessage} label="Mensagem" />
+                <p className="text-sm font-bold">{t("chat")}</p>
+                <CopyButton text={app.chatMessage} label={t("chatShort")} />
               </div>
               <pre className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{app.chatMessage}</pre>
             </div>
@@ -127,7 +131,7 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
         ) : null}
 
         <details>
-          <summary className="cursor-pointer text-sm text-muted-foreground">Ver texto original da vaga</summary>
+          <summary className="cursor-pointer text-sm text-muted-foreground">{t("viewJob")}</summary>
           <pre className="mt-2 whitespace-pre-wrap rounded-md bg-muted p-3 text-xs">{app.jobText}</pre>
         </details>
       </div>

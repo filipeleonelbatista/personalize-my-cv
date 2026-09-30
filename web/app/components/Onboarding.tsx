@@ -8,7 +8,7 @@ import { buildBaseExtractSystem, buildRepairUser, type BaseLang } from "@/lib/ll
 import { extractCvTextFromFile } from "@/lib/cv-text-client";
 import { normalizeResume } from "@/lib/tailor";
 import { loadSettings, saveSettings, saveBase, setOnboarded, quotaMessage } from "@/lib/store";
-import { getLocale } from "@/lib/i18n/locale";
+import { getLocale, tErr } from "@/lib/i18n/locale";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Select } from "./ui/select";
@@ -41,6 +41,12 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
   async function onCreateBase() {
     if (!file) return;
+    if (!navigator.onLine) {
+      const off = tErr(getLocale(), "offline");
+      setError(off);
+      toast.error(off);
+      return;
+    }
     setError(""); setLoading(true);
     try {
       const settings = loadSettings();

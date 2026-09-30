@@ -23,6 +23,6 @@ describe("deleteApplication (store)", () => {
     expect(loadApps()).toHaveLength(1);
   });
   it("table row has a delete action", () => {
-    expect(readFileSync("app/components/VacancyTable.tsx", "utf8")).toContain("Excluir");
+    expect(readFileSync("app/components/VacancyTable.tsx", "utf8")).toContain('t("delete")');
   });
 });

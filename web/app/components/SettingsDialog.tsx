@@ -4,6 +4,7 @@
 import { useRef, useState } from "react";
 import { LuSettings } from "react-icons/lu";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { clearSettings, exportBackup, importBackup, loadSettings, saveSettings, setOnboarded } from "@/lib/store";
 import { validateGeminiKey } from "@/lib/llm/chain";
 import { DEFAULT_GEMINI_MODELS } from "@/lib/llm/gemini";
@@ -11,6 +12,7 @@ import { Button } from "./ui/button";
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 
 export function SettingsDialog() {
+  const t = useTranslations("Settings");
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState("");
   const [models, setModels] = useState<string[]>([]);
@@ -46,11 +48,11 @@ export function SettingsDialog() {
         new Set([...models, ...custom.split(",").map((s) => s.trim()).filter(Boolean)]),
       );
       if (!all.length) {
-        setError("Selecione ao menos um model.");
+        setError(t("minOneModel"));
         return;
       }
       saveSettings({ geminiKey: trimmed, models: all });
-      toast.success("Configurações atualizadas!");
+      toast.success(t("updated"));
       setOpen(false);
     } finally {
       setLoading(false);
@@ -58,7 +60,7 @@ export function SettingsDialog() {
   }
 
   function handleClearKey() {
-    if (!window.confirm("Remover a chave Gemini e voltar ao onboarding? Seus dados locais são mantidos.")) return;
+    if (!window.confirm(t("confirmClear"))) return;
     clearSettings();
     setOnboarded(false);
     window.location.reload();
@@ -74,16 +76,16 @@ export function SettingsDialog() {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    toast.success("Backup exportado!");
+    toast.success(t("exported"));
   }
 
   async function handleImportFile(file: File) {
     try {
       importBackup(await file.text());
-      toast.success("Backup importado!");
+      toast.success(t("imported"));
       window.location.reload();
     } catch (e) {
-      toast.error("Backup inválido", { description: (e as Error).message.slice(0, 300) });
+      toast.error(t("invalidBackup"), { description: (e as Error).message.slice(0, 300) });
     } finally {
       if (fileRef.current) fileRef.current.value = "";
     }
@@ -94,12 +96,12 @@ export function SettingsDialog() {
   return (
     <>
       <Button variant="outline" onClick={handleOpen}>
-        <LuSettings /> Configurações
+        <LuSettings /> {t("open")}
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)}>
         <DialogHeader>
-          <DialogTitle>Configurações</DialogTitle>
-          <DialogDescription>Gerencie sua chave Gemini (armazenada no browser).</DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("desc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-3">
@@ -109,18 +111,18 @@ export function SettingsDialog() {
               rel="noopener"
               className="text-sm underline"
             >
-              Criar chave em aistudio.google.com/apikey
+              {t("createKeyLink")}
             </a>
             <input
               type="password"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              placeholder="GEMINI_API_KEY"
+              placeholder={t("keyPlaceholder")}
               className="w-full rounded border p-2 text-sm"
               disabled={loading}
             />
             <fieldset className="space-y-1">
-              <legend className="text-sm font-medium">Models (ordem de tentativa)</legend>
+              <legend className="text-sm font-medium">{t("modelsLegend")}</legend>
               {options.map((m) => (
                 <label key={m} className="flex items-center gap-2 text-sm">
                   <input
@@ -136,7 +138,7 @@ export function SettingsDialog() {
                 type="text"
                 value={custom}
                 onChange={(e) => setCustom(e.target.value)}
-                placeholder="Outros models, separados por vírgula"
+                placeholder={t("customPlaceholder")}
                 className="w-full rounded border p-2 text-sm"
                 disabled={loading}
               />
@@ -144,24 +146,24 @@ export function SettingsDialog() {
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <div className="flex flex-wrap justify-end gap-2">
               <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
-                Cancelar
+                {t("cancel")}
               </Button>
               <Button variant="outline" onClick={handleClearKey} disabled={loading}>
-                Remover chave
+                {t("clearKey")}
               </Button>
               <Button onClick={handleSave} disabled={loading || !key.trim()}>
-                {loading ? "Validando…" : "Salvar"}
+                {loading ? t("validating") : t("save")}
               </Button>
             </div>
           </div>
           <div className="space-y-2 border-t pt-3">
-            <p className="text-sm font-medium">Backup</p>
+            <p className="text-sm font-medium">{t("backup")}</p>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={handleExport}>
-                Exportar backup
+                {t("export")}
               </Button>
               <Button variant="outline" onClick={() => fileRef.current?.click()}>
-                Importar backup
+                {t("import")}
               </Button>
               <input
                 ref={fileRef}

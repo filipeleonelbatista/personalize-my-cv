@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useTranslations } from "next-intl";
 import { LuChevronLeft, LuChevronRight, LuTrendingUp } from "react-icons/lu";
 import { loadApps } from "@/lib/store";
-import { WEEKDAY_LABELS, bucketByWeekday, weekLabel, weekRange } from "@/lib/report";
+import { getLocale } from "@/lib/i18n/locale";
+import { bucketByWeekday, weekLabel, weekRange } from "@/lib/report";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
@@ -17,6 +19,16 @@ type ClientWeekStats = {
   avgPerDay: number;
 };
 
+const WEEKDAYS: Record<string, string[]> = {
+  "pt-BR": ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
+  "en-US": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  "es-ES": ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
+};
+
+function weekdayLabels(): string[] {
+  return WEEKDAYS[getLocale()] ?? WEEKDAYS["pt-BR"];
+}
+
 function computeWeekStats(offset: number): ClientWeekStats {
   const { start, end } = weekRange(new Date(), offset);
   const endExclusive = new Date(end);
@@ -27,16 +39,18 @@ function computeWeekStats(offset: number): ClientWeekStats {
   const counts = bucketByWeekday(dates);
   const total = dates.length;
   const best = counts.indexOf(Math.max(...counts));
+  const labels = weekdayLabels();
   return {
     label: weekLabel(start, end),
     total,
     counts,
-    bestDay: total ? WEEKDAY_LABELS[best] : "—",
+    bestDay: total ? labels[best] : "—",
     avgPerDay: Math.round((total / 7) * 10) / 10,
   };
 }
 
 export function ReportsSection() {
+  const t = useTranslations("Reports");
   const [offset, setOffset] = useState(0);
   const [stats, setStats] = useState<ClientWeekStats | null>(null);
 
@@ -49,17 +63,17 @@ export function ReportsSection() {
     return () => window.removeEventListener("storage", onStorage);
   }, [offset]);
 
-  const data = (stats?.counts ?? []).map((count, i) => ({ dia: WEEKDAY_LABELS[i], total: count }));
+  const data = (stats?.counts ?? []).map((count, i) => ({ dia: weekdayLabels()[i], total: count }));
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <Button variant="outline" size="sm" onClick={() => setOffset((o) => o - 1)}>
-          <LuChevronLeft /> Semana anterior
+          <LuChevronLeft /> {t("prevWeek")}
         </Button>
         <p className="text-sm font-medium">{stats ? stats.label : "…"}</p>
         <Button variant="outline" size="sm" disabled={offset >= 0} onClick={() => setOffset((o) => o + 1)}>
-          Próxima semana <LuChevronRight />
+          {t("nextWeek")} <LuChevronRight />
         </Button>
       </div>
 
@@ -73,7 +87,7 @@ export function ReportsSection() {
         <Card>
           <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
             <LuTrendingUp className="size-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Sem currículos gerados nesta semana.</p>
+            <p className="text-sm text-muted-foreground">{t("empty")}</p>
           </CardContent>
         </Card>
       ) : (
@@ -81,26 +95,26 @@ export function ReportsSection() {
           <div className="grid gap-4 sm:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardDescription>Total na semana</CardDescription>
+                <CardDescription>{t("totalWeek")}</CardDescription>
                 <CardTitle className="text-3xl">{stats.total}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader>
-                <CardDescription>Média por dia</CardDescription>
+                <CardDescription>{t("avgDay")}</CardDescription>
                 <CardTitle className="text-3xl">{stats.avgPerDay}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader>
-                <CardDescription>Melhor dia</CardDescription>
+                <CardDescription>{t("bestDay")}</CardDescription>
                 <CardTitle className="text-3xl">{stats.bestDay}</CardTitle>
               </CardHeader>
             </Card>
           </div>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Currículos por dia da semana</CardTitle>
+              <CardTitle className="text-base">{t("chartTitle")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-64 w-full">

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { BaseSetupDialog } from "./components/BaseSetupDialog";
 import { DashboardTabs } from "./components/DashboardTabs";
+import { HelpDialog } from "./components/HelpDialog";
+import { LocaleSelector } from "./components/LocaleSelector";
 import { Onboarding } from "./components/Onboarding";
 import { ThemeToggle } from "./components/theme-toggle";
 import type { BaseLang } from "@/lib/llm/prompts";
@@ -44,7 +46,11 @@ export default function Page() {
             <h1 className="text-2xl font-bold tracking-tight">Personalize My CV</h1>
             <p className="text-sm text-muted-foreground">{t("tagline")}</p>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <LocaleSelector />
+            <HelpDialog />
+            <ThemeToggle />
+          </div>
         </header>
         <Onboarding onDone={() => window.location.reload()} />
       </main>
@@ -64,7 +70,11 @@ export default function Page() {
             <p className="text-sm text-muted-foreground">{t("tagline")}</p>
           )}
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-1">
+          <LocaleSelector />
+          <HelpDialog />
+          <ThemeToggle />
+        </div>
       </header>
 
       {!base ? (

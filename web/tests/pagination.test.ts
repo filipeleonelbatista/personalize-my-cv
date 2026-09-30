@@ -22,7 +22,7 @@ describe("paginate", () => {
 describe("table pagination contract", () => {
   it("table has footer with page-size select", () => {
     const src = readFileSync("app/components/VacancyTable.tsx", "utf8");
-    expect(src).toContain("por página");
+    expect(src).toContain('t("perPage")');
     expect(src).toContain("setPageSize");
   });
 });
