@@ -120,4 +120,18 @@ describe("pdf pipeline", () => {
     );
     expect([...files.keys()].some((k) => k.includes("incoming-") && k.endsWith(".pdf"))).toBe(true);
   });
+  it("extraction waits for harness ready, with phase-specific timeout", async () => {
+    const wv = await import("../lib/webview-extract");
+    wv.__resetExtractorState();
+    expect(wv.isExtractorReady()).toBe(false);
+    const unregister = wv.registerExtractorHost(() => {});
+    try {
+      await expect(wv.extractCvTextFromUri("/x.pdf", "pt-BR", 30)).rejects.toThrow(/ainda carregando/);
+      wv.notifyExtractorReady();
+      expect(wv.isExtractorReady()).toBe(true);
+    } finally {
+      unregister();
+      wv.__resetExtractorState();
+    }
+  });
 });

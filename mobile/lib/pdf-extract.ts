@@ -8,6 +8,7 @@ import { buildBaseExtractSystem, buildRepairUser, type BaseLang } from "./llm/pr
 import { normalizeResume } from "./tailor";
 import { getLocale, tErr, type UiLocale } from "./i18n-locale";
 import { extractCvTextFromUri } from "./webview-extract";
+import { appendAiLog } from "./ai-log";
 
 export type PdfFile = { uri: string; name: string };
 
@@ -34,13 +35,21 @@ async function ensureLocalCopy(file: PdfFile, locale: UiLocale): Promise<string>
 }
 
 export async function createBaseFromFile(file: PdfFile, lang: BaseLang, locale: UiLocale = getLocale()): Promise<void> {
+  const started = Date.now();
   const localUri = await ensureLocalCopy(file, locale);
-  const text = await extractCvTextFromUri(localUri, locale);
+  try {
+    var text = await extractCvTextFromUri(localUri, locale);
+  } catch (e) {
+    const msg = (e as Error).message;
+    void appendAiLog({ label: "extract-pdf", provider: "", ms: Date.now() - started, ok: false, error: msg.slice(0, 300) });
+    throw e;
+  }
+  void appendAiLog({ label: "extract-pdf", provider: "", ms: Date.now() - started, ok: true });
   const settings = await loadSettings();
   const key = await getApiKey();
   if (!key) throw new Error(tErr(locale, "noKey"));
   const system = buildBaseExtractSystem(lang);
-  const { data } = await generateJson(system, text.slice(0, 12000), key, settings.models, locale);
+  const { data } = await generateJson(system, text.slice(0, 12000), key, settings.models, locale, "base");
   let resume;
   try {
     resume = normalizeResume(data);
@@ -51,6 +60,7 @@ export async function createBaseFromFile(file: PdfFile, lang: BaseLang, locale: 
       key,
       settings.models,
       locale,
+      "base-repair",
     );
     resume = normalizeResume(fixed);
   }

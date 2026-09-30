@@ -1,6 +1,7 @@
 // mobile/lib/llm/chain.ts
 import { chatJsonGemini, geminiModels } from "./gemini";
 import { getLocale, tErr, type UiLocale } from "../i18n-locale";
+import { appendAiLog } from "../ai-log";
 
 export type Provider = string;
 
@@ -10,13 +11,20 @@ export async function generateJson(
   key: string,
   models?: string[],
   locale: UiLocale = getLocale(),
+  label = "generate",
 ): Promise<{ data: unknown; provider: Provider }> {
   const errs: string[] = [];
   for (const model of geminiModels(models)) {
+    const started = Date.now();
     try {
-      return { data: await chatJsonGemini(system, user, key, model, locale), provider: `gemini:${model}` };
+      const data = await chatJsonGemini(system, user, key, model, locale);
+      const provider = `gemini:${model}`;
+      void appendAiLog({ label, provider, ms: Date.now() - started, ok: true });
+      return { data, provider };
     } catch (e) {
-      errs.push(`${model}: ${(e as Error).message}`);
+      const msg = (e as Error).message;
+      errs.push(`${model}: ${msg}`);
+      void appendAiLog({ label, provider: `gemini:${model}`, ms: Date.now() - started, ok: false, error: msg.slice(0, 300) });
     }
   }
   throw new Error(errs.join(" | "));

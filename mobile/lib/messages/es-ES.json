@@ -32,7 +32,8 @@
     "tailFail": "Las IAs fallaron. Vacante guardada como failed para reintentar. Detalle: {msg}",
     "retryFailDetail": "Reintento fallido. Detalle: {msg}",
     "permissionDenied": "Permiso denegado.",
-    "fileUnreadable": "No se pudo leer el PDF. Elige un archivo guardado en el dispositivo (Descargas/Archivos), no de la nube."
+    "fileUnreadable": "No se pudo leer el PDF. Elige un archivo guardado en el dispositivo (Descargas/Archivos), no de la nube.",
+    "extractNotReady": "Extractor de PDF aún cargando. Inténtalo de nuevo en un momento."
   },
   "Help": {
     "open": "Cómo usar la app",
@@ -221,5 +222,11 @@
     "pick": "Seleccionar PDF",
     "change": "Cambiar PDF",
     "remove": "Quitar archivo"
+  },
+  "AiLog": {
+    "title": "Logs de IA",
+    "desc": "Solicitudes recientes de generación y extracción.",
+    "empty": "Aún no hay solicitudes.",
+    "clear": "Limpiar"
   }
 }

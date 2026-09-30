@@ -32,7 +32,8 @@
     "tailFail": "The AIs failed. Job saved as failed for retry. Detail: {msg}",
     "retryFailDetail": "Retry failed. Detail: {msg}",
     "permissionDenied": "Permission denied.",
-    "fileUnreadable": "Could not read the PDF. Pick a file saved on the device (Downloads/Files), not from the cloud."
+    "fileUnreadable": "Could not read the PDF. Pick a file saved on the device (Downloads/Files), not from the cloud.",
+    "extractNotReady": "PDF extractor still loading. Try again in a moment."
   },
   "Help": {
     "open": "How to use the app",
@@ -221,5 +222,11 @@
     "pick": "Select PDF",
     "change": "Change PDF",
     "remove": "Remove file"
+  },
+  "AiLog": {
+    "title": "AI logs",
+    "desc": "Recent generation and extraction requests.",
+    "empty": "No requests yet.",
+    "clear": "Clear"
   }
 }

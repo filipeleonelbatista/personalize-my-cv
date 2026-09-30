@@ -5,6 +5,7 @@ import { AppIcon } from "./AppIcon";
 import { FormInput } from "./FormInput";
 import { useTranslations } from "../lib/i18n-provider";
 import { clearSettings, exportBackup, importBackup, loadSettings, saveSettings, setOnboarded } from "../lib/store";
+import { clearAiLog, loadAiLog, type AiLogEntry } from "../lib/ai-log";
 import { clearApiKey, getApiKey, setApiKey } from "../lib/secure-key";
 import { validateGeminiKey } from "../lib/llm/chain";
 import { DEFAULT_GEMINI_MODELS } from "../lib/llm/gemini";
@@ -13,12 +14,14 @@ import { toast, toastError } from "../lib/toast";
 
 export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
   const t = useTranslations("Settings");
+  const ta = useTranslations("AiLog");
   const [key, setKey] = useState("");
   const [models, setModels] = useState<string[]>([]);
   const [custom, setCustom] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [aiLog, setAiLog] = useState<AiLogEntry[]>([]);
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -34,6 +37,7 @@ export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
       setKey(k ?? "");
       setModels(s.models);
       setCustom(s.models.filter((m) => !DEFAULT_GEMINI_MODELS.includes(m)).join(", "));
+      setAiLog(await loadAiLog());
     })();
   }, []);
 
@@ -154,6 +158,35 @@ export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
         <Pressable onPress={handleImport} className="flex-1 rounded-xl border border-zinc-300 p-3">
           <Text className="text-center text-zinc-700 dark:text-zinc-300">{t("import")}</Text>
         </Pressable>
+      </View>
+      <View className="mt-2 gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{ta("title")}</Text>
+          <Pressable
+            onPress={() => {
+              void clearAiLog().then(() => setAiLog([]));
+            }}
+          >
+            <Text className="text-sm text-blue-600">{ta("clear")}</Text>
+          </Pressable>
+        </View>
+        <Text className="text-xs text-zinc-500">{ta("desc")}</Text>
+        {aiLog.length === 0 ? (
+          <Text className="text-sm text-zinc-500">{ta("empty")}</Text>
+        ) : (
+          aiLog.slice(0, 20).map((e) => (
+            <View key={e.id} className="rounded-lg bg-zinc-100 p-2 dark:bg-zinc-800">
+              <View className="flex-row items-center gap-1">
+                <AppIcon name={e.ok ? "check" : "close"} size={12} />
+                <Text className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                  {e.label} · {e.provider || "—"} · {e.ms}ms
+                </Text>
+              </View>
+              <Text className="text-[11px] text-zinc-500">{new Date(e.at).toLocaleString()}</Text>
+              {e.error ? <Text className="text-[11px] text-red-600">{e.error}</Text> : null}
+            </View>
+          ))
+        )}
       </View>
     </ScrollView>
   );

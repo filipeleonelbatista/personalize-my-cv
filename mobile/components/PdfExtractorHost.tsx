@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { Asset } from "expo-asset";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
-import { registerExtractorHost, resolveExtractorJob } from "../lib/webview-extract";
+import { registerExtractorHost, resolveExtractorJob, notifyExtractorReady } from "../lib/webview-extract";
 
 export function PdfExtractorHost() {
   const ref = useRef<WebView>(null);
@@ -25,7 +25,10 @@ export function PdfExtractorHost() {
   function onMessage(e: WebViewMessageEvent) {
     try {
       const m = JSON.parse(e.nativeEvent.data) as { id: number; ok: boolean; text?: string; error?: string; ready?: boolean };
-      if (m.ready) return;
+      if (m.ready) {
+        notifyExtractorReady();
+        return;
+      }
       resolveExtractorJob(m.id, m.ok, m.text, m.error);
     } catch {
       /* ignore malformed messages */

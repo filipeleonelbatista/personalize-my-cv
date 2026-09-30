@@ -32,7 +32,8 @@
     "tailFail": "As IAs falharam. Vaga salva como failed para retry. Detalhe: {msg}",
     "retryFailDetail": "Retry falhou. Detalhe: {msg}",
     "permissionDenied": "Permissão negada.",
-    "fileUnreadable": "Não foi possível ler o PDF. Escolha um arquivo salvo no aparelho (Downloads/Arquivos), não da nuvem."
+    "fileUnreadable": "Não foi possível ler o PDF. Escolha um arquivo salvo no aparelho (Downloads/Arquivos), não da nuvem.",
+    "extractNotReady": "Extrator de PDF ainda carregando. Tente de novo em instantes."
   },
   "Help": {
     "open": "Como usar o app",
@@ -221,5 +222,11 @@
     "pick": "Selecionar PDF",
     "change": "Trocar PDF",
     "remove": "Remover arquivo"
+  },
+  "AiLog": {
+    "title": "Logs de IA",
+    "desc": "Últimas requisições de geração e extração.",
+    "empty": "Nenhuma requisição ainda.",
+    "clear": "Limpar"
   }
 }

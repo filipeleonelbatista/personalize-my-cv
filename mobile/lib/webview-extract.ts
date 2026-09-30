@@ -9,12 +9,32 @@ type Pending = { resolve: (text: string) => void; reject: (e: Error) => void; ti
 const pending = new Map<number, Pending>();
 let seq = 0;
 let poster: ((js: string) => void) | null = null;
+let harnessReady = false;
 
 export function registerExtractorHost(poster_: (js: string) => void): () => void {
   poster = poster_;
   return () => {
-    if (poster === poster_) poster = null;
+    if (poster === poster_) {
+      poster = null;
+      harnessReady = false;
+    }
   };
+}
+
+/** Called by the host when the harness posts {ready:true}. */
+export function notifyExtractorReady(): void {
+  harnessReady = true;
+}
+
+export function isExtractorReady(): boolean {
+  return harnessReady;
+}
+
+/** Test-only reset for module state (ready flag + pending jobs). */
+export function __resetExtractorState(): void {
+  harnessReady = false;
+  for (const [, p] of pending) clearTimeout(p.timer);
+  pending.clear();
 }
 
 export function resolveExtractorJob(id: number, ok: boolean, text?: string, error?: string): void {
@@ -32,6 +52,18 @@ function escapeForJs(s: string): string {
 
 export async function extractCvTextFromUri(uri: string, locale: UiLocale = getLocale(), timeoutMs = 60_000): Promise<string> {
   if (!poster) throw new Error(tErr(locale, "extractUnavailable"));
+  if (!harnessReady) {
+    const becameReady = await new Promise<boolean>((resolve) => {
+      const t0 = Date.now();
+      const tick = () => {
+        if (harnessReady) resolve(true);
+        else if (Date.now() - t0 >= timeoutMs) resolve(false);
+        else setTimeout(tick, 250);
+      };
+      tick();
+    });
+    if (!becameReady) throw new Error(tErr(locale, "extractNotReady"));
+  }
   let b64: string;
   try {
     b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });

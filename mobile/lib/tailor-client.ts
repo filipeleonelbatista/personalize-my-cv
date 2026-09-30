@@ -38,14 +38,14 @@ export function newId(): string {
   return `pmcv-${Date.now().toString(36)}-${fallbackSeq.toString(36)}-${Math.floor(Math.random() * 0xffffffff).toString(36)}`;
 }
 
-async function generateEnvelope(jobText: string, lang: BaseLang, locale: UiLocale): Promise<TailorEnvelope> {
+async function generateEnvelope(jobText: string, lang: BaseLang, locale: UiLocale, label = "tailor"): Promise<TailorEnvelope> {
   const base = await loadBase();
   if (!base) throw new Error(tErr(locale, "noBase"));
   const settings = await loadSettings();
   const key = await getApiKey();
   if (!key) throw new Error(tErr(locale, "noKey"));
   const system = buildTailorSystem(lang);
-  const { data } = await generateJson(system, buildTailorUser(JSON.stringify(base.resume), jobText), key, settings.models, locale);
+  const { data } = await generateJson(system, buildTailorUser(JSON.stringify(base.resume), jobText), key, settings.models, locale, label);
   let env;
   try {
     env = normalizeEnvelope(data, lang, base.resume);
@@ -56,6 +56,7 @@ async function generateEnvelope(jobText: string, lang: BaseLang, locale: UiLocal
       key,
       settings.models,
       locale,
+      label,
     );
     env = normalizeEnvelope(fixed, lang, base.resume);
   }
@@ -90,7 +91,7 @@ export async function runTailorJob(jobText: string, lang: BaseLang, locale: UiLo
     throw new Error(tErr(locale, "jobShort"));
   }
   try {
-    const env = await generateEnvelope(jobText, lang, locale);
+    const env = await generateEnvelope(jobText, lang, locale, "tailor");
     const app: StoredApp = {
       ...env,
       id: newId(),
@@ -120,7 +121,7 @@ export async function retryStoredApp(
   const current = (await loadApps()).find((a) => a.id === id);
   if (!current) return { ok: false, error: tErr(locale, "notFound") };
   try {
-    const env = await generateEnvelope(current.jobText, current.lang, locale);
+    const env = await generateEnvelope(current.jobText, current.lang, locale, "retry");
     const app: StoredApp = {
       ...env,
       id: newId(),
