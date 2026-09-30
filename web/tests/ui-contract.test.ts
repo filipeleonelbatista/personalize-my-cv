@@ -162,4 +162,10 @@ describe("settings dialog (post-onboarding)", () => {
       expect(s, f).not.toMatch(/Currículos|Relatórios|Personalizar com IA|Baixar|Excluir|Configurações/);
     }
   });
+  it("splash + icons wired", () => {
+    expect(readFileSync("app/page.tsx", "utf8")).toContain("SplashScreen");
+    for (const f of ["public/icon-192.png", "public/icon-512.png", "public/maskable-512.png", "public/apple-touch-icon.png", "app/icon.svg"]) {
+      expect(existsSync(f), f).toBe(true);
+    }
+  });
 });

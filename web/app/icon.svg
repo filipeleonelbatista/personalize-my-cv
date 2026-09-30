@@ -1,0 +1,16 @@
+<!-- web/app/icon.svg — served as /icon.svg; adaptive via prefers-color-scheme -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <style>
+    .bg { fill: #ffffff; }
+    .fg { fill: #09090b; }
+    .accent { fill: #2563eb; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #09090b; }
+      .fg { fill: #fafafa; }
+    }
+  </style>
+  <rect class="bg" width="512" height="512" rx="112"/>
+  <text class="fg" x="256" y="270" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="150">PC</text>
+  <rect class="accent" x="156" y="320" width="200" height="24" rx="12"/>
+  <rect class="fg" x="186" y="360" width="140" height="14" rx="7" opacity="0.55"/>
+</svg>

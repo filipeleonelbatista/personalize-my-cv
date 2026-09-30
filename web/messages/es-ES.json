@@ -73,6 +73,7 @@
   },
   "Dashboard": { "resumes": "Currículums", "reports": "Informes" },
   "Theme": { "toggle": "Cambiar tema" },
+  "Splash": { "loading": "Cargando tus datos…" },
   "Dropzone": {
     "cta": "Arrastra el PDF aquí o haz clic para seleccionar",
     "onlyPdf": "Solo archivos .pdf",

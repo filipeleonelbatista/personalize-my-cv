@@ -7,6 +7,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Personalize My CV",
   description: "Gerador de currículos otimizados por vaga (MVP)",
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

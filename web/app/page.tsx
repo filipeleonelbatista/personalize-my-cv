@@ -11,7 +11,7 @@ import { ThemeToggle } from "./components/theme-toggle";
 import type { BaseLang } from "@/lib/llm/prompts";
 import type { Resume } from "@/lib/resume-schema";
 import { isOnboarded, loadApps, loadBase, loadSettings, setOnboarded, type StoredApp } from "@/lib/store";
-import Loading from "./loading";
+import { SplashScreen } from "./components/SplashScreen";
 
 export default function Page() {
   const t = useTranslations("Page");
@@ -21,6 +21,13 @@ export default function Page() {
   const [lang, setLang] = useState<BaseLang>("pt-BR");
 
   useEffect(() => {
+    let cancelled = false;
+    // Splash resolves with the store read + fonts; 400ms minimum avoids a
+    // flash on fast boots (standard practice, not a fake delay of work).
+    const ready = Promise.all([
+      document.fonts ? document.fonts.ready : Promise.resolve(),
+      new Promise((r) => setTimeout(r, 400)),
+    ]);
     function refreshFromStore() {
       const stored = loadBase();
       setBase(stored ? stored.resume : null);
@@ -30,13 +37,18 @@ export default function Page() {
       if (!isOnboarded() && loadSettings().geminiKey && stored) setOnboarded(true);
       setPhase(isOnboarded() ? "dashboard" : "onboarding");
     }
-    refreshFromStore();
+    void ready.then(() => {
+      if (!cancelled) refreshFromStore();
+    });
     // Cross-tab: outra aba pode concluir o onboarding ou mudar base/apps.
     window.addEventListener("storage", refreshFromStore);
-    return () => window.removeEventListener("storage", refreshFromStore);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("storage", refreshFromStore);
+    };
   }, []);
 
-  if (phase === "loading") return <Loading />;
+  if (phase === "loading") return <SplashScreen />;
 
   if (phase === "onboarding") {
     return (
