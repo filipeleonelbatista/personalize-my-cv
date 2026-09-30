@@ -2,8 +2,9 @@
 // PDF pick + CV language + base creation. Shared by OnboardingWizard
 // (step 3) and UpdateBaseSheet (settings) so both flows stay identical.
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useTranslations } from "../lib/i18n-provider";
+import { useStagedSteps } from "../lib/use-staged-steps";
 import { quotaMessage } from "../lib/store";
 import { getLocale } from "../lib/i18n-locale";
 import { createBaseFromFile, pickPdf, type PdfFile } from "../lib/pdf-extract";
@@ -38,6 +39,8 @@ export function BasePickStep({
   const [lang, setLang] = useState<BaseLang>("pt-BR");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const stages = [t("stage1"), t("stage2"), t("stage3")];
+  const stage = useStagedSteps(stages, loading);
 
   async function onPick() {
     const f = await pickPdf();
@@ -92,8 +95,9 @@ export function BasePickStep({
             <Text className="text-center text-zinc-700 dark:text-zinc-300">{tc("back")}</Text>
           </Pressable>
         ) : null}
-        <Pressable onPress={onCreateBase} disabled={loading || !file} className="flex-1 rounded-xl bg-blue-600 p-3">
-          <Text className="text-center font-bold text-white">{loading ? t("stage1") : submitLabel}</Text>
+        <Pressable onPress={onCreateBase} disabled={loading || !file} className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600 p-3">
+          {loading ? <ActivityIndicator size="small" color="#fff" /> : null}
+          <Text className="text-center font-bold text-white">{loading ? stages[stage] : submitLabel}</Text>
         </Pressable>
       </View>
     </View>

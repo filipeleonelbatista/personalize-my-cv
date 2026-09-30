@@ -1,8 +1,9 @@
 // mobile/components/GenerateSheet.tsx
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { FormInput } from "./FormInput";
 import { useTranslations } from "../lib/i18n-provider";
+import { useStagedSteps } from "../lib/use-staged-steps";
 import { runTailorJob } from "../lib/tailor-client";
 import { loadApps, quotaMessage } from "../lib/store";
 import { getLocale } from "../lib/i18n-locale";
@@ -20,6 +21,8 @@ export function GenerateSheet({ visible, onClose, onChanged }: { visible: boolea
   const [lang, setLang] = useState<BaseLang>("pt-BR");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const stages = [t("stage1"), t("stage2"), t("stage3")];
+  const stage = useStagedSteps(stages, loading, 8000);
 
   async function onGenerate() {
     if (!(await ensureOnline())) return;
@@ -75,9 +78,12 @@ export function GenerateSheet({ visible, onClose, onChanged }: { visible: boolea
           className="mb-2 min-h-[160px]"
         />
         {loading ? (
-          <Text className="mb-2 text-sm text-zinc-500">
-            {t("stage1")} {t("loadingNote")}
-          </Text>
+          <View className="mb-2 flex-row items-center gap-2">
+            <ActivityIndicator size="small" />
+            <Text className="text-sm text-zinc-500">
+              {stages[stage]} {t("loadingNote")}
+            </Text>
+          </View>
         ) : null}
         {error ? <Text className="mb-2 text-sm text-red-600">{error}</Text> : null}
         <View className="flex-row gap-2">

@@ -1,7 +1,8 @@
 // mobile/components/ThemeToggle.tsx
-import { Pressable, Text } from "react-native";
+import { Pressable } from "react-native";
 import { useTranslations } from "../lib/i18n-provider";
 import { useTheme } from "../lib/theme";
+import { AppIcon } from "./AppIcon";
 
 export function ThemeToggle() {
   const t = useTranslations("Theme");
@@ -12,7 +13,7 @@ export function ThemeToggle() {
       onPress={() => setScheme(resolved === "dark" ? "light" : "dark")}
       className="h-10 w-10 items-center justify-center rounded-full"
     >
-      <Text className="text-xl">{resolved === "dark" ? "☀️" : "🌙"}</Text>
+      <AppIcon name={resolved === "dark" ? "sun" : "moon"} size={22} />
     </Pressable>
   );
 }

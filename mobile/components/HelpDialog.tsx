@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Pressable, Text, View, ScrollView } from "react-native";
 import { useTranslations } from "../lib/i18n-provider";
+import { AppIcon } from "./AppIcon";
 import { ModalShell } from "./ModalShell";
 
 export function HelpDialog() {
@@ -14,7 +15,7 @@ export function HelpDialog() {
         onPress={() => setOpen(true)}
         className="h-10 w-10 items-center justify-center rounded-full"
       >
-        <Text className="text-xl">❓</Text>
+        <AppIcon name="help" size={22} />
       </Pressable>
       <ModalShell visible={open} onClose={() => setOpen(false)} title={t("title")}>
         <ScrollView>

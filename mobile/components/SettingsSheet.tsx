@@ -1,6 +1,7 @@
 // mobile/components/SettingsSheet.tsx — key, models, backup.
 import { useEffect, useRef, useState } from "react";
 import { Keyboard, Linking, Pressable, ScrollView, Text, View, Alert } from "react-native";
+import { AppIcon } from "./AppIcon";
 import { FormInput } from "./FormInput";
 import { useTranslations } from "../lib/i18n-provider";
 import { clearSettings, exportBackup, importBackup, loadSettings, saveSettings, setOnboarded } from "../lib/store";
@@ -124,7 +125,7 @@ export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
       <Text className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{t("modelsLegend")}</Text>
       {options.map((m) => (
         <Pressable key={m} onPress={() => toggleModel(m)} disabled={loading} className="flex-row items-center gap-2">
-          <Text className="text-lg">{models.includes(m) ? "☑️" : "⬜"}</Text>
+          <Text className="text-lg">{models.includes(m) ? <AppIcon name="check" size={20} /> : <AppIcon name="square" size={20} />}</Text>
           <Text className="text-sm text-zinc-700 dark:text-zinc-300">{m}</Text>
         </Pressable>
       ))}

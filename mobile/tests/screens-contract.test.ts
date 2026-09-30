@@ -85,4 +85,31 @@ describe("screens contract", () => {
     expect(s).toMatch(/scrollToEnd/);
     expect(s).toMatch(/keyboardShouldPersistTaps="handled"/);
   });
+  it("uses vector icons, never emoji", () => {
+    const files = [
+      "components/HelpDialog.tsx",
+      "components/ThemeToggle.tsx",
+      "components/SettingsSheet.tsx",
+      "components/SplashScreen.tsx",
+      "components/VacancyCard.tsx",
+      "components/DetailSheet.tsx",
+      "components/GenerateSheet.tsx",
+      "components/ReportsView.tsx",
+      "app/(tabs)/curriculos.tsx",
+      "app/(tabs)/_layout.tsx",
+    ];
+    for (const f of files) {
+      const s = readFileSync(f, "utf8");
+      expect(s, f).not.toMatch(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/u);
+    }
+    expect(readFileSync("components/AppIcon.tsx", "utf8")).toMatch(/Ionicons/);
+  });
+  it("loading states animate with staged steps", () => {
+    for (const f of ["components/GenerateSheet.tsx", "components/BasePickStep.tsx"]) {
+      const s = readFileSync(f, "utf8");
+      expect(s, f).toMatch(/ActivityIndicator/);
+      expect(s, f).toMatch(/useStagedSteps/);
+    }
+    expect(existsSync("lib/use-staged-steps.ts")).toBe(true);
+  });
 });

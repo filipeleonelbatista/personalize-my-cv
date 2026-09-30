@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "babel-preset-expo": "~57.0.0",
     "expo": "~57.0.26",
@@ -34,7 +35,9 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "@types/react-test-renderer": "^19.3.0",
     "pdfjs-dist": "^6.3.289",
+    "react-test-renderer": "^19.3.0",
     "sharp": "^0.35.5",
     "typescript": "~6.0.3",
     "vite": "^8.3.1",

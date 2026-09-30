@@ -2,6 +2,7 @@
 import { useCallback, useState } from "react";
 import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AppIcon } from "../../components/AppIcon";
 import { useFocusEffect, router } from "expo-router";
 import { useTranslations } from "../../lib/i18n-provider";
 import { loadApps, loadBase, type StoredApp } from "../../lib/store";
@@ -48,11 +49,12 @@ export default function CurriculosScreen() {
         subtitle={baseName && baseTitle ? t("baseLine", { nome: baseName, titulo: baseTitle }) : t("tagline")}
       />
       <View className="flex-row gap-2 px-4 pb-2">
-        <Pressable onPress={() => setGenerating(true)} className="flex-1 rounded-xl bg-blue-600 p-3">
-          <Text className="text-center font-bold text-white">✨ {tg("open")}</Text>
+        <Pressable onPress={() => setGenerating(true)} className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600 p-3">
+          <AppIcon name="sparkles" size={18} color="#fff" />
+          <Text className="text-center font-bold text-white">{tg("open")}</Text>
         </Pressable>
-        <Pressable onPress={() => router.push("/settings")} className="rounded-xl border border-zinc-300 p-3">
-          <Text>⚙️</Text>
+        <Pressable onPress={() => router.push("/settings")} className="items-center justify-center rounded-xl border border-zinc-300 p-3">
+          <AppIcon name="settings" size={20} />
         </Pressable>
       </View>
       {apps.length === 0 ? (
