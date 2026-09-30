@@ -31,7 +31,8 @@
     "shareUnavailable": "Compartir no está disponible en este dispositivo.",
     "tailFail": "Las IAs fallaron. Vacante guardada como failed para reintentar. Detalle: {msg}",
     "retryFailDetail": "Reintento fallido. Detalle: {msg}",
-    "permissionDenied": "Permiso denegado."
+    "permissionDenied": "Permiso denegado.",
+    "fileUnreadable": "No se pudo leer el PDF. Elige un archivo guardado en el dispositivo (Descargas/Archivos), no de la nube."
   },
   "Help": {
     "open": "Cómo usar la app",

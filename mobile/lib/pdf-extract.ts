@@ -1,5 +1,6 @@
 // mobile/lib/pdf-extract.ts
 import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
 import { loadSettings, saveBase, setOnboarded } from "./store";
 import { getApiKey } from "./secure-key";
 import { generateJson } from "./llm/chain";
@@ -17,6 +18,8 @@ export async function pickPdf(): Promise<PdfFile | null> {
 }
 
 export async function createBaseFromFile(file: PdfFile, lang: BaseLang, locale: UiLocale = getLocale()): Promise<void> {
+  const info = await FileSystem.getInfoAsync(file.uri);
+  if (!info.exists || (info.size ?? 0) === 0) throw new Error(tErr(locale, "fileUnreadable"));
   const text = await extractCvTextFromUri(file.uri, locale);
   const settings = await loadSettings();
   const key = await getApiKey();

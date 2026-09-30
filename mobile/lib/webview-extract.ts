@@ -32,7 +32,12 @@ function escapeForJs(s: string): string {
 
 export async function extractCvTextFromUri(uri: string, locale: UiLocale = getLocale(), timeoutMs = 60_000): Promise<string> {
   if (!poster) throw new Error(tErr(locale, "extractUnavailable"));
-  const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+  let b64: string;
+  try {
+    b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+  } catch {
+    throw new Error(tErr(locale, "fileUnreadable"));
+  }
   const id = ++seq;
   return new Promise<string>((resolve, reject) => {
     const timer = setTimeout(() => {

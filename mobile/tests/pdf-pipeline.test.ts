@@ -99,4 +99,12 @@ describe("pdf pipeline", () => {
     expect(s).toMatch(/overflow:\s*"hidden"/);
     expect(s).not.toMatch(/position:\s*"absolute"/);
   });
+  it("unreadable picked files fail with guidance, not raw IOException", async () => {
+    const fs = await import("./__mocks__/file-system");
+    (fs as unknown as { __getFiles: () => Map<string, string> }).__getFiles().clear();
+    const { createBaseFromFile } = await import("../lib/pdf-extract");
+    await expect(createBaseFromFile({ uri: "/missing.pdf", name: "cv.pdf" }, "pt-BR")).rejects.toThrow(
+      /Não foi possível ler/,
+    );
+  });
 });

@@ -31,7 +31,8 @@
     "shareUnavailable": "Compartilhamento indisponível neste aparelho.",
     "tailFail": "As IAs falharam. Vaga salva como failed para retry. Detalhe: {msg}",
     "retryFailDetail": "Retry falhou. Detalhe: {msg}",
-    "permissionDenied": "Permissão negada."
+    "permissionDenied": "Permissão negada.",
+    "fileUnreadable": "Não foi possível ler o PDF. Escolha um arquivo salvo no aparelho (Downloads/Arquivos), não da nuvem."
   },
   "Help": {
     "open": "Como usar o app",

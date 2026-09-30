@@ -2,6 +2,10 @@
 export const documentDirectory = "/mock-documents/";
 export const EncodingType = { Base64: "base64", UTF8: "utf8" };
 const files = new Map<string, string>();
+export async function getInfoAsync(uri: string): Promise<{ exists: boolean; size: number; uri: string }> {
+  const c = files.get(uri);
+  return { exists: c !== undefined, size: c?.length ?? 0, uri };
+}
 export async function readAsStringAsync(): Promise<string> {
   return "";
 }
