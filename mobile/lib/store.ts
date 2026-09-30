@@ -8,15 +8,16 @@ import * as SecureStore from "expo-secure-store";
 import { DEFAULT_LOCALE, type UiLocale } from "./i18n-config";
 import { tErr } from "./i18n-locale";
 import { getApiKey } from "./secure-key";
+import { ResumeSchema, TailorEnvelopeSchema } from "./resume-schema";
 
 export const StoredBaseSchema = z.object({
-  resume: z.unknown(),
+  resume: ResumeSchema,
   lang: z.enum(["pt-BR", "en", "es"]),
   updatedAt: z.string(),
 });
 export type StoredBase = z.infer<typeof StoredBaseSchema>;
 
-export const StoredAppSchema = z.object({
+export const StoredAppSchema = TailorEnvelopeSchema.extend({
   id: z.string().min(1),
   jobText: z.string(),
   fileName: z.string(),
@@ -24,7 +25,6 @@ export const StoredAppSchema = z.object({
   errorLog: z.string().default(""),
   lang: z.enum(["pt-BR", "en", "es"]).default("pt-BR"),
   createdAt: z.string(),
-  payload: z.unknown(),
 });
 export type StoredApp = z.infer<typeof StoredAppSchema>;
 

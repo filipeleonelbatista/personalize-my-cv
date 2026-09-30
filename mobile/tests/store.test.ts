@@ -1,33 +1,7 @@
 // mobile/tests/store.test.ts
-import { describe, expect, it, beforeEach, vi } from "vitest";
-
-vi.mock("@react-native-async-storage/async-storage", () => {
-  const mem = new Map<string, string>();
-  return {
-    default: {
-      getItem: async (k: string) => mem.get(k) ?? null,
-      setItem: async (k: string, v: string) => {
-        mem.set(k, v);
-      },
-      removeItem: async (k: string) => {
-        mem.delete(k);
-      },
-    },
-  };
-});
-
-vi.mock("expo-secure-store", () => {
-  const mem = new Map<string, string>();
-  return {
-    getItemAsync: async (k: string) => mem.get(k) ?? null,
-    setItemAsync: async (k: string, v: string) => {
-      mem.set(k, v);
-    },
-    deleteItemAsync: async (k: string) => {
-      mem.delete(k);
-    },
-  };
-});
+// Native modules (@react-native-async-storage/async-storage,
+// expo-secure-store) are aliased to in-memory mocks in vitest.config.ts.
+import { describe, expect, it, beforeEach } from "vitest";
 
 import { saveBase, loadBase } from "../lib/store";
 import { setApiKey, getApiKey } from "../lib/secure-key";
@@ -45,7 +19,7 @@ describe("mobile store", () => {
         cabecalho: {
           nome: "Ana",
           titulo_profissional: "Dev",
-          contatos: [{ tipo: "email", valor: "a@a.com", link: null }],
+          contatos: [{ tipo: "email" as const, valor: "a@a.com", link: null }],
         },
         secoes: {
           resumo: "X",
