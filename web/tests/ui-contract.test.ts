@@ -168,4 +168,14 @@ describe("settings dialog (post-onboarding)", () => {
       expect(existsSync(f), f).toBe(true);
     }
   });
+  it("all AI entry points guard offline before calling the API", () => {
+    for (const f of ["app/components/GenerateModal.tsx", "app/components/VacancyTable.tsx", "app/components/Onboarding.tsx", "app/components/BaseSetup.tsx"]) {
+      expect(readFileSync(f, "utf8"), f).toMatch(/navigator\.onLine/);
+    }
+  });
+  it("locale switch does not remount the app", () => {
+    const s = readFileSync("lib/i18n/provider.tsx", "utf8");
+    expect(s).not.toMatch(/key=\{locale\}/);
+    expect(s).toMatch(/useState<UiLocale>\(\(\) => loadLocale\(\)\)/);
+  });
 });

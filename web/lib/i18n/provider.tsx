@@ -16,8 +16,12 @@ const Ctx = createContext<{ locale: UiLocale; setLocale: (l: UiLocale) => void }
 export const useUiLocale = () => useContext(Ctx);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<UiLocale>(DEFAULT_LOCALE);
-  useEffect(() => setLocaleState(loadLocale()), []);
+  // Lazy init from storage: no pt-BR flash on boot, no remount on switch
+  // (next-intl re-renders via context; remounting on locale change would replay splash).
+  const [locale, setLocaleState] = useState<UiLocale>(() => loadLocale());
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
@@ -34,7 +38,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
   return (
     <Ctx.Provider value={{ locale, setLocale }}>
-      <NextIntlClientProvider locale={locale} messages={MESSAGES[locale]} key={locale}>
+      <NextIntlClientProvider locale={locale} messages={MESSAGES[locale]}>
         {children}
       </NextIntlClientProvider>
     </Ctx.Provider>
