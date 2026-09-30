@@ -11,6 +11,7 @@ export default defineConfig({
       { find: "expo-document-picker", replacement: path.resolve(__dirname, "tests/__mocks__/document-picker.ts") },
       { find: "expo-file-system", replacement: path.resolve(__dirname, "tests/__mocks__/file-system.ts") },
       { find: "expo-print", replacement: path.resolve(__dirname, "tests/__mocks__/print.ts") },
+      { find: "expo-media-library", replacement: path.resolve(__dirname, "tests/__mocks__/media-library.ts") },
       { find: "expo-sharing", replacement: path.resolve(__dirname, "tests/__mocks__/sharing.ts") },
     ],
   },

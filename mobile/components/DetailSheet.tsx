@@ -2,7 +2,7 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useTranslations } from "../lib/i18n-provider";
 import * as Clipboard from "expo-clipboard";
-import { shareResumePdf } from "../lib/pdf-share";
+import { shareResumePdf, downloadResumePdf } from "../lib/pdf-share";
 import { retryStoredApp } from "../lib/tailor-client";
 import { loadApps, saveApps, type StoredApp } from "../lib/store";
 import { ensureOnline } from "../lib/net";
@@ -21,6 +21,15 @@ export function DetailSheet({ app, onClose, onChanged }: { app: StoredApp; onClo
   async function onShare() {
     try {
       await shareResumePdf(app);
+    } catch (e) {
+      toastError(t("downloadFail"), e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function onDownload() {
+    try {
+      await downloadResumePdf(app);
+      toast(t("downloaded"));
     } catch (e) {
       toastError(t("downloadFail"), e instanceof Error ? e.message : String(e));
     }
@@ -63,8 +72,11 @@ export function DetailSheet({ app, onClose, onChanged }: { app: StoredApp; onClo
         {app.status === "done" ? (
           <View className="gap-3">
             <View className="flex-row gap-2">
-              <Pressable onPress={onShare} className="flex-1 rounded-xl bg-blue-600 p-3">
+              <Pressable onPress={onDownload} className="flex-1 rounded-xl bg-blue-600 p-3">
                 <Text className="text-center font-bold text-white">{t("download")}</Text>
+              </Pressable>
+              <Pressable onPress={onShare} className="flex-1 rounded-xl border border-zinc-300 p-3 dark:border-zinc-700">
+                <Text className="text-center text-zinc-700 dark:text-zinc-300">{t("share")}</Text>
               </Pressable>
               <Pressable onPress={onDelete} className="rounded-xl border border-red-300 p-3">
                 <Text className="text-center text-red-600">{tv("delete")}</Text>

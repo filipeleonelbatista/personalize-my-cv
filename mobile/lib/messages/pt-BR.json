@@ -30,7 +30,8 @@
     "extractTimeout": "Tempo esgotado ao ler o PDF.",
     "shareUnavailable": "Compartilhamento indisponível neste aparelho.",
     "tailFail": "As IAs falharam. Vaga salva como failed para retry. Detalhe: {msg}",
-    "retryFailDetail": "Retry falhou. Detalhe: {msg}"
+    "retryFailDetail": "Retry falhou. Detalhe: {msg}",
+    "permissionDenied": "Permissão negada."
   },
   "Help": {
     "open": "Como usar o app",
@@ -99,11 +100,12 @@
     "update": "Atualizar currículo",
     "updateTitle": "Atualizar currículo",
     "updateDesc": "A IA vai recatalogar seus dados a partir do novo PDF.",
-    "updated": "Currículo base atualizado!",
     "failUpdate": "Falha ao atualizar base",
     "openPdfFail": "Falha ao abrir PDF",
     "storageFull": "Armazenamento cheio",
-    "unknownFail": "Falha desconhecida."
+    "unknownFail": "Falha desconhecida.",
+    "updateSubmit": "Atualizar base",
+    "updateBaseBtn": "Atualizar currículo base"
   },
   "Dashboard": {
     "resumes": "Currículos",
@@ -176,7 +178,9 @@
     "chatShort": "Mensagem",
     "downloadFail": "Falha ao gerar PDF",
     "printFail": "Falha ao abrir PDF",
-    "done": "Pronto"
+    "done": "Pronto",
+    "downloaded": "PDF baixado!",
+    "share": "Compartilhar"
   },
   "Reports": {
     "prevWeek": "Semana anterior",

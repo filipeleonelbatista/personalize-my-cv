@@ -35,4 +35,19 @@ describe("screens contract", () => {
       expect(s, f).not.toMatch(/Currículos|Relatórios|Personalizar com IA|Baixar|Excluir|Configurações/);
     }
   });
+  it("settings offers base update reusing the pick step", () => {
+    expect(existsSync("components/UpdateBaseSheet.tsx")).toBe(true);
+    expect(existsSync("components/BasePickStep.tsx")).toBe(true);
+    const w = readFileSync("components/OnboardingWizard.tsx", "utf8");
+    expect(w).toContain("BasePickStep");
+    const s = readFileSync("app/settings.tsx", "utf8");
+    expect(s).toMatch(/UpdateBaseSheet/);
+  });
+  it("detail can download the PDF to the device library", () => {
+    const d = readFileSync("components/DetailSheet.tsx", "utf8");
+    expect(d).toMatch(/downloadResumePdf/);
+    const lib = readFileSync("lib/pdf-share.ts", "utf8");
+    expect(lib).toContain("downloadResumePdf");
+    expect(lib).toMatch(/MediaLibrary|media-library/);
+  });
 });

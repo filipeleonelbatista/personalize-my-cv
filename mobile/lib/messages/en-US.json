@@ -30,7 +30,8 @@
     "extractTimeout": "Timed out reading the PDF.",
     "shareUnavailable": "Sharing is unavailable on this device.",
     "tailFail": "The AIs failed. Job saved as failed for retry. Detail: {msg}",
-    "retryFailDetail": "Retry failed. Detail: {msg}"
+    "retryFailDetail": "Retry failed. Detail: {msg}",
+    "permissionDenied": "Permission denied."
   },
   "Help": {
     "open": "How to use the app",
@@ -99,11 +100,12 @@
     "update": "Update resume",
     "updateTitle": "Update resume",
     "updateDesc": "The AI will re-catalog your data from the new PDF.",
-    "updated": "Base resume updated!",
     "failUpdate": "Failed to update base",
     "openPdfFail": "Failed to open PDF",
     "storageFull": "Storage full",
-    "unknownFail": "Unknown failure."
+    "unknownFail": "Unknown failure.",
+    "updateSubmit": "Update base",
+    "updateBaseBtn": "Update base resume"
   },
   "Dashboard": {
     "resumes": "Resumes",
@@ -176,7 +178,9 @@
     "chatShort": "Message",
     "downloadFail": "Failed to generate PDF",
     "printFail": "Failed to open PDF",
-    "done": "Ready"
+    "done": "Ready",
+    "downloaded": "PDF downloaded!",
+    "share": "Share"
   },
   "Reports": {
     "prevWeek": "Previous week",

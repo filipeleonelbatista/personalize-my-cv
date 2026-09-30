@@ -5,6 +5,8 @@ dados, gera versões por vaga (PDF + match + email + mensagem) e organiza o
 histórico com relatórios. Sem backend: cada app guarda tudo localmente com
 a sua própria chave Gemini (BYOK).
 
+> Visão dos dois projetos, decisão de separação e paridade: ver [`PROJECT.md`](./PROJECT.md).
+
 ## Projetos
 
 | Pasta | O quê | Tech |
@@ -69,7 +71,7 @@ O link de download do APK aparece no final + no dashboard EAS
 
 ## Paridade web × mobile
 
-Onboarding 3 passos, gate chave+base, splash, lista com ver/baixar(receber via share)/retry/excluir, gerar por vaga com idioma próprio, relatórios semanais, settings (chave, models, backup), ajuda 4 passos, i18n total da UI (idioma do CV independente), tema claro/escuro, guarda offline. Conceitos web sem equivalente mobile: PWA/service worker, SEO/sitemap.
+Onboarding 3 passos, gate chave+base, splash, lista com ver/baixar/retry/excluir, gerar por vaga com idioma próprio, atualizar base (menu da base no web, Configurações no mobile), relatórios semanais, settings (chave, models, backup), ajuda 4 passos, i18n total da UI (idioma do CV independente), tema claro/escuro, guarda offline. A lista mobile é contínua (sem paginação); o download mobile salva na biblioteca do aparelho (MediaLibrary). Conceitos web sem equivalente mobile: PWA/service worker, SEO/sitemap.
 
 ## Avisos
 

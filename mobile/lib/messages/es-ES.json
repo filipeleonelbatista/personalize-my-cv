@@ -30,7 +30,8 @@
     "extractTimeout": "Tiempo agotado al leer el PDF.",
     "shareUnavailable": "Compartir no está disponible en este dispositivo.",
     "tailFail": "Las IAs fallaron. Vacante guardada como failed para reintentar. Detalle: {msg}",
-    "retryFailDetail": "Reintento fallido. Detalle: {msg}"
+    "retryFailDetail": "Reintento fallido. Detalle: {msg}",
+    "permissionDenied": "Permiso denegado."
   },
   "Help": {
     "open": "Cómo usar la app",
@@ -99,11 +100,12 @@
     "update": "Actualizar currículum",
     "updateTitle": "Actualizar currículum",
     "updateDesc": "La IA recatalogará tus datos desde el nuevo PDF.",
-    "updated": "¡CV base actualizado!",
     "failUpdate": "No se pudo actualizar la base",
     "openPdfFail": "No se pudo abrir el PDF",
     "storageFull": "Almacenamiento lleno",
-    "unknownFail": "Fallo desconocido."
+    "unknownFail": "Fallo desconocido.",
+    "updateSubmit": "Actualizar base",
+    "updateBaseBtn": "Actualizar CV base"
   },
   "Dashboard": {
     "resumes": "Currículums",
@@ -176,7 +178,9 @@
     "chatShort": "Mensaje",
     "downloadFail": "No se pudo generar el PDF",
     "printFail": "No se pudo abrir el PDF",
-    "done": "Listo"
+    "done": "Listo",
+    "downloaded": "¡PDF descargado!",
+    "share": "Compartir"
   },
   "Reports": {
     "prevWeek": "Semana anterior",
