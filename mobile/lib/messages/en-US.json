@@ -1,0 +1,53 @@
+{
+  "Common": {
+    "back": "Go back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "retry": "Try again",
+    "loading": "Loading…"
+  },
+  "Locale": {
+    "label": "Language",
+    "aria": "Change language"
+  },
+  "Errors": {
+    "noKey": "Set your Gemini key in onboarding.",
+    "invalidKey": "Invalid Gemini key (401/403). Check https://aistudio.google.com/apikey",
+    "emptyResponse": "gemini: empty AI response.",
+    "validateFailed": "Validation failed: {status}",
+    "pasteKey": "Paste a key.",
+    "noBase": "Register your base resume first.",
+    "jobShort": "Paste the job text (min. 20 characters).",
+    "notFound": "Record not found.",
+    "unknownFail": "Unknown failure.",
+    "invalidPdf": "Send a PDF file.",
+    "emptyPdf": "Invalid or empty PDF.",
+    "unscannedPdf": "PDF has no selectable text — send a text PDF, not a scan.",
+    "quota": "Storage full — export a backup and delete old items.",
+    "offline": "Offline — the AI needs internet. Try again online.",
+    "tailFail": "The AIs failed. Job saved as failed for retry. Detail: {msg}",
+    "retryFailDetail": "Retry failed. Detail: {msg}"
+  },
+  "Help": {
+    "open": "How to use the app",
+    "title": "How to use",
+    "desc": "From zero to tailored CV in 4 steps.",
+    "s1t": "1. Connect your Gemini key",
+    "s1d": "Create a free key at aistudio.google.com/apikey and paste it in onboarding or Settings. It stays in your browser only.",
+    "s2t": "2. Register the base resume",
+    "s2d": "Upload your PDF resume with selectable text. The AI catalogs everything into JSON.",
+    "s3t": "3. Generate per job",
+    "s3d": "Paste the job text and generate: match, strengths/weaknesses, email and message. Failed? Use retry.",
+    "s4t": "4. Backup and language",
+    "s4d": "Export a backup in Settings. Switch the UI language in the top selector — the CV language is chosen per generation."
+  },
+  "Splash": {
+    "loading": "Loading your data…"
+  },
+  "Offline": {
+    "title": "You're offline",
+    "desc": "The app opens without internet, but generating resumes needs a Gemini API connection.",
+    "retry": "Try again"
+  }
+}

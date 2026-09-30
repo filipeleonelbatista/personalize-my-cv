@@ -1,0 +1,53 @@
+{
+  "Common": {
+    "back": "Volver",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "retry": "Reintentar",
+    "loading": "Cargando…"
+  },
+  "Locale": {
+    "label": "Idioma",
+    "aria": "Cambiar idioma"
+  },
+  "Errors": {
+    "noKey": "Configura tu clave de Gemini en el onboarding.",
+    "invalidKey": "Clave de Gemini inválida (401/403). Revisa https://aistudio.google.com/apikey",
+    "emptyResponse": "gemini: respuesta vacía de la IA.",
+    "validateFailed": "Validación fallida: {status}",
+    "pasteKey": "Pega una clave.",
+    "noBase": "Registra tu CV base primero.",
+    "jobShort": "Pega el texto de la vacante (mín. 20 caracteres).",
+    "notFound": "Registro no encontrado.",
+    "unknownFail": "Fallo desconocido.",
+    "invalidPdf": "Envía un archivo PDF.",
+    "emptyPdf": "PDF inválido o vacío.",
+    "unscannedPdf": "El PDF no tiene texto seleccionable — envía un PDF con texto, no escaneado.",
+    "quota": "Almacenamiento lleno — exporta una copia y borra elementos antiguos.",
+    "offline": "Sin conexión — la IA necesita internet. Inténtalo en línea.",
+    "tailFail": "Las IAs fallaron. Vacante guardada como failed para reintentar. Detalle: {msg}",
+    "retryFailDetail": "Reintento fallido. Detalle: {msg}"
+  },
+  "Help": {
+    "open": "Cómo usar la app",
+    "title": "Cómo usar",
+    "desc": "De cero al CV a medida en 4 pasos.",
+    "s1t": "1. Conecta tu clave de Gemini",
+    "s1d": "Crea una clave gratuita en aistudio.google.com/apikey y pégala en el onboarding o en Ajustes. Queda solo en tu navegador.",
+    "s2t": "2. Registra el CV base",
+    "s2d": "Sube tu CV en PDF con texto seleccionable. La IA lo cataloga todo en JSON.",
+    "s3t": "3. Genera por vacante",
+    "s3d": "Pega el texto de la vacante y genera: match, fortalezas/debilidades, email y mensaje. ¿Falló? Usa reintentar.",
+    "s4t": "4. Copia e idioma",
+    "s4d": "Exporta una copia en Ajustes. Cambia el idioma de la interfaz en el selector superior — el idioma del CV se elige en cada generación."
+  },
+  "Splash": {
+    "loading": "Cargando tus datos…"
+  },
+  "Offline": {
+    "title": "Sin conexión",
+    "desc": "La app abre sin internet, pero generar currículums necesita conexión con la API de Gemini.",
+    "retry": "Reintentar"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "Common": {
+    "back": "Voltar",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "close": "Fechar",
+    "retry": "Tentar novamente",
+    "loading": "Carregando…"
+  },
+  "Locale": {
+    "label": "Idioma",
+    "aria": "Trocar idioma"
+  },
+  "Errors": {
+    "noKey": "Configure a chave Gemini no onboarding.",
+    "invalidKey": "Chave Gemini inválida (401/403). Confira em https://aistudio.google.com/apikey",
+    "emptyResponse": "gemini: resposta vazia da IA.",
+    "validateFailed": "Falha ao validar: {status}",
+    "pasteKey": "Cole uma chave.",
+    "noBase": "Cadastre o currículo base primeiro.",
+    "jobShort": "Cole o texto da vaga (mín. 20 caracteres).",
+    "notFound": "Registro não encontrado.",
+    "unknownFail": "Falha desconhecida.",
+    "invalidPdf": "Envie um arquivo PDF.",
+    "emptyPdf": "PDF inválido ou vazio.",
+    "unscannedPdf": "PDF sem texto selecionável — envie um PDF com texto, não escaneado.",
+    "quota": "Armazenamento cheio — exporte o backup e limpe itens antigos.",
+    "offline": "Sem conexão — a IA precisa de internet. Tente de novo online.",
+    "tailFail": "As IAs falharam. Vaga salva como failed para retry. Detalhe: {msg}",
+    "retryFailDetail": "Retry falhou. Detalhe: {msg}"
+  },
+  "Help": {
+    "open": "Como usar o app",
+    "title": "Como usar",
+    "desc": "Do zero ao CV sob medida em 4 passos.",
+    "s1t": "1. Conecte sua chave Gemini",
+    "s1d": "Crie uma chave gratuita em aistudio.google.com/apikey e cole no onboarding ou em Configurações. Ela fica só no seu browser.",
+    "s2t": "2. Cadastre o currículo base",
+    "s2d": "Envie seu CV em PDF com texto selecionável. A IA cataloga tudo em JSON.",
+    "s3t": "3. Gere por vaga",
+    "s3d": "Cole o texto da vaga e gere: match, pontos fortes/fracos, email e mensagem. Falhou? Use o retry.",
+    "s4t": "4. Backup e idioma",
+    "s4d": "Exporte o backup em Configurações. Troque o idioma da interface no seletor do topo — o idioma do CV é escolhido a cada geração."
+  },
+  "Splash": {
+    "loading": "Carregando seus dados…"
+  },
+  "Offline": {
+    "title": "Você está offline",
+    "desc": "O app abre sem internet, mas gerar currículos precisa de conexão com a API Gemini.",
+    "retry": "Tentar de novo"
+  }
+}
