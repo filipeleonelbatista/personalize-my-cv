@@ -32,6 +32,13 @@
           "backgroundColor": "#09090b"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "eb3e4cce-cb26-4a4a-aad7-0eb3a7d28470"
+      }
+    },
+    "owner": "filipeleonelbatista"
   }
 }
