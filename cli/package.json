@@ -1,7 +1,8 @@
 {
   "name": "personalize-my-cv-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "bin": {
     "personalize-cv": "./dist/src/index.js"
