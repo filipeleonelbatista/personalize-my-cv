@@ -4,8 +4,12 @@ import { readFileSync, existsSync } from "node:fs";
 describe("app config", () => {
   it("android package, version and icons configured", () => {
     const app = JSON.parse(readFileSync("app.json", "utf8")).expo;
+    const pkg = JSON.parse(readFileSync("package.json", "utf8"));
     expect(app.android.package).toBe("com.pmcv.app");
-    expect(app.version).toBe("1.0.0");
+    // Semver + sincronizado com package.json (o hook pre-commit dá bump; nunca pinar valor fixo)
+    expect(app.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(app.version).toBe(pkg.version);
+    expect(app.android.versionCode).toEqual(expect.any(Number));
     expect(app.scheme).toMatch(/^[a-z][a-z0-9.+-]*$/);
     for (const f of ["assets/icon.png", "assets/adaptive-icon.png", "assets/splash.png"]) {
       expect(existsSync(f), f).toBe(true);
