@@ -1,44 +1,51 @@
 // mobile/assets/pdfjs/extract.template.html
 // Template for the vendored single-file harness. scripts/vendor-pdfjs.mjs
-// inlines pdf.min.mjs + worker below. Placeholders: /*__PDFJS__*/ /*__WORKER__*/
+// base64-encodes pdf.min.mjs into the B64 slot (raw inline would break on
+// backticks/${} and ESM exports bind to nothing when inlined).
+// Slots: B64 payload + worker block (see vendor script).
 <!doctype html>
 <html>
   <head><meta charset="utf-8" /></head>
   <body>
     <script type="module">
-      /*__PDFJS__*/
-      const workerCode = `/*__WORKER__*/`;
-      pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
-        new Blob([workerCode], { type: "text/javascript" }),
-      );
-
-      function b64ToBytes(b64) {
-        const bin = atob(b64);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        return bytes;
+      function report(id, ok, text, error) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ id, ok, text, error }));
       }
+      try {
+        const pdfBytes = Uint8Array.from(atob("__PDFJS_B64__"), (c) => c.charCodeAt(0));
+        const pdfText = new TextDecoder().decode(pdfBytes);
+        const pdfjsLib = await import(URL.createObjectURL(new Blob([pdfText], { type: "text/javascript" })));
+        const workerCode = `/*__WORKER__*/`;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+          new Blob([workerCode], { type: "text/javascript" }),
+        );
 
-      window.__extract = async function (dataB64, jobId) {
-        try {
-          const doc = await pdfjsLib.getDocument({ data: b64ToBytes(dataB64) }).promise;
-          let out = "";
-          for (let i = 1; i <= doc.numPages; i++) {
-            const page = await doc.getPage(i);
-            const tc = await page.getTextContent();
-            out += tc.items.map((it) => it.str || "").join(" ") + "\n";
+        window.__extract = async function (dataB64, jobId) {
+          try {
+            const bin = atob(dataB64);
+            const data = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i);
+            const doc = await pdfjsLib.getDocument({ data }).promise;
+            let out = "";
+            for (let i = 1; i <= doc.numPages; i++) {
+              const page = await doc.getPage(i);
+              const tc = await page.getTextContent();
+              out += tc.items.map((it) => it.str || "").join(" ") + "\n";
+            }
+            await doc.destroy();
+            const text = out.trim();
+            if (!text) throw new Error("EMPTY_TEXT");
+            report(jobId, true, text);
+          } catch (e) {
+            report(jobId, false, undefined, String((e && e.message) || e));
           }
-          await doc.destroy();
-          const text = out.trim();
-          if (!text) throw new Error("EMPTY_TEXT");
-          window.ReactNativeWebView.postMessage(JSON.stringify({ id: jobId, ok: true, text }));
-        } catch (e) {
-          window.ReactNativeWebView.postMessage(
-            JSON.stringify({ id: jobId, ok: false, error: String((e && e.message) || e) }),
-          );
-        }
-      };
-      window.ReactNativeWebView.postMessage(JSON.stringify({ id: 0, ok: true, ready: true }));
+        };
+        window.ReactNativeWebView.postMessage(JSON.stringify({ id: 0, ok: true, ready: true }));
+      } catch (e) {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({ id: 0, ok: false, bootError: String((e && e.message) || e) }),
+        );
+      }
     </script>
   </body>
 </html>

@@ -58,6 +58,13 @@ describe("pdf pipeline", () => {
       expect(existsSync(f), f).toBe(true);
     }
   });
+  it("harness binds the pdf.js namespace (no dangling global)", () => {
+    const html = readFileSync("assets/pdfjs/extract.html", "utf8");
+    expect(html).toMatch(/await import\(URL\.createObjectURL/);
+    expect(html).toMatch(/const pdfjsLib = await import/);
+    expect(html).not.toContain("__PDFJS_B64__");
+    expect(html).toContain("window.__extract");
+  });
   it("pdf-share never statically imports media-library (route must load without it)", () => {
     const s = readFileSync("lib/pdf-share.ts", "utf8");
     expect(s).not.toContain('from "expo-media-library"');

@@ -50,10 +50,23 @@ export function PdfExtractorHost() {
 
   function onMessage(e: WebViewMessageEvent) {
     try {
-      const m = JSON.parse(e.nativeEvent.data) as { id: number; ok: boolean; text?: string; error?: string; ready?: boolean };
+      const m = JSON.parse(e.nativeEvent.data) as {
+        id: number;
+        ok: boolean;
+        text?: string;
+        error?: string;
+        ready?: boolean;
+        bootError?: string;
+      };
       if (m.ready) {
         log("harness ready");
         notifyExtractorReady();
+        return;
+      }
+      if (m.id === 0 && (m.bootError || m.ok === false)) {
+        const msg = `Falha ao iniciar o extrator de PDF: ${m.bootError || m.error || "desconhecida"}`;
+        log(msg);
+        notifyExtractorFailed(msg);
         return;
       }
       resolveExtractorJob(m.id, m.ok, m.text, m.error);
