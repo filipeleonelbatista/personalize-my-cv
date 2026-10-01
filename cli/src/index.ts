@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { confirm, editor, input, password, select } from "@inquirer/prompts";
 import { copyFileSync } from "node:fs";
 import { loadApps, loadBase, loadConfig, saveApps, saveConfig, isQuotaError } from "./lib/store.js";
+import { createRequire } from "node:module";
 import { parseLocale, t, type UiLocale } from "./lib/i18n.js";
 import { parseBaseLang } from "./lib/prompts.js";
 import { retryStoredApp } from "./lib/tailor.js";
@@ -12,6 +13,20 @@ import { generateForJob } from "./commands/generate.js";
 import { formatTable } from "./commands/list.js";
 import { formatAnalysis } from "./commands/show.js";
 import { renderReport } from "./commands/report.js";
+
+const _require = createRequire(import.meta.url);
+function loadPkgVersion(): string {
+  for (const p of ["../package.json", "../../package.json"]) {
+    try {
+      return (_require(p) as { version: string }).version;
+    } catch {
+      continue;
+    }
+  }
+  throw new Error("Cannot find cli/package.json");
+}
+
+export const CLI_VERSION: string = loadPkgVersion();
 
 export function helpText(locale: UiLocale): string {
   const L = [
@@ -23,6 +38,7 @@ export function helpText(locale: UiLocale): string {
     `  personalize-cv --show <id>           — ${t(locale, "Vacancy.view")}`,
     `  personalize-cv --report [--week -1]  — ${t(locale, "Dashboard.reports")}`,
     `  personalize-cv --help                — ${t(locale, "Help.title")}`,
+    `  personalize-cv --version              — ${CLI_VERSION}`,
     "",
     `  --locale pt-BR|en-US|es-ES   (${t(locale, "Locale.label")})`,
     `  --cv-lang pt-BR|en|es        (${t(locale, "Onboarding.cvLang")})`,
@@ -100,6 +116,7 @@ async function listFlow(locale: UiLocale, out: string | undefined): Promise<void
 const program = new Command();
 program
   .name("personalize-cv")
+  .version(CLI_VERSION)
   .allowUnknownOption(false)
   .option("--locale <l>")
   .option("--cv-lang <l>")

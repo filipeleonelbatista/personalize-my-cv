@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useTranslations } from "../lib/i18n-provider";
+import { APP_VERSION, ANDROID_VERSION_CODE } from "../lib/version";
 import { Header } from "../components/Header";
 import { SettingsSheet } from "../components/SettingsSheet";
 import { UpdateBaseSheet } from "../components/UpdateBaseSheet";
@@ -17,6 +18,7 @@ import { UpdateBaseSheet } from "../components/UpdateBaseSheet";
 export default function SettingsScreen() {
   const t = useTranslations("Page");
   const tb = useTranslations("Base");
+  const tc = useTranslations("Common");
   const [updating, setUpdating] = useState(false);
   return (
     <SafeAreaView
@@ -45,6 +47,11 @@ export default function SettingsScreen() {
         onClose={() => setUpdating(false)}
         onChanged={() => {}}
       />
+      <View className="items-center px-4 py-3">
+        <Text className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+          {tc("version", { v: `${APP_VERSION} (${ANDROID_VERSION_CODE})` })}
+        </Text>
+      </View>
     </SafeAreaView>
   );
 }

@@ -26,6 +26,7 @@ personalize-cv --list                 # tabela + selecionar: ver análise / baix
 personalize-cv --show <id> [--out f.pdf]
 personalize-cv --report [--week -1]   # progresso semanal (total, média/dia, melhor dia, barras)
 personalize-cv --help
+personalize-cv --version
 personalize-cv --locale en-US --cv-lang en --out ./cv.pdf
 ```
 

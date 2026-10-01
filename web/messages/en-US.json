@@ -1,5 +1,5 @@
 {
-  "Common": { "back": "Go back", "cancel": "Cancel", "save": "Save", "close": "Close", "retry": "Try again", "loading": "Loading…" },
+  "Common": { "back": "Go back", "cancel": "Cancel", "save": "Save", "close": "Close", "retry": "Try again", "loading": "Loading…", "developedBy": "Built by", "appVersion": "Version {v}", "privacy": "Privacy", "terms": "Terms of use" },
   "Locale": { "label": "Language", "aria": "Change language" },
   "Errors": {
     "noKey": "Set your Gemini key in onboarding.",
@@ -49,7 +49,13 @@
     "createBtn": "Create base resume",
     "baseCreated": "Base resume created!",
     "storageFull": "Storage full",
-    "unknownFail": "Unknown failure."
+    "unknownFail": "Unknown failure.",
+ "stepName1": "Welcome",
+ "stepName2": "Gemini key",
+ "stepName3": "Base resume",
+ "successTitle": "Base resume ready!",
+ "successDesc": "Your base was cataloged by AI. Now paste your first job posting and generate a tailored CV.",
+ "goBtn": "Start using"
   },
   "Base": {
     "title": "Create base resume",
@@ -182,7 +188,11 @@
     "import": "Import backup",
     "exported": "Backup exported!",
     "imported": "Backup imported!",
-    "invalidBackup": "Invalid backup"
+    "invalidBackup": "Invalid backup",
+    "wipeAll": "Delete everything",
+    "wipeTitle": "Delete all data?",
+    "wipeDesc": "This is irreversible: base resume, applications, key, language, theme and consent will be removed from this browser.",
+    "wipeConfirm": "Delete everything"
   },
   "Help": {
     "open": "How to use the app",
@@ -196,5 +206,45 @@
     "s3d": "Paste the job text and generate: match, strengths/weaknesses, email and message. Failed? Use retry.",
     "s4t": "4. Backup and language",
     "s4d": "Export a backup in Settings. Switch the UI language in the top selector — the CV language is chosen per generation."
+  },
+  "Cookie": {
+    "message": "We only use local storage in your browser (no first-party cookies). Google Fonts and the Gemini API (with your key) load from third parties.", 
+    "accept": "Accept", 
+    "decline": "Decline", 
+    "learnMore": "Learn more"
+  },
+  "Privacy": {
+    "title": "Privacy Policy", 
+    "updated": "Updated October 2026.", 
+    "back": "Back", 
+    "s1h": "1. Your data stays in your browser", 
+    "s1b": "Personalize My CV has no server and no database. Your base resume, generated applications and settings live only in your browser''s localStorage, under pmcv:* keys. Nothing is sent to our servers — because there are none.", 
+    "s2h": "2. Cookies", 
+    "s2b": "We use no first-party cookies and no trackers. The cookie notice exists for transparency: we only store your consent choice (pmcv:consent) and preferences (language, theme) in local storage.", 
+    "s3h": "3. Third-party services", 
+    "s3b": "Two external connections happen straight from your browser: Google Fonts (loads the Roboto font) and the Google Gemini API (generativelanguage.googleapis.com), called with YOUR key to generate resumes. Google''s privacy policies apply.", 
+    "s4h": "4. Your Gemini key", 
+    "s4b": "The key is yours and stays obfuscated in the browser (secure-ls — not a vault). Use a key with quota limits, never share it, and revoke it at https://aistudio.google.com/apikey if you think it leaked.", 
+    "s5h": "5. Your rights", 
+    "s5b": "Access, correction, portability and deletion are all in your hands. Export a backup in Settings for portability; delete applications, clear the base or remove the key for deletion. Legal basis: your consent.", 
+    "s6h": "6. Contact", 
+    "s6b": "Privacy questions? Reach filipeleonelbatista via LinkedIn in the footer. This policy may change; the date at the top marks the current version."
+  },
+  "Terms": {
+    "title": "Terms of Use", 
+    "updated": "Updated October 2026.", 
+    "back": "Back", 
+    "s1h": "1. What it is", 
+    "s1b": "An AI resume tailor, 100% static and free. You register your base CV as PDF and generate optimized versions per job (PDF, match score, email and message). No account, no server: everything in your browser.", 
+    "s2h": "2. Free, forever open", 
+    "s2b": "This project is licensed under AGPL-3.0-only: you may use, study, modify and distribute it, as long as derivative works stay free and open under the same license.", 
+    "s3h": "3. Your key, your responsibility", 
+    "s3b": "The Gemini key is personal. Google API usage costs are yours; set quotas and never use someone else''s key without permission.", 
+    "s4h": "4. No warranties", 
+    "s4b": "AI can make mistakes (dates, translations, scores). Review every resume before sending it to recruiters. The app is provided as is, without warranties of any kind.", 
+    "s5h": "5. Acceptable use", 
+    "s5b": "Don''t use the app to bypass Google API limits, spam recruiters or generate unlawful content. Respect Google''s terms of use.", 
+    "s6h": "6. Contact and changes", 
+    "s6b": "Contact channel via LinkedIn in the footer. We may update these terms; continued use after changes means agreement."
   }
 }

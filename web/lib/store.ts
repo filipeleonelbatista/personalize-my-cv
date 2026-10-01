@@ -65,5 +65,27 @@ export function importBackup(json: string): void {
   if (parsed.base) saveBase(parsed.base); localStorage.setItem("pmcv:apps", JSON.stringify(parsed.apps));
 }
 export function touchUpdatedAt(): string { return new Date().toISOString(); }
+
+/** Apaga TUDO do navegador (base, vagas, chave, onboarding, idioma, tema,
+ *  consentimento + cookie). Irreversível. Falhas isoladas não travam o resto. */
+export function wipeAll(): void {
+  try {
+    clearSettings();
+  } catch {
+    /* segue o baile */
+  }
+  for (const k of ["pmcv:base", "pmcv:apps", "pmcv:onboarded", "pmcv:locale", "pmcv:consent", "theme"]) {
+    try {
+      localStorage.removeItem(k);
+    } catch {
+      /* segue o baile */
+    }
+  }
+  try {
+    document.cookie = "pmcv-consent=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+  } catch {
+    /* segue o baile */
+  }
+}
 export type { BaseLang };
 export { parseBaseLang };

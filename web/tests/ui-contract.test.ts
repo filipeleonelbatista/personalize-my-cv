@@ -50,9 +50,10 @@ describe("ui contract", () => {
     expect(readFileSync("app/layout.tsx", "utf8")).toContain("ThemeProvider");
   });
   it("layout has developer footer with linkedin", () => {
-    const src = readFileSync("app/layout.tsx", "utf8");
+    const src = readFileSync("app/components/Footer.tsx", "utf8");
     expect(src).toContain("filipeleonelbatista");
     expect(src).toContain("linkedin.com/in/filipeleonelbatista");
+    expect(readFileSync("app/layout.tsx", "utf8")).toContain("Footer");
   });
   it("roboto is the default font", () => {
     const layout = readFileSync("app/layout.tsx", "utf8");
@@ -135,6 +136,21 @@ describe("settings dialog (post-onboarding)", () => {
     expect(tabs).toContain("<SettingsDialog />");
     expect(readFileSync("app/components/SettingsDialog.tsx", "utf8")).toContain('t("open")');
     expect(JSON.parse(readFileSync("messages/pt-BR.json", "utf8")).Settings.open).toBe("Configurações");
+  });
+  it("settings has an irreversible wipe-everything danger zone", () => {
+    const s = readFileSync("app/components/SettingsDialog.tsx", "utf8");
+    expect(s).toContain("wipeAll");
+    expect(s).toContain("wipeTitle");
+    expect(s).toContain("wipeDesc");
+    expect(s).toContain("wipeConfirm");
+    expect(s).toContain('variant="destructive"');
+    expect(s).toContain("window.location.reload()");
+    for (const loc of ["pt-BR", "en-US", "es-ES"]) {
+      const m = JSON.parse(readFileSync(`messages/${loc}.json`, "utf8"));
+      expect(m.Settings.wipeAll, loc).toBeTruthy();
+      expect(m.Settings.wipeDesc, loc).toMatch(/irrevers/i);
+    }
+    expect(readFileSync("lib/store.ts", "utf8")).toContain("export function wipeAll");
   });
   it("has models selector, clear-key and backup export/import", () => {
     const s = readFileSync("app/components/SettingsDialog.tsx", "utf8");

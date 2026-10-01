@@ -1,5 +1,5 @@
 {
-  "Common": { "back": "Voltar", "cancel": "Cancelar", "save": "Salvar", "close": "Fechar", "retry": "Tentar novamente", "loading": "Carregando…" },
+  "Common": { "back": "Voltar", "cancel": "Cancelar", "save": "Salvar", "close": "Fechar", "retry": "Tentar novamente", "loading": "Carregando…", "developedBy": "Desenvolvido por", "appVersion": "Versão {v}", "privacy": "Privacidade", "terms": "Termos de uso" },
   "Locale": { "label": "Idioma", "aria": "Trocar idioma" },
   "Errors": {
     "noKey": "Configure a chave Gemini no onboarding.",
@@ -49,7 +49,13 @@
     "createBtn": "Criar currículo base",
     "baseCreated": "Currículo base criado!",
     "storageFull": "Armazenamento cheio",
-    "unknownFail": "Falha desconhecida."
+    "unknownFail": "Falha desconhecida.",
+ "stepName1": "Início",
+ "stepName2": "Chave Gemini",
+ "stepName3": "Currículo base",
+ "successTitle": "Currículo base criado!",
+ "successDesc": "Sua base foi catalogada pela IA. Agora cole a primeira vaga e gere um CV sob medida.",
+ "goBtn": "Começar a usar"
   },
   "Base": {
     "title": "Criar currículo base",
@@ -182,7 +188,11 @@
     "import": "Importar backup",
     "exported": "Backup exportado!",
     "imported": "Backup importado!",
-    "invalidBackup": "Backup inválido"
+    "invalidBackup": "Backup inválido",
+    "wipeAll": "Apagar tudo",
+    "wipeTitle": "Apagar todos os dados?",
+    "wipeDesc": "Isso é irreversível: base, vagas, chave, idioma, tema e consentimento serão removidos deste navegador.",
+    "wipeConfirm": "Apagar tudo"
   },
   "Help": {
     "open": "Como usar o app",
@@ -196,5 +206,45 @@
     "s3d": "Cole o texto da vaga e gere: match, pontos fortes/fracos, email e mensagem. Falhou? Use o retry.",
     "s4t": "4. Backup e idioma",
     "s4d": "Exporte o backup em Configurações. Troque o idioma da interface no seletor do topo — o idioma do CV é escolhido a cada geração."
+  },
+  "Cookie": {
+    "message": "Usamos apenas armazenamento local no seu navegador (sem cookies próprios). Google Fonts e a API Gemini (com sua chave) são carregadas de terceiros.", 
+    "accept": "Aceitar", 
+    "decline": "Recusar", 
+    "learnMore": "Saiba mais"
+  },
+  "Privacy": {
+    "title": "Política de Privacidade", 
+    "updated": "Atualizado em outubro de 2026.", 
+    "back": "Voltar", 
+    "s1h": "1. Seus dados ficam no seu navegador", 
+    "s1b": "O Personalize My CV não tem servidor nem banco de dados. Currículo base, vagas geradas e configurações ficam salvos apenas no localStorage do seu navegador, nas chaves pmcv:*. Nada é enviado para servidores nossos — porque eles não existem.", 
+    "s2h": "2. Cookies", 
+    "s2b": "Não usamos cookies próprios nem rastreadores. O aviso de cookies existe por transparência: guardamos apenas a sua escolha de consentimento (pmcv:consent) e as suas preferências (idioma, tema) no armazenamento local.", 
+    "s3h": "3. Serviços de terceiros", 
+    "s3b": "Duas conexões externas acontecem direto do seu navegador: Google Fonts (carrega a fonte Roboto) e a API Google Gemini (generativelanguage.googleapis.com), chamada com a SUA chave para gerar os currículos. Valem as políticas de privacidade do Google.", 
+    "s4h": "4. Sua chave Gemini", 
+    "s4b": "A chave é sua e fica ofuscada no navegador (secure-ls, não é um cofre). Use uma chave com limites de cota, nunca a compartilhe e revogue-a em https://aistudio.google.com/apikey se achar que foi exposta.", 
+    "s5h": "5. Seus direitos (LGPD)", 
+    "s5b": "Acesso, correção, portabilidade e eliminação: tudo está na sua mão. Exporte o backup em Configurações para portabilidade; apague vagas, limpe a base ou remova a chave para eliminação. Base legal do tratamento: seu consentimento (art. 7º da LGPD).", 
+    "s6h": "6. Contato", 
+    "s6b": "Dúvidas sobre privacidade? Fale com filipeleonelbatista pelo LinkedIn no rodapé. Esta política pode mudar; a data no topo indica a versão vigente."
+  },
+  "Terms": {
+    "title": "Termos de Uso", 
+    "updated": "Atualizado em outubro de 2026.", 
+    "back": "Voltar", 
+    "s1h": "1. O que é", 
+    "s1b": "Gerador de currículos sob medida com IA, 100% estático e gratuito. Você cadastra o CV base em PDF e gera versões otimizadas por vaga (PDF, afinidade, email e mensagem). Sem conta, sem servidor: tudo no seu navegador.", 
+    "s2h": "2. Gratuito, livre para sempre", 
+    "s2b": "Este projeto é licenciado sob AGPL-3.0-only: você pode usar, estudar, modificar e distribuir, desde que trabalhos derivados permaneçam livres e abertos sob a mesma licença.", 
+    "s3h": "3. Sua chave, sua responsabilidade", 
+    "s3b": "A chave Gemini é pessoal. Custos de uso da API do Google são seus; configure cotas e não use chaves de terceiros sem autorização.", 
+    "s4h": "4. Sem garantias", 
+    "s4b": "A IA pode errar (datas, traduções, afinidade). Revise cada currículo antes de enviar a recrutadores. O app é fornecido como está, sem garantias de qualquer tipo.", 
+    "s5h": "5. Uso aceitável", 
+    "s5b": "Não use o app para burlar limites da API do Google, enviar spam a recrutadores ou gerar conteúdo ilícito. Respeite os termos de uso do Google.", 
+    "s6h": "6. Contato e alterações", 
+    "s6b": "Canal de contato pelo LinkedIn no rodapé. Podemos atualizar estes termos; o uso contínuo após mudanças significa concordância."
   }
 }

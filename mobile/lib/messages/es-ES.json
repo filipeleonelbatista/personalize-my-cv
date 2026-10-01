@@ -5,7 +5,8 @@
     "save": "Guardar",
     "close": "Cerrar",
     "retry": "Reintentar",
-    "loading": "Cargando…"
+    "loading": "Cargando…",
+    "version": "Versión {v}"
   },
   "Locale": {
     "label": "Idioma",

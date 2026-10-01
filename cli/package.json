@@ -1,11 +1,19 @@
 {
   "name": "personalize-my-cv-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
-  "bin": { "personalize-cv": "./dist/src/index.js" },
-  "scripts": { "build": "tsc -p tsconfig.json", "test": "vitest run", "dev": "tsx src/index.ts" },
-  "engines": { "node": ">=20" },
+  "bin": {
+    "personalize-cv": "./dist/src/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "dev": "tsx src/index.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",
     "@react-pdf/renderer": "^4.0.0",

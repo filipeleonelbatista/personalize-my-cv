@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // web/tests/store.test.ts
 import { describe, expect, it, beforeEach, vi } from "vitest";
-import { saveBase, loadBase, saveApps, loadApps, saveSettings, loadSettings, exportBackup, importBackup, type StoredBase } from "@/lib/store";
+import { saveBase, loadBase, saveApps, loadApps, saveSettings, loadSettings, exportBackup, importBackup, isOnboarded, wipeAll, type StoredBase } from "@/lib/store";
 
 const base: StoredBase = { resume: { cabecalho: { nome: "Ana", titulo_profissional: "Dev", contatos: [{ tipo: "email", valor: "a@a.com", link: null }] }, secoes: { resumo: "X", experiencia: [], formacao: [], habilidades: [], certificacoes: [], idiomas: [], projetos: [] } }, lang: "pt-BR" as const, updatedAt: new Date().toISOString() };
 
@@ -53,5 +53,23 @@ describe("store", () => {
     const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => { throw new DOMException("full", "QuotaExceededError"); });
     expect(() => saveBase(base)).toThrow(/Armazenamento cheio/);
     setItem.mockRestore();
+  });
+  it("wipeAll removes every local trace and drops onboarding", () => {
+    saveBase(base);
+    saveApps([]);
+    saveSettings({ geminiKey: "K", models: ["m1"] });
+    localStorage.setItem("pmcv:onboarded", "1");
+    localStorage.setItem("pmcv:locale", "es-ES");
+    localStorage.setItem("pmcv:consent", "accepted");
+    localStorage.setItem("theme", "dark");
+    document.cookie = "pmcv-consent=1; path=/";
+    expect(isOnboarded()).toBe(true);
+    wipeAll();
+    for (const k of ["pmcv:base", "pmcv:apps", "pmcv:onboarded", "pmcv:locale", "pmcv:consent", "theme"]) {
+      expect(localStorage.getItem(k), k).toBeNull();
+    }
+    expect(loadSettings().geminiKey).toBe("");
+    expect(document.cookie).not.toContain("pmcv-consent");
+    expect(isOnboarded()).toBe(false);
   });
 });

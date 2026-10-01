@@ -5,11 +5,11 @@ import { useRef, useState } from "react";
 import { LuSettings } from "react-icons/lu";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { clearSettings, exportBackup, importBackup, loadSettings, saveSettings, setOnboarded } from "@/lib/store";
+import { clearSettings, exportBackup, importBackup, loadSettings, saveSettings, setOnboarded, wipeAll } from "@/lib/store";
 import { validateGeminiKey } from "@/lib/llm/chain";
 import { DEFAULT_GEMINI_MODELS } from "@/lib/llm/gemini";
 import { Button } from "./ui/button";
-import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
 export function SettingsDialog() {
   const t = useTranslations("Settings");
@@ -19,6 +19,7 @@ export function SettingsDialog() {
   const [custom, setCustom] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [confirmWipe, setConfirmWipe] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function handleOpen() {
@@ -89,6 +90,11 @@ export function SettingsDialog() {
     } finally {
       if (fileRef.current) fileRef.current.value = "";
     }
+  }
+
+  function handleWipeAll() {
+    wipeAll();
+    window.location.reload();
   }
 
   const options = Array.from(new Set([...DEFAULT_GEMINI_MODELS, ...models]));
@@ -177,7 +183,29 @@ export function SettingsDialog() {
               />
             </div>
           </div>
+          <div className="space-y-2 border-t border-destructive/30 pt-3">
+            <p className="text-sm font-medium text-destructive">{t("wipeAll")}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="destructive" onClick={() => setConfirmWipe(true)} disabled={loading}>
+                {t("wipeAll")}
+              </Button>
+            </div>
+          </div>
         </div>
+      </Dialog>
+      <Dialog open={confirmWipe} onClose={() => setConfirmWipe(false)}>
+        <DialogHeader>
+          <DialogTitle>{t("wipeTitle")}</DialogTitle>
+          <DialogDescription>{t("wipeDesc")}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setConfirmWipe(false)}>
+            {t("cancel")}
+          </Button>
+          <Button variant="destructive" onClick={handleWipeAll}>
+            {t("wipeConfirm")}
+          </Button>
+        </DialogFooter>
       </Dialog>
     </>
   );

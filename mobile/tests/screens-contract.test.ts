@@ -136,4 +136,13 @@ describe("screens contract", () => {
       expect(s, `${f} calls ensureOnline before validate`).toMatch(/await ensureOnline\(\)/);
     }
   });
+  it("settings footer shows the app version", () => {
+    const s = readFileSync("app/settings.tsx", "utf8");
+    expect(s).toMatch(/lib\/version/);
+    expect(s).toMatch(/APP_VERSION/);
+    for (const f of ["lib/messages/pt-BR.json", "lib/messages/en-US.json", "lib/messages/es-ES.json"]) {
+      const m = JSON.parse(readFileSync(f, "utf8")) as { Common?: Record<string, unknown> };
+      expect(m.Common?.version, `${f} Common.version`).toBeDefined();
+    }
+  });
 });

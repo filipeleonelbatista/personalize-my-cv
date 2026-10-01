@@ -1,0 +1,6 @@
+#!/bin/sh
+# Auto-bump package versions based on staged paths.
+TOP="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$TOP" || exit 0
+node scripts/bump-versions.mjs
+exit 0

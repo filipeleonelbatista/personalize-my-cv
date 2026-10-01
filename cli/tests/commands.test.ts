@@ -26,6 +26,13 @@ describe("commands", () => {
     const { renderReport } = await import("../src/commands/report.js");
     expect(renderReport("pt-BR", 0)).toMatch(/Total|Média|Seg/);
   });
+  it("CLI_VERSION matches package.json and help mentions --version", async () => {
+    const { CLI_VERSION, helpText } = await import("../src/index.js");
+    const { readFileSync } = await import("node:fs");
+    const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8")) as { version: string };
+    expect(CLI_VERSION).toBe(pkg.version);
+    expect(helpText("pt-BR")).toContain("--version");
+  });
   it("missing pdf path throws localized notFound", async () => {
     process.env.PMCV_HOME = "/tmp/opencode/pmcv-missing-home";
     const { mkdirSync, writeFileSync } = await import("node:fs");
