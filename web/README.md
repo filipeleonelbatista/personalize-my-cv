@@ -67,3 +67,7 @@ npm run build        # gera web/out/
 ```
 
 > Regras de trabalho neste projeto: ver [`AGENTS.md`](./AGENTS.md). Visão geral dos dois projetos: [`PROJECT.md`](../PROJECT.md).
+
+## Licença
+
+AGPL-3.0-only — ver [`LICENSE`](../LICENSE).

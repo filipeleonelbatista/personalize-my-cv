@@ -90,3 +90,8 @@ Onboarding 3 passos, gate chave+base, splash, lista com ver/baixar/retry/excluir
 
 - Chave Gemini: no mobile fica em `expo-secure-store` (cofre do SO); no web, ofuscada via `secure-ls` (não é cofre). Use chave com limites e revogue se necessário.
 - Sem migração entre aparelhos: use backup export/import em Configurações.
+
+## Licença
+
+AGPL-3.0-only — ver [`LICENSE`](./LICENSE). Você pode usar, estudar, modificar e
+distribuir, desde que trabalhos derivados permaneçam livres e abertos sob a mesma licença.

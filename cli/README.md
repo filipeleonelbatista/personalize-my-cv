@@ -46,3 +46,7 @@ npm run build       # gera dist/ (bin: ./dist/src/index.js)
 - Chave Gemini em texto simples com chmod 600 — ofuscação, não cofre
   (como `secure-ls` no web). Use chave com limites e revogue se necessário.
 - Gerar currículos precisa de internet (API Gemini); `--list`/`--show`/`--report` funcionam offline.
+
+## Licença
+
+AGPL-3.0-only — ver [`LICENSE`](../LICENSE).
