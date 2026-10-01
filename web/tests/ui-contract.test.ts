@@ -54,6 +54,13 @@ describe("ui contract", () => {
     expect(src).toContain("filipeleonelbatista");
     expect(src).toContain("linkedin.com/in/filipeleonelbatista");
   });
+  it("roboto is the default font", () => {
+    const layout = readFileSync("app/layout.tsx", "utf8");
+    expect(layout).toMatch(/Roboto/);
+    expect(layout).toMatch(/next\/font\/google/);
+    const css = readFileSync("app/globals.css", "utf8");
+    expect(css).toMatch(/Roboto|font-sans|--font-sans/);
+  });
 });
 
 describe("base setup dialog", () => {

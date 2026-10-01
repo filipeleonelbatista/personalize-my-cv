@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import { Roboto } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { I18nProvider } from "@/lib/i18n/provider";
 import { SwRegister } from "./components/SwRegister";
 import "./globals.css";
+
+const roboto = Roboto({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: "Personalize My CV", template: "%s — Personalize My CV" },
@@ -44,8 +52,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <body className="bg-background text-foreground antialiased">
+    <html lang="pt-BR" suppressHydrationWarning className={roboto.variable}>
+      <body className="bg-background text-foreground font-sans antialiased">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

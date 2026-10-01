@@ -1,6 +1,6 @@
 // mobile/app/(tabs)/curriculos.tsx — resume list + generate + detail.
 import { useCallback, useState } from "react";
-import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "../../components/AppIcon";
 import { useFocusEffect, router } from "expo-router";
@@ -12,11 +12,14 @@ import { GenerateSheet } from "../../components/GenerateSheet";
 import { DetailSheet } from "../../components/DetailSheet";
 import { EmptyState } from "../../components/EmptyState";
 
+const PAGE_SIZE = 20;
+
 export default function CurriculosScreen() {
   const t = useTranslations("Page");
   const tg = useTranslations("Generate");
   const tv = useTranslations("Vacancy");
   const [apps, setApps] = useState<StoredApp[]>([]);
+  const [visible, setVisible] = useState(PAGE_SIZE);
   const [baseName, setBaseName] = useState<string | null>(null);
   const [baseTitle, setBaseTitle] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -28,6 +31,7 @@ export default function CurriculosScreen() {
     setBaseName(b?.resume.cabecalho.nome ?? null);
     setBaseTitle(b?.resume.cabecalho.titulo_profissional ?? null);
     setApps(a);
+    setVisible(PAGE_SIZE);
   }, []);
 
   useFocusEffect(
@@ -41,6 +45,13 @@ export default function CurriculosScreen() {
     await refresh();
     setRefreshing(false);
   }
+
+  function onEndReached() {
+    setVisible((v) => (v < apps.length ? Math.min(v + PAGE_SIZE, apps.length) : v));
+  }
+
+  const visibleApps = apps.slice(0, visible);
+  const hasMore = visible < apps.length;
 
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-black">
@@ -63,12 +74,21 @@ export default function CurriculosScreen() {
         </View>
       ) : (
         <FlatList
-          data={apps}
+          data={visibleApps}
           keyExtractor={(a) => a.id}
           className="flex-1"
           contentContainerClassName="p-4"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={({ item }) => <VacancyCard app={item} onOpen={() => setSelected(item)} />}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            hasMore ? (
+              <View className="items-center py-4">
+                <ActivityIndicator size="small" />
+              </View>
+            ) : null
+          }
         />
       )}
       <GenerateSheet visible={generating} onClose={() => setGenerating(false)} onChanged={refresh} />

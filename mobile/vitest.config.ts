@@ -12,6 +12,7 @@ export default defineConfig({
       { find: "expo-print", replacement: path.resolve(__dirname, "tests/__mocks__/print.ts") },
       { find: "expo-media-library", replacement: path.resolve(__dirname, "tests/__mocks__/media-library.ts") },
       { find: "expo-sharing", replacement: path.resolve(__dirname, "tests/__mocks__/sharing.ts") },
+      { find: "expo-secure-store", replacement: path.resolve(__dirname, "tests/__mocks__/secure-store.ts") },
     ],
   },
   test: { include: ["tests/**/*.test.ts"], environment: "node" },

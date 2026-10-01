@@ -112,4 +112,28 @@ describe("screens contract", () => {
     }
     expect(existsSync("lib/use-staged-steps.ts")).toBe(true);
   });
+  it("roboto is the default font", () => {
+    const layout = readFileSync("app/_layout.tsx", "utf8");
+    expect(layout).toMatch(/Roboto_400Regular/);
+    expect(layout).toMatch(/useFonts/);
+    expect(layout).toMatch(/SplashScreen/);
+    const tw = readFileSync("tailwind.config.js", "utf8");
+    expect(tw).toMatch(/Roboto/);
+    const css = readFileSync("global.css", "utf8");
+    expect(css).toMatch(/Roboto/);
+  });
+  it("vacancy list is infinite-scroll paged", () => {
+    const s = readFileSync("app/(tabs)/curriculos.tsx", "utf8");
+    expect(s).toMatch(/onEndReached/);
+    expect(s).toMatch(/onEndReachedThreshold/);
+    expect(s).toMatch(/ActivityIndicator/);
+    expect(s).toMatch(/PAGE_SIZE|pageSize|visible|slice/);
+  });
+  it("key validation guards offline first", () => {
+    for (const f of ["components/OnboardingWizard.tsx", "components/SettingsSheet.tsx"]) {
+      const s = readFileSync(f, "utf8");
+      expect(s, `${f} imports ensureOnline`).toMatch(/ensureOnline/);
+      expect(s, `${f} calls ensureOnline before validate`).toMatch(/await ensureOnline\(\)/);
+    }
+  });
 });

@@ -65,6 +65,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --font-sans: "Roboto", var(--font-sans), system-ui, sans-serif;
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -73,4 +74,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: "Roboto", var(--font-sans), system-ui, sans-serif;
 }

@@ -8,6 +8,7 @@ import { clearSettings, exportBackup, importBackup, loadSettings, saveSettings, 
 import { clearAiLog, loadAiLog, type AiLogEntry } from "../lib/ai-log";
 import { clearApiKey, getApiKey, setApiKey } from "../lib/secure-key";
 import { validateGeminiKey } from "../lib/llm/chain";
+import { ensureOnline } from "../lib/net";
 import { DEFAULT_GEMINI_MODELS } from "../lib/llm/gemini";
 import { exportBackupToFile, importBackupFromFile } from "../lib/backup-files";
 import { toast, toastError } from "../lib/toast";
@@ -46,6 +47,7 @@ export function SettingsSheet({ onKeyRemoved }: { onKeyRemoved: () => void }) {
   }
 
   async function handleSave() {
+    if (!(await ensureOnline())) return;
     setError("");
     setLoading(true);
     try {

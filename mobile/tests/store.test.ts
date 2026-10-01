@@ -40,12 +40,29 @@ describe("mobile store", () => {
     expect(loaded?.cabecalho.nome).toBe("Ana");
   });
 
-  it("api key lives in AsyncStorage (no secure-store)", async () => {
+  it("api key lives in SecureStore with example key containing special chars", async () => {
+    const { __clear } = await import("./__mocks__/secure-store");
+    __clear();
+    // Synthetic value covering SecureStore-sensitive chars (".", "_", "-").
+    const example = "TEST-KEY_123.ABC-def_GHI.789-test-only";
     expect(await getApiKey()).toBeNull();
-    await setApiKey("K");
-    expect(await getApiKey()).toBe("K");
+    await setApiKey(example);
+    expect(await getApiKey()).toBe(example);
+    // Storage key must respect SecureStore charset (alnum + . - _), no ":".
     const src = readFileSync("lib/secure-key.ts", "utf8");
-    expect(src).not.toContain("expo-secure-store");
-    expect(readFileSync("lib/store.ts", "utf8")).not.toContain("expo-secure-store");
+    expect(src).toContain("expo-secure-store");
+    const keyMatch = src.match(/const\s+KEY\s*=\s*["']([^"']+)["']/);
+    expect(keyMatch, "KEY constant").not.toBeNull();
+    expect(keyMatch![1]).toMatch(/^[A-Za-z0-9.\-_]+$/);
+  });
+
+  it("migrates legacy AsyncStorage key once", async () => {
+    const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
+    const { __clear } = await import("./__mocks__/secure-store");
+    __clear();
+    await AsyncStorage.setItem("pmcv:gemini-key", "LEGACY-KEY_123.ABC");
+    expect(await getApiKey()).toBe("LEGACY-KEY_123.ABC");
+    // After migration the legacy slot is cleared.
+    expect(await AsyncStorage.getItem("pmcv:gemini-key")).toBeNull();
   });
 });

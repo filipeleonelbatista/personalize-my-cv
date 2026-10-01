@@ -4,6 +4,7 @@ import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { FormInput } from "./FormInput";
 import { useTranslations } from "../lib/i18n-provider";
 import { validateGeminiKey } from "../lib/llm/chain";
+import { ensureOnline } from "../lib/net";
 import { loadSettings, saveSettings } from "../lib/store";
 import { setApiKey } from "../lib/secure-key";
 import { BasePickStep } from "./BasePickStep";
@@ -18,6 +19,7 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
   const trimmedKey = key.trim();
 
   async function onValidateSave() {
+    if (!(await ensureOnline())) return;
     setError("");
     setLoading(true);
     try {
