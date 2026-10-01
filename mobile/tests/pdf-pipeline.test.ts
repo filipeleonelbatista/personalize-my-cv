@@ -65,6 +65,11 @@ describe("pdf pipeline", () => {
     expect(html).not.toContain("__PDFJS_B64__");
     expect(html).toContain("window.__extract");
   });
+  it("harness reports boot stages even if the module never parses", () => {
+    const html = readFileSync("assets/pdfjs/extract.html", "utf8");
+    expect(html).toMatch(/bootStarted/);
+    expect(html).toMatch(/addEventListener\(['"]error['"]/);
+  });
   it("pdf-share never statically imports media-library (route must load without it)", () => {
     const s = readFileSync("lib/pdf-share.ts", "utf8");
     expect(s).not.toContain('from "expo-media-library"');

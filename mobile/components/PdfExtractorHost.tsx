@@ -57,7 +57,12 @@ export function PdfExtractorHost() {
         error?: string;
         ready?: boolean;
         bootError?: string;
+        bootStarted?: boolean;
       };
+      if (m.bootStarted) {
+        log("harness page alive");
+        return;
+      }
       if (m.ready) {
         log("harness ready");
         notifyExtractorReady();
