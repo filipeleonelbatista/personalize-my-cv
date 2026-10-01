@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": { "personalize-cv": "./dist/index.js" },
+  "bin": { "personalize-cv": "./dist/src/index.js" },
   "scripts": { "build": "tsc -p tsconfig.json", "test": "vitest run", "dev": "tsx src/index.ts" },
   "engines": { "node": ">=20" },
   "dependencies": {

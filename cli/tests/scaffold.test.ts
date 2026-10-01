@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from "node:fs";
 describe("scaffold", () => {
   it("exposes bin personalize-cv", () => {
     const pkg = JSON.parse(readFileSync("package.json", "utf8"));
-    expect(pkg.bin["personalize-cv"]).toBe("./dist/index.js");
+    expect(pkg.bin["personalize-cv"]).toBe("./dist/src/index.js");
   });
   it("has type module + node engine", () => {
     const pkg = JSON.parse(readFileSync("package.json", "utf8"));
