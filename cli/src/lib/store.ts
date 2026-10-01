@@ -7,9 +7,24 @@ export function homeDir(): string {
   return process.env.PMCV_HOME ?? join(homedir(), ".personalize-cv");
 }
 
+const QUOTA_CODES = new Set(["ENOSPC", "EACCES", "EPERM", "EROFS", "ENOTDIR", "EEXIST"]);
+
+export function isQuotaError(e: unknown): boolean {
+  return e instanceof Error && (e.message === "PMCV_QUOTA" || (e as NodeJS.ErrnoException)?.code !== undefined && QUOTA_CODES.has((e as NodeJS.ErrnoException).code ?? ""));
+}
+
+function quota(): Error {
+  return new Error("PMCV_QUOTA");
+}
+
 function ensureDir(): string {
   const d = homeDir();
-  mkdirSync(d, { recursive: true });
+  try {
+    mkdirSync(d, { recursive: true });
+  } catch (e) {
+    if (QUOTA_CODES.has((e as NodeJS.ErrnoException)?.code ?? "")) throw quota();
+    throw e;
+  }
   return d;
 }
 
@@ -34,8 +49,7 @@ function writeJson(name: string, v: unknown): void {
       } catch {}
     }
   } catch (e) {
-    const err = e as NodeJS.ErrnoException;
-    if (err?.code === "ENOSPC") throw new Error("quota");
+    if (QUOTA_CODES.has((e as NodeJS.ErrnoException)?.code ?? "")) throw quota();
     throw e;
   }
 }

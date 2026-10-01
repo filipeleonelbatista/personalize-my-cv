@@ -215,7 +215,6 @@
     "s4d": "Export a backup in Settings. Switch the UI language in the top selector — the CV language is chosen per generation."
   },
   "Cli": {
-    "onlyInPt": "somente pt — fallback test key",
     "enterKey": "Paste your GEMINI_API_KEY (https://aistudio.google.com/apikey):",
     "enterPdf": "Base PDF path:",
     "enterJob": "Paste the job text (finish with an empty line):",

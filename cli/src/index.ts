@@ -2,7 +2,7 @@
 import { Command } from "commander";
 import { confirm, editor, input, password, select } from "@inquirer/prompts";
 import { copyFileSync } from "node:fs";
-import { loadApps, loadBase, loadConfig, saveApps, saveConfig } from "./lib/store.js";
+import { loadApps, loadBase, loadConfig, saveApps, saveConfig, isQuotaError } from "./lib/store.js";
 import { parseLocale, t, type UiLocale } from "./lib/i18n.js";
 import { parseBaseLang } from "./lib/prompts.js";
 import { retryStoredApp } from "./lib/tailor.js";
@@ -150,7 +150,8 @@ async function main(): Promise<void> {
 if (process.env.PMCV_NO_RUN !== "1") {
   program.configureHelp({ formatHelp: () => helpText(parseLocale(process.env.PMCV_LOCALE)) });
   main().catch((e) => {
-    console.error(e instanceof Error ? e.message : String(e));
+    const locale = parseLocale(process.env.PMCV_LOCALE ?? loadConfig().locale);
+    console.error(isQuotaError(e) ? t(locale, "Errors.quota") : e instanceof Error ? e.message : String(e));
     process.exitCode = 1;
   });
 }

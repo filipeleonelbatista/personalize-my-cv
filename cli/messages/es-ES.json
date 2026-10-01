@@ -215,7 +215,6 @@
     "s4d": "Exporta una copia en Ajustes. Cambia el idioma de la interfaz en el selector superior — el idioma del CV se elige en cada generación."
   },
   "Cli": {
-    "onlyInPt": "somente pt — clave de prueba de fallback",
     "enterKey": "Pega tu GEMINI_API_KEY (https://aistudio.google.com/apikey):",
     "enterPdf": "Ruta del PDF base:",
     "enterJob": "Pega el texto de la vacante (termina con línea vacía):",

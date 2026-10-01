@@ -20,7 +20,7 @@ function minimalResume(): Resume {
 describe("tailor", () => {
   it("rejects short job before AI (jobShort)", async () => {
     const { runTailorJob } = await import("../src/lib/tailor.js");
-    await expect(runTailorJob("curta", "pt-BR", "pt-BR")).rejects.toThrow();
+    await expect(runTailorJob("curta", "pt-BR", "pt-BR")).rejects.toThrow("mín. 20 caracteres");
   });
   it("fills missing cargo/empresa with MISSING_JOB", () => {
     const env = normalizeEnvelope(

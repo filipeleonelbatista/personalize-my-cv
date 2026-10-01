@@ -8,12 +8,13 @@ function keys(o: unknown, p = ""): string[] {
   return Object.entries(o as Record<string, unknown>).flatMap(([k, v]) => keys(v, p ? `${p}.${k}` : k));
 }
 describe("i18n parity", () => {
-  it("same keyset in 3 locales", () => {
-    expect(keys(en).sort()).toEqual(keys(pt).sort());
-    expect(keys(es).sort()).toEqual(keys(pt).sort());
+  it("same keyset in 3 locales (except pt-only fallback probe)", () => {
+    const without = (ks: string[]) => ks.filter((k) => k !== "Cli.onlyInPt").sort();
+    expect(without(keys(en))).toEqual(without(keys(pt)));
+    expect(without(keys(es))).toEqual(without(keys(pt)));
   });
-  it("falls back to pt-BR without crashing", () => {
-    expect(t("pt-BR", "Cli.onlyInPt")).toContain("somente");
-    expect(t("en-US" as never, "Cli.__missing_key__" as never)).toBe("Cli.__missing_key__");
+  it("falls back to pt-BR text when key missing in locale", () => {
+    expect(t("en-US", "Cli.onlyInPt")).toContain("somente");
+    expect(t("es-ES", "Cli.onlyInPt")).toContain("somente");
   });
 });

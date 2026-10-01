@@ -27,7 +27,16 @@ describe("commands", () => {
     expect(renderReport("pt-BR", 0)).toMatch(/Total|Média|Seg/);
   });
   it("missing pdf path throws localized notFound", async () => {
+    process.env.PMCV_HOME = "/tmp/opencode/pmcv-missing-home";
+    const { mkdirSync, writeFileSync } = await import("node:fs");
+    mkdirSync(process.env.PMCV_HOME, { recursive: true });
+    writeFileSync(
+      `${process.env.PMCV_HOME}/config.json`,
+      JSON.stringify({ geminiKey: "seed-key", models: ["m"], locale: "pt-BR" }),
+    );
     const { onboardWithPdf } = await import("../src/commands/onboard.js");
-    await expect(onboardWithPdf("/tmp/opencode/does-not-exist.pdf", "pt-BR", "pt-BR")).rejects.toThrow();
+    await expect(onboardWithPdf("/tmp/opencode/does-not-exist.pdf", "pt-BR", "pt-BR")).rejects.toThrow(
+      "Registro não encontrado",
+    );
   });
 });
