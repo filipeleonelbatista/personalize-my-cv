@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personalize My CV — Currículos sob medida com IA</title>
+  <meta name="description" content="Cadastre seu CV base em PDF e gere versões otimizadas por vaga com IA. Grátis, sem conta, no seu navegador. App Android, CLI e código aberto.">
+  <meta property="og:title" content="Personalize My CV — Currículos sob medida com IA">
+  <meta property="og:description" content="CV base em PDF + IA por vaga: afinidade, email e mensagem. Grátis, sem conta, no seu browser.">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-in">
+      <a class="brand" href="#hero">Personalize My CV</a>
+      <nav aria-label="Navegação">
+        <a href="#features" data-i18n="navFeatures">Recursos</a>
+        <a href="#app" data-i18n="navApp">App</a>
+        <a href="#cli" data-i18n="navCli">CLI</a>
+        <a href="#colaborar" data-i18n="navCollab">Colaborar</a>
+        <a href="#doadores" data-i18n="navDonors">Doadores</a>
+      </nav>
+      <div class="header-ctl">
+        <select id="langSelect" aria-label="Idioma">
+          <option value="pt-BR">PT</option>
+          <option value="en-US">EN</option>
+          <option value="es-ES">ES</option>
+        </select>
+        <button id="themeToggle" class="btn icon" aria-label="Alternar tema">☾</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="hero" class="hero">
+      <div class="wrap">
+        <p class="badge" data-i18n="badge">100% estático · sem backend · sua chave Gemini</p>
+        <h1 data-i18n="h1">Currículos sob medida com IA</h1>
+        <p class="lede" data-i18n="sub">Cadastre seu CV base em PDF e gere versões otimizadas por vaga — afinidade, email e mensagem. Grátis, sem conta: seus dados ficam no seu navegador.</p>
+        <div class="cta-row">
+          <a class="btn primary" href="https://personalize-my-cv.vercel.app/" data-i18n="ctaWeb">Usar o app web</a>
+          <a class="btn outline" href="https://github.com/filipeleonelbatista/personalize-my-cv" data-i18n="ctaGh">Ver no GitHub</a>
+        </div>
+        <div class="mockup" aria-hidden="true">
+          <div class="mock-line ok">✓ CV base catalogado</div>
+          <div class="mock-line big">Match 92%</div>
+          <div class="mock-line">⭳ cv-vaga-acme.pdf pronto</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="wrap reveal">
+      <h2 data-i18n="featTitle">Tudo que o app faz</h2>
+      <div class="grid">
+        <div class="card reveal"><h3 data-i18n="f1-t">CV base via IA</h3><p data-i18n="f1-d">Envie o PDF e a IA cataloga seus dados em JSON.</p></div>
+        <div class="card reveal"><h3 data-i18n="f2-t">Match por vaga</h3><p data-i18n="f2-d">Índice de afinidade com pontos fortes e fracos.</p></div>
+        <div class="card reveal"><h3 data-i18n="f3-t">Email + mensagem</h3><p data-i18n="f3-d">Email de apresentação e mensagem prontos pra copiar.</p></div>
+        <div class="card reveal"><h3 data-i18n="f4-t">Relatórios semanais</h3><p data-i18n="f4-d">Histórico e gráficos das candidaturas.</p></div>
+        <div class="card reveal"><h3 data-i18n="f5-t">Backup export/import</h3><p data-i18n="f5-d">Leve seus dados pra qualquer navegador.</p></div>
+        <div class="card reveal"><h3 data-i18n="f6-t">Offline + PWA</h3><p data-i18n="f6-d">Instalável, com fallback offline.</p></div>
+        <div class="card reveal"><h3 data-i18n="f7-t">3 idiomas</h3><p data-i18n="f7-d">UI completa em PT, EN e ES.</p></div>
+        <div class="card reveal"><h3 data-i18n="f8-t">Tema claro/escuro</h3><p data-i18n="f8-d">Segue seu sistema.</p></div>
+      </div>
+    </section>
+
+    <section id="app" class="wrap reveal">
+      <h2 data-i18n="appTitle">Leve no bolso</h2>
+      <p class="lede" data-i18n="appSub">App nativo com as mesmas funções. Android primeiro.</p>
+      <div class="cta-row">
+        <a id="androidBtn" class="btn primary" href="https://github.com/filipeleonelbatista/personalize-my-cv" data-i18n="androidBtn">Baixar para Android</a>
+        <span class="badge soon" data-i18n="iosBadge">iOS em breve</span>
+      </div>
+      <p class="muted"><span data-i18n="androidSoon">Em breve: APK na raiz do repo</span> · <span data-i18n="apkNote">Builds preview via EAS; a listagem Play vem depois.</span></p>
+    </section>
+
+    <section id="cli" class="wrap reveal">
+      <h2 data-i18n="cliTitle">Automatize no terminal</h2>
+      <p class="lede" data-i18n="cliSub">`personalize-cv`: onboarding uma vez, gere por vaga, acompanhe metas — scripteável e agent-friendly.</p>
+      <pre id="terminal" aria-label="Demonstração do CLI"><code id="termBody"></code><span class="term-cursor">▊</span></pre>
+      <p class="muted" data-i18n="agentsNote">Agent-friendly: automatize com Claude Code, OpenCode, Codex e outros.</p>
+    </section>
+
+    <section id="colaborar" class="wrap reveal">
+      <h2 data-i18n="collabTitle">Colabore</h2>
+      <p class="lede" data-i18n="collabSub">Projeto colaborativo, gratuito para sempre (AGPL-3.0).</p>
+      <div class="grid">
+        <div class="card reveal"><h3 data-i18n="cIssues-t">Issues</h3><p data-i18n="cIssues-d">Reporte bugs ou sugira funções.</p></div>
+        <div class="card reveal"><h3 data-i18n="cPRs-t">Pull requests</h3><p data-i18n="cPRs-d">Código, testes e correções bem-vindos.</p></div>
+        <div class="card reveal"><h3 data-i18n="cI18n-t">Traduções</h3><p data-i18n="cI18n-d">Ajude com PT, EN e ES.</p></div>
+        <div class="card reveal"><h3 data-i18n="cDocs-t">Docs</h3><p data-i18n="cDocs-d">Guias e exemplos.</p></div>
+      </div>
+      <div class="cta-row">
+        <a class="btn primary" href="https://github.com/filipeleonelbatista/personalize-my-cv" data-i18n="repoBtn">Abrir o repositório</a>
+      </div>
+      <p class="muted" data-i18n="licNote">AGPL-3.0-only: derivados ficam livres e abertos.</p>
+    </section>
+
+    <section id="doadores" class="wrap reveal">
+      <h2 data-i18n="donorsTitle">Doadores VIP</h2>
+      <p class="lede" data-i18n="donorsEmpty">Ninguém ainda — seja a primeira pessoa.</p>
+      <div class="cta-row">
+        <a class="btn outline" href="https://github.com/filipeleonelbatista/personalize-my-cv" data-i18n="donorsCta">Apoiar</a>
+        <a class="link" href="https://github.com/filipeleonelbatista/personalize-my-cv/blob/master/DONORS.md" data-i18n="donorsDoc">Ver DONORS.md</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p><span data-i18n="footRights">Grátis para sempre sob AGPL-3.0.</span> <span data-i18n="footBy">Feito por filipeleonelbatista</span> · <span id="year">2026</span></p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

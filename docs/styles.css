@@ -1,0 +1,96 @@
+:root {
+  --background: #ffffff;
+  --foreground: #09090b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --muted: #f4f4f5;
+  --muted-fg: #52525b;
+  --border: #e4e4e7;
+  --radius: 12px;
+}
+[data-theme="dark"] {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #09090b;
+  --muted: #27272a;
+  --muted-fg: #a1a1aa;
+  --border: #27272a;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+}
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+.site-header {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in srgb, var(--background) 85%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.header-in { display: flex; align-items: center; gap: 16px; padding: 12px 20px; }
+.brand { font-weight: 800; color: inherit; text-decoration: none; margin-right: auto; }
+nav { display: flex; gap: 4px 14px; flex-wrap: wrap; }
+nav a { color: var(--muted-fg); text-decoration: none; font-size: 14px; }
+nav a:hover { color: var(--foreground); }
+.header-ctl { display: flex; gap: 8px; align-items: center; }
+select, .btn.icon {
+  background: var(--background); color: var(--foreground);
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 14px;
+}
+.hero { text-align: center; padding: 72px 0 56px;
+  background: radial-gradient(600px 300px at 50% -60px, color-mix(in srgb, var(--primary) 12%, transparent), transparent);
+}
+.hero h1 { font-size: clamp(32px, 6vw, 56px); line-height: 1.1; margin: 16px 0; letter-spacing: -0.02em; }
+.lede { font-size: 18px; color: var(--muted-fg); max-width: 640px; margin: 0 auto; }
+.badge {
+  display: inline-block; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--border); border-radius: 999px; padding: 4px 14px;
+  background: var(--muted); color: var(--muted-fg);
+}
+.badge.soon { background: transparent; }
+.cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 28px; }
+.btn {
+  display: inline-block; padding: 12px 24px; border-radius: 10px;
+  font-weight: 600; font-size: 15px; text-decoration: none; border: 1px solid transparent;
+}
+.btn.primary { background: var(--primary); color: var(--primary-foreground); }
+.btn.outline { background: transparent; color: var(--foreground); border-color: var(--border); }
+.btn.icon { padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+.link { align-self: center; color: var(--muted-fg); font-size: 14px; }
+.mockup {
+  margin: 40px auto 0; max-width: 420px; text-align: left;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--muted); padding: 16px 20px; font-size: 14px;
+}
+.mock-line { padding: 6px 0; border-bottom: 1px dashed var(--border); }
+.mock-line:last-child { border-bottom: 0; }
+.mock-line.ok { color: #16a34a; }
+.mock-line.big { font-size: 28px; font-weight: 800; }
+section.wrap { padding-top: 56px; padding-bottom: 8px; }
+h2 { font-size: clamp(24px, 4vw, 34px); letter-spacing: -0.01em; margin: 0 0 8px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 24px; }
+.card { border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; background: var(--background); }
+.card h3 { margin: 0 0 6px; font-size: 16px; }
+.card p { margin: 0; font-size: 14px; color: var(--muted-fg); }
+.muted { color: var(--muted-fg); font-size: 14px; }
+#terminal {
+  background: #0c0c0e; color: #4ade80; border-radius: var(--radius);
+  padding: 20px; font-family: ui-monospace, monospace; font-size: 14px;
+  min-height: 260px; white-space: pre-wrap; overflow-x: auto; margin-top: 20px;
+}
+.term-cursor { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.site-footer { border-top: 1px solid var(--border); margin-top: 64px; padding: 24px 0; font-size: 13px; color: var(--muted-fg); text-align: center; }
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .term-cursor { animation: none; }
+}
