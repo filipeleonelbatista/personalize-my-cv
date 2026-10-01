@@ -1,4 +1,4 @@
-# Personalize My CV — Web + Mobile
+# Personalize My CV — Web + Mobile + CLI
 
 Currículos sob medida com IA a partir do seu PDF base: a IA cataloga seus
 dados, gera versões por vaga (PDF + match + email + mensagem) e organiza o
@@ -13,10 +13,11 @@ a sua própria chave Gemini (BYOK).
 |---|---|---|
 | `web/` | Aplicação web 100% estática | Next.js 15 (`output: export`), Prisma removido, Tailwind, next-intl (pt-BR/en-US/es-ES), PWA Serwist |
 | `mobile/` | Mesmo app no Android/iOS | Expo SDK 57, expo-router, NativeWind v4, `use-intl`, Zod |
+| `cli/` | Comando `personalize-cv` (PS/CMD/Bash) | Node 20+ TS, commander, `@react-pdf/renderer`, `pdfjs-dist`, i18n pt-BR/en-US/es-ES |
 
 **Decisão de separação total:** os projetos não compartilham código — nenhum
-import cruza `web/` ↔ `mobile/`. A lógica pura foi reimplementada em
-`mobile/lib` (mesmos contratos, mesmos testes). Isso mantém cada deploy
+import cruza `web/` ↔ `mobile/` ↔ `cli/`. A lógica pura foi reimplementada em
+`mobile/lib` e `cli/src/lib` (mesmos contratos, mesmos testes). Isso mantém cada deploy
 independente ao custo de duplicação consciente (~10 arquivos).
 
 ## Pré-requisitos
@@ -46,8 +47,20 @@ npx tsc --noEmit
 npx expo start     # escaneie o QR com o Expo Go
 ```
 
-## APK (EAS cloud)
+## CLI — setup/uso
 
+```bash
+cd cli
+npm i
+npm run build
+npm link           # expõe `personalize-cv` (Powershell/CMD/Bash)
+personalize-cv --help
+personalize-cv             # interativo: onboarding → vaga → análise + PDF
+personalize-cv --list
+personalize-cv --report --week -1
+```
+
+## APK (EAS cloud)
 ```bash
 cd mobile
 npx eas-cli@latest login   # sua conta Expo (interativo, uma vez; equivale a `eas login`)
