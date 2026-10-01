@@ -68,5 +68,24 @@ Preview profile = installable APK (`distribution: internal`); `production`
 
 - `README.md` (root): setup/dev/test/build per project, APK flow, assets, warnings.
 - `web/README.md`: web setup, backup, security notice, troubleshooting, visual assets.
-- `web/AGENTS.md`, `mobile/AGENTS.md`: agent working rules per project.
+- `web/AGENTS.md`, `mobile/AGENTS.md`, `cli/AGENTS.md`, `docs/AGENTS.md`: agent working rules per project.
 - Specs/plans: `web/docs/superpowers/`.
+
+## More deliverables
+
+| Pasta | O quê | Tech |
+|---|---|---|
+| `cli/` | Comando `personalize-cv` (PS/CMD/Bash) | Node 20+ TS, commander, `@react-pdf/renderer`, `pdfjs-dist`, i18n pt-BR/en-US/es-ES |
+| `docs/` | Landing trilíngue com dark mode | HTML+CSS+JS puro, zero build, GitHub Pages servindo `/docs` |
+
+## Links oficiais
+
+- Web: https://personalize-my-cv.vercel.app/
+- Landing: https://filipeleonelbatista.github.io/personalize-my-cv/
+- Repo: https://github.com/filipeleonelbatista/personalize-my-cv
+- APK: `personalize-my-cv.apk` na raiz do repo (em breve, quando terminar de testar)
+
+## Licença
+
+AGPL-3.0-only (`LICENSE`). Derivados precisam continuar abertos e gratuitos.
+Doadores VIP em `DONORS.md`, contribuidores em `CONTRIBUTORS.md`.

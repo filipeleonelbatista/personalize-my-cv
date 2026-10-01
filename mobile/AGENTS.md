@@ -60,3 +60,7 @@ Docs: https://docs.expo.dev/eas/index.md
 - Splash screen goes through the `expo-splash-screen` config plugin — the top-level `splash` key in `app.json` is rejected by the SDK 57 schema.
 - Never share code with `web/` — this project is self-contained by decision (see root `PROJECT.md`). Equivalent logic may be reimplemented, never imported.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Links oficiais
+
+- Web deploy: https://personalize-my-cv.vercel.app/ · Landing: https://filipeleonelbatista.github.io/personalize-my-cv/ · Repo: https://github.com/filipeleonelbatista/personalize-my-cv · Licença: AGPL-3.0-only.

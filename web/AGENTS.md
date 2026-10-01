@@ -40,3 +40,7 @@ npm run build      # generates web/out/
 - Never reintroduce server persistence (Prisma/SQLite) or secrets in client-accessible code — static deploy is a core constraint (see root `PROJECT.md`).
 - Never share code with `mobile/` — this project is self-contained by decision. Equivalent logic may be reimplemented, never imported.
 - New user-visible strings go in all 3 message files; lib errors go through `tErr` with an optional locale param defaulting to `getLocale()`.
+
+## Links oficiais
+
+- Web deploy: https://personalize-my-cv.vercel.app/ · Landing: https://filipeleonelbatista.github.io/personalize-my-cv/ · Repo: https://github.com/filipeleonelbatista/personalize-my-cv · Licença: AGPL-3.0-only.
