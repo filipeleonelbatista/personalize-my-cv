@@ -12,22 +12,24 @@ describe("mobile llm chain", () => {
       vi.fn(async () => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"ok":1}' }] } }] }) })),
     );
     const r = await generateJson("s", "u", "KEY");
-    expect(r.provider).toBe("gemini:gemini-3-flash-preview");
+    expect(r.provider).toBe("gemini:gemini-3.8-flash");
     expect(r.data).toEqual({ ok: 1 });
   });
   it("falls back across models", async () => {
     const fetch = vi
       .fn()
       .mockRejectedValueOnce(new Error("m1 down"))
-      .mockResolvedValueOnce({ ok: false, status: 429, text: async () => "quota" } as unknown as Response)
+      .mockRejectedValueOnce(new Error("m2 down"))
+      .mockRejectedValueOnce(new Error("m3 down"))
+      .mockRejectedValueOnce(new Error("m4 down"))
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ candidates: [{ content: { parts: [{ text: '{"ok":3}' }] } }] }),
+        json: async () => ({ candidates: [{ content: { parts: [{ text: '{"ok":5}' }] } }] }),
       } as unknown as Response);
     vi.stubGlobal("fetch", fetch);
     const r = await generateJson("s", "u", "KEY");
-    expect(r.provider).toBe("gemini:gemini-2.5-flash-lite");
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(r.provider).toBe("gemini:gemini-3.5-flash-lite");
+    expect(fetch).toHaveBeenCalledTimes(5);
   });
   it("validate empty key in UI locale", async () => {
     const r = await validateGeminiKey("", "en-US");

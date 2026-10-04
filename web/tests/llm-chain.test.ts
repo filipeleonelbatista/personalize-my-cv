@@ -8,14 +8,18 @@ afterEach(() => {
 });
 
 describe("geminiModels", () => {
-  it("defaults to the 3 free-tier models in quality order", () => {
-    expect(geminiModels()).toEqual(["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]);
+  it("defaults to the 5 free-tier models in quality order", () => {
+    expect(geminiModels()).toEqual(["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]);
   });
   it("trims and filters a caller-provided list", () => {
-    expect(geminiModels([" gemini-2.5-flash ", "", " gemini-2.5-flash-lite "])).toEqual(["gemini-2.5-flash", "gemini-2.5-flash-lite"]);
+    expect(geminiModels([" gemini-3.8-flash ", "", " gemini-3.5-flash-lite "])).toEqual(["gemini-3.8-flash", "gemini-3.5-flash-lite"]);
   });
   it("falls back to defaults when the list is empty after filtering", () => {
-    expect(geminiModels(["", "   ", ""])).toEqual(["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]);
+    expect(geminiModels(["", "   ", ""])).toEqual(["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]);
+  });
+  it("migrates deprecated models to defaults", () => {
+    expect(geminiModels(["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"])).toEqual(["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]);
+    expect(geminiModels(["gemini-2.5-flash", " gemini-3.6-flash "])).toEqual(["gemini-3.6-flash"]);
   });
 });
 
@@ -23,26 +27,28 @@ describe("generateJson fallback", () => {
   it("uses the first model when it succeeds", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"ok":1}' }] } }] }) })));
     const r = await generateJson("s", "u", "K");
-    expect(r.provider).toBe("gemini:gemini-3-flash-preview");
+    expect(r.provider).toBe("gemini:gemini-3.8-flash");
     expect(r.data).toEqual({ ok: 1 });
   });
-  it("falls back across the 3 models", async () => {
+  it("falls back across the 5 models", async () => {
     const fetch = vi.fn()
       .mockRejectedValueOnce(new Error("m1 down"))
-      .mockResolvedValueOnce({ ok: false, status: 429, text: async () => "quota" } as unknown as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"ok":3}' }] } }] }) } as unknown as Response);
+      .mockRejectedValueOnce(new Error("m2 down"))
+      .mockRejectedValueOnce(new Error("m3 down"))
+      .mockRejectedValueOnce(new Error("m4 down"))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"ok":5}' }] } }] }) } as unknown as Response);
     vi.stubGlobal("fetch", fetch);
     const r = await generateJson("s", "u", "K");
-    expect(r.provider).toBe("gemini:gemini-2.5-flash-lite");
-    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(r.provider).toBe("gemini:gemini-3.5-flash-lite");
+    expect(fetch).toHaveBeenCalledTimes(5);
   });
-  it("throws with all three model errors", async () => {
+  it("throws with all five model errors", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("down"); }));
-    await expect(generateJson("s", "u", "K")).rejects.toThrow(/gemini-3-flash-preview.*gemini-2\.5-flash.*gemini-2\.5-flash-lite/s);
+    await expect(generateJson("s", "u", "K")).rejects.toThrow(/gemini-3\.8-flash.*gemini-3\.7-flash.*gemini-3\.6-flash.*gemini-3\.5-flash.*gemini-3\.5-flash-lite/s);
   });
   it("gemini rejects empty candidates with readable error", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ candidates: [] }) })));
-    await expect(chatJsonGemini("s", "u", "K", "gemini-2.5-flash")).rejects.toThrow(/resposta vazia/);
+    await expect(chatJsonGemini("s", "u", "K", "gemini-3.8-flash")).rejects.toThrow(/resposta vazia/);
   });
 });
 

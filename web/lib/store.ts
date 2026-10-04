@@ -10,7 +10,7 @@ export const StoredBaseSchema = z.object({ resume: ResumeSchema, lang: z.enum(["
 export type StoredBase = z.infer<typeof StoredBaseSchema>;
 export const StoredAppSchema = TailorEnvelopeSchema.extend({ id: z.string().min(1), jobText: z.string(), fileName: z.string(), status: z.enum(["done", "failed"]), errorLog: z.string().default(""), lang: z.enum(["pt-BR", "en", "es"]).default("pt-BR"), createdAt: z.string() });
 export type StoredApp = z.infer<typeof StoredAppSchema>;
-export const SettingsSchema = z.object({ geminiKey: z.string().default(""), models: z.array(z.string()).min(1).default(["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]) });
+export const SettingsSchema = z.object({ geminiKey: z.string().default(""), models: z.array(z.string()).min(1).default(["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]) });
 export type Settings = z.infer<typeof SettingsSchema>;
 
 function readArr(key: string): StoredApp[] {

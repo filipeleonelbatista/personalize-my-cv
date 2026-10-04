@@ -18,7 +18,7 @@ describe("retryStoredApp failure path", () => {
   it("preserves the original createdAt when retry fails", async () => {
     saveBase(base);
     saveApps([failedApp()]);
-    saveSettings({ geminiKey: "K", models: ["gemini-2.5-flash"] });
+    saveSettings({ geminiKey: "K", models: ["gemini-3.8-flash"] });
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("ia fora do ar"); }));
     const r = await retryStoredApp("retry-1");
     expect(r.ok).toBe(false);

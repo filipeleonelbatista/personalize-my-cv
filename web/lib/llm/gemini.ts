@@ -1,10 +1,24 @@
 import { getLocale, tErr, type UiLocale } from "@/lib/i18n/locale";
 
-export const DEFAULT_GEMINI_MODELS = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+export const DEFAULT_GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"];
+
+// Modelos antigos removidos/restritos pela API (2.5 só para uso legado desde 18/09/2026,
+// 2.0 desligado em 01/06/2026, preview instável com 503). Mantidos aqui para migrar
+// configurações salvas que ainda referenciem esses IDs.
+export const DEPRECATED_GEMINI_MODELS = new Set([
+  "gemini-3-flash-preview",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-2.0-flash-001",
+  "gemini-2.0-flash-lite-001",
+  "gemini-3.1-flash-lite-preview",
+]);
 
 export function geminiModels(models?: string[]): string[] {
   if (models && models.length) {
-    const clean = models.map((s) => s.trim()).filter(Boolean);
+    const clean = models.map((s) => s.trim()).filter(Boolean).filter((m) => !DEPRECATED_GEMINI_MODELS.has(m));
     if (clean.length) return clean;
   }
   return [...DEFAULT_GEMINI_MODELS];
