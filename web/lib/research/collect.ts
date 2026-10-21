@@ -4,7 +4,7 @@
 // Os provedores são injetados (`search`/`read`): quem chama controla o pro-
 // vedor real e os testes mockam. Tudo é resolvido no cliente — nada de servidor.
 //
-// Invariantes duros, forçados em código:
+// Invariantes duros, forçados em código (o caller pode BAIXAR um teto, nunca subir):
 // - teto de buscas e de leituras (crédito real do Tavily);
 // - leitura que falha NUNCA entra no corpus (a URL só vai para `failures`);
 // - URL descoberta e não lida não vira citação depois.
@@ -24,6 +24,13 @@ const READ_PRIORITY: DossierSection[] = ["reputacao", "contatos", "redes", "prod
 
 const OFFICIAL_QUERY_RE = /site oficial|official site|sitio oficial/;
 
+// Agregadores/redes sociais não caracterizam o site oficial da empresa.
+const AGGREGATOR_HOSTS = [
+  "linkedin.com", "instagram.com", "facebook.com", "youtube.com", "github.com", "x.com",
+  "twitter.com", "tiktok.com", "glassdoor.com", "indeed.com", "wikipedia.org", "wikidata.org",
+  "reclameaqui.com.br", "jusbrasil.com.br", "medium.com", "reddit.com", "youtube.com.br",
+];
+
 export type SearchFn = (query: string) => Promise<SearchHit[]>;
 export type ReadFn = (url: string) => Promise<ReadDoc>;
 
@@ -31,21 +38,28 @@ export type CollectOptions = {
   company: string;
   lang: BaseLang;
   cnpj?: string | null;
-  maxSearches?: number; // default 22
-  maxReads?: number; // default 15
+  maxSearches?: number; // default 22 — teto; o caller pode baixar, nunca subir
+  maxReads?: number; // default 15 — teto; o caller pode baixar, nunca subir
   search: SearchFn;
   read: ReadFn;
+  /** Cache de leituras. As chaves DEVEM ser URLs canônicas (`canonicalUrl(url)`);
+   * chave crua (com `www.`, trailing `/`, `utm_*`) vira miss silencioso e re-gasta a leitura. */
   cache?: Map<string, ReadDoc>;
   onStage?: (stage: "search" | "read" | "official") => void;
 };
 
 export type CollectResult = {
   docs: ReadDoc[];
+  /** Descoberta COMPLETA: inclui URLs nunca lidas e duplicatas. `docs` é o corpus (único
+   * material citável); na hora de citar, restrinja a `docs` e canonize com `canonicalUrl`. */
   hits: SearchHit[];
   legal: CnpjData | null;
+  /** CNPJ resolvido (14 dígitos) — digitado pelo usuário ou descoberto nas queries;
+   * null quando não houve. Fonte oficial correspondente: https://brasilapi.com.br/api/cnpj/v1/<cnpj> */
+  cnpj: string | null;
   searchesUsed: number;
   readsUsed: number;
-  failures: { url: string; reason: string }[];
+  failures: { section: DossierSection | null; url: string; reason: string }[];
 };
 
 // D11 — validação de homônimo: tokens significativos = minúsculas, sem acento,
@@ -76,16 +90,29 @@ function sharesToken(company: string, razaoSocial: string | null): boolean {
   return significantTokens(razaoSocial).some((t) => mine.has(t));
 }
 
-// F0 — extrai um CNPJ (14 dígitos) dos hits do bloco `cnpj`.
-function extractCnpjDigits(texts: string[]): string | null {
+// F0 — combinações exatas do CNPJ formatado (um número colado em texto não
+// deve engolir o vizinho) e, como fallback, corridas de dígitos puras de
+// exatamente 14 (não recortes de números maiores).
+const CNPJ_FORMATTED_RE = /\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/g;
+
+function extractCnpjCandidates(texts: string[]): string[] {
+  const found: string[] = [];
+  const push = (digits: string) => {
+    if (digits.length === 14 && !found.includes(digits)) found.push(digits);
+  };
   for (const text of texts) {
-    const chunks = text.match(/\d[\d.,\s/?-]*\d/g) ?? [];
-    for (const chunk of chunks) {
-      const digits = chunk.replace(/\D/g, "");
-      if (digits.length === 14) return digits;
+    for (const m of text.matchAll(CNPJ_FORMATTED_RE)) push(m[0].replace(/\D/g, ""));
+  }
+  if (found.length === 0) {
+    for (const text of texts) {
+      // corridas de dígitos puras: separadas por QUAISQUER não-dígitos, sem
+      // misturar números adjacentes (o espaço não cola "1 2024" em "12024").
+      for (const m of text.matchAll(/\d+/g)) {
+        if (m[0].length === 14) push(m[0]);
+      }
     }
   }
-  return null;
+  return found;
 }
 
 function hostOf(url: string): string {
@@ -96,19 +123,35 @@ function hostOf(url: string): string {
   }
 }
 
+function isAggregatorHost(host: string): boolean {
+  return AGGREGATOR_HOSTS.some((d) => host === d || host.endsWith(`.${d}`));
+}
+
+// O 1º hit da query "site oficial" pode ser diretório/rede social;
+// pega o primeiro hit cujo host não é agregador, senão o 1º hit.
+function pickOfficialDomain(officialHits: SearchHit[]): string {
+  for (const hit of officialHits) {
+    const host = hostOf(hit.url);
+    if (host && !isAggregatorHost(host)) return host;
+  }
+  return officialHits.length > 0 ? hostOf(officialHits[0].url) : "";
+}
+
 function errorMessage(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err);
   return message.slice(0, 120);
 }
 
 export async function collectCompany(opts: CollectOptions): Promise<CollectResult> {
-  const maxSearches = opts.maxSearches ?? DEFAULT_MAX_SEARCHES;
-  const maxReads = opts.maxReads ?? DEFAULT_MAX_READS;
-  const failures: { url: string; reason: string }[] = [];
+  // Teto é teto: caller pode baixar, nunca subir (crédito real do Tavily).
+  const maxSearches = Math.min(opts.maxSearches ?? DEFAULT_MAX_SEARCHES, DEFAULT_MAX_SEARCHES);
+  const maxReads = Math.min(opts.maxReads ?? DEFAULT_MAX_READS, DEFAULT_MAX_READS);
+  const failures: { section: DossierSection | null; url: string; reason: string }[] = [];
 
   // 1. Estágio de descoberta.
   opts.onStage?.("search");
   const hits: SearchHit[] = [];
+  const tagged: { hit: SearchHit; section: DossierSection }[] = [];
   const bySection = new Map<DossierSection, SearchHit[]>();
   let officialHits: SearchHit[] = [];
   let searchesUsed = 0;
@@ -117,53 +160,108 @@ export async function collectCompany(opts: CollectOptions): Promise<CollectResul
     if (searchesUsed >= maxSearches) break;
     // 2. CNPJ digitado pelo usuário: a query de CNPJ não gasta crédito.
     if (opts.cnpj && item.section === "cnpj") continue;
+    // Variante de idioma: só gasta crédito quando a seção PT/ES ficou vazia.
+    if (item.lang && (bySection.get(item.section)?.length ?? 0) > 0) continue;
     searchesUsed++;
     let found: SearchHit[];
     try {
       found = await opts.search(item.query);
     } catch {
-      failures.push({ url: item.query, reason: "search" });
+      failures.push({ section: item.section, url: item.query, reason: "search" });
       continue;
     }
     hits.push(...found);
-    bySection.set(item.section, [...(bySection.get(item.section) ?? []), ...found]);
-    // (a) domínio do site oficial = host do 1º hit da query "site oficial".
+    for (const hit of found) tagged.push({ hit, section: item.section });
+    // Base não consome cota de seção — só alimenta o passe de site oficial.
+    if (!item.base) bySection.set(item.section, [...(bySection.get(item.section) ?? []), ...found]);
+    // (a) hits da query "site oficial" definem o domínio do site oficial.
     if (officialHits.length === 0 && OFFICIAL_QUERY_RE.test(item.query)) officialHits = found;
   }
 
   // 4. Estágio oficial: CNPJ informado ou extraído dos hits do bloco cnpj.
   opts.onStage?.("official");
   let legal: CnpjData | null = null;
-  const informed = opts.cnpj ?? null;
-  const cnpj = informed ?? extractCnpjDigits((bySection.get("cnpj") ?? []).map((h) => `${h.title} ${h.snippet} ${h.url}`));
-  if (cnpj && cnpj.replace(/\D/g, "").length === 14) {
-    try {
-      legal = await fetchCnpj(cnpj.replace(/\D/g, ""));
-    } catch (err) {
-      legal = null;
-      failures.push({ url: "cnpj", reason: `official: ${errorMessage(err)}` });
+  let cnpj: string | null = null;
+  if (opts.cnpj) {
+    const digits = opts.cnpj.replace(/\D/g, "");
+    if (digits.length === 14) {
+      cnpj = digits;
+      let data: CnpjData | null = null;
+      let fetchFailed = false;
+      try {
+        data = await fetchCnpj(digits);
+      } catch (err) {
+        fetchFailed = true;
+        failures.push({ section: "cnpj", url: "cnpj", reason: `official: ${errorMessage(err)}` });
+      }
+      if (data) legal = data;
+      else if (!fetchFailed) failures.push({ section: "cnpj", url: "cnpj", reason: "not-found" });
+    } else {
+      // CNPJ digitado não fechou 14 dígitos — não vai ao registro.
+      failures.push({ section: "cnpj", url: "cnpj", reason: "invalid" });
+    }
+  } else {
+    const texts = (bySection.get("cnpj") ?? []).map((h) => `${h.title} ${h.snippet} ${h.url}`);
+    const candidates = extractCnpjCandidates(texts);
+    let sawHomonym = false;
+    let sawNotFound = false;
+    for (const cand of candidates) {
+      let data: CnpjData | null = null;
+      try {
+        data = await fetchCnpj(cand);
+      } catch (err) {
+        failures.push({ section: "cnpj", url: "cnpj", reason: `official: ${errorMessage(err)}` });
+        continue;
+      }
+      if (!data) {
+        // 404 etc.: registro não existe para esse número; tenta o próximo.
+        sawNotFound = true;
+        continue;
+      }
+      if (sharesToken(opts.company, data.razaoSocial)) {
+        legal = data;
+        cnpj = cand;
+        break;
+      }
+      // D11 — homônimo: tenta o próximo candidato antes de desistir.
+      sawHomonym = true;
+    }
+    if (!cnpj) {
+      failures.push({
+        section: "cnpj",
+        url: "cnpj",
+        reason: candidates.length === 0 ? "no-digits" : sawHomonym ? "homonym" : "not-found",
+      });
     }
   }
-  // 5. D11 — homônimo: só valida quando o CNPJ NÃO vem do usuário.
-  if (legal && !informed && !sharesToken(opts.company, legal.razaoSocial)) {
-    legal = null;
-    failures.push({ url: "cnpj", reason: "homonym" });
+
+  // 6. Estágio de leitura: candidatos em ordem de prioridade com proveniência.
+  opts.onStage?.("read");
+  const officialDomain = pickOfficialDomain(officialHits);
+  const candidates: { url: string; section: DossierSection }[] = [];
+  if (officialDomain) {
+    const officialTagged = tagged.filter((t) => hostOf(t.hit.url) === officialDomain);
+    for (const t of officialTagged.slice(0, SECTION_READ_CAP)) {
+      candidates.push({ url: t.hit.url, section: t.section });
+    }
+  }
+  for (const section of READ_PRIORITY) {
+    for (const hit of (bySection.get(section) ?? []).slice(0, SECTION_READ_CAP)) {
+      candidates.push({ url: hit.url, section });
+    }
   }
 
-  // 6. Estágio de leitura: candidatos em ordem de prioridade.
-  opts.onStage?.("read");
-  const officialDomain = officialHits.length > 0 ? hostOf(officialHits[0].url) : "";
-  const candidates: SearchHit[] = [
-    ...hits.filter((h) => officialDomain && hostOf(h.url) === officialDomain).slice(0, SECTION_READ_CAP),
-  ];
-  for (const section of READ_PRIORITY) {
-    candidates.push(...(bySection.get(section) ?? []).slice(0, SECTION_READ_CAP));
+  const sectionOfUrl = new Map<string, DossierSection>();
+  for (const c of candidates) {
+    const k = canonicalUrl(c.url);
+    if (!sectionOfUrl.has(k)) sectionOfUrl.set(k, c.section);
   }
 
   const docs: ReadDoc[] = [];
   let readsUsed = 0;
-  for (const url of dedupeUrls(candidates.map((h) => h.url.trim()).filter(Boolean))) {
+  for (const url of dedupeUrls(candidates.map((c) => c.url.trim()).filter(Boolean))) {
     const key = canonicalUrl(url);
+    const section = sectionOfUrl.get(key) ?? null;
     const cached = opts.cache?.get(key);
     if (cached) {
       docs.push(cached); // cache não gasta leitura nem crédito.
@@ -176,9 +274,9 @@ export async function collectCompany(opts: CollectOptions): Promise<CollectResul
       docs.push(doc);
       opts.cache?.set(key, doc);
     } catch (err) {
-      failures.push({ url: key, reason: errorMessage(err) });
+      failures.push({ section, url: key, reason: errorMessage(err) });
     }
   }
 
-  return { docs, hits, legal, searchesUsed, readsUsed, failures };
+  return { docs, hits, legal, cnpj, searchesUsed, readsUsed, failures };
 }
