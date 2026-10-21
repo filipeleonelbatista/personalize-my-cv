@@ -2,7 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { buildCorpus, buildSources, runDossierFromDocs, runDossierJob, runDossierMatch } from "@/lib/dossier-client";
 import { DossierSchema } from "@/lib/dossier-schema";
-import { loadApps, loadDossiers, loadReadCache, saveApps, saveBase, saveDossiers, saveSettings, StoredAppSchema } from "@/lib/store";
+import { tErr } from "@/lib/i18n/locale";
+import { loadApps, loadDossiers, loadReadCache, saveApps, saveBase, saveDossiers, saveReadCache, saveSettings, StoredAppSchema } from "@/lib/store";
 
 // Mesmo fixture inline de tests/store.test.ts (linha 6) — sem fixture compartilhado.
 const RESUME = { cabecalho: { nome: "Ana", titulo_profissional: "Dev", contatos: [{ tipo: "email" as const, valor: "a@a.com", link: null }] }, secoes: { resumo: "X", experiencia: [], formacao: [], habilidades: [], certificacoes: [], idiomas: [], projetos: [] } };
@@ -56,6 +57,27 @@ function seedDossier(extra: Record<string, unknown> = {}) {
   });
   saveDossiers([dossier]);
   return dossier;
+}
+
+function makeApp(overrides: Record<string, unknown> = {}) {
+  return StoredAppSchema.parse({
+    id: "a1",
+    jobText: "vaga de devs",
+    fileName: "f.pdf",
+    resume: RESUME,
+    cargo: "Dev",
+    empresa: "Acme",
+    matchPercent: 80,
+    strengths: ["s"],
+    weaknesses: ["w"],
+    emailBody: "e",
+    chatMessage: "c",
+    status: "done",
+    errorLog: "",
+    lang: "pt-BR",
+    createdAt: ISO,
+    ...overrides,
+  });
 }
 
 beforeEach(() => {
@@ -114,8 +136,17 @@ describe("runDossierJob", () => {
     const fetchMock = installFetch();
     const r = await runDossierJob({ company: "Acme", lang: "pt-BR" });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error).toBe("noResearchKey");
+    if (!r.ok) expect(r.error).toBe(tErr("pt-BR", "noResearchKey"));
     expect(r.dossier).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("não dispara pesquisa sem chave Gemini", async () => {
+    saveSettings({ geminiKey: "" });
+    const fetchMock = installFetch();
+    const r = await runDossierJob({ company: "Acme", lang: "pt-BR" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe(tErr("pt-BR", "noKey"));
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -128,17 +159,56 @@ describe("runDossierJob", () => {
     expect(failed.errorLog.length).toBeGreaterThan(0);
     expect(failed.sources[0].url).toBe("https://acme.com");
     expect(loadReadCache().map((entry) => entry.url)).toContain("https://acme.com");
-    if (!r.ok) expect(r.error).toBe("dossierFailed");
+    if (!r.ok) expect(r.error).toBe(tErr("pt-BR", "dossierFailed"));
   });
 
-  it("chama onStage na ordem search/read/official/synthesize", async () => {
+  it("tenta o reparo uma vez quando o JSON é válido mas o Zod falha", async () => {
+    const fetchMock = installFetch({
+      geminiText: (user) => {
+        if (user.includes("Corrija este JSON")) {
+          return JSON.stringify({
+            history: { summary: "reparado" },
+            products: [],
+            reputation: { reviews: [], redFlags: [] },
+            contacts: [],
+            socials: [],
+          });
+        }
+        if (user.includes("reputation")) return JSON.stringify({ reputation: "invalido" });
+        return JSON.stringify({ products: "invalido" });
+      },
+    });
+    const r = await runDossierJob({ company: "Acme", lang: "pt-BR" });
+    expect(r.ok).toBe(true);
+    expect(loadDossiers()[0].history.summary).toBe("reparado");
+    const geminiCalls = fetchMock.mock.calls.filter((call) => String(call[0]).includes("generativelanguage"));
+    expect(geminiCalls).toHaveLength(3); // A + B + 1 reparo
+  });
+
+  it("retry de dossiê failed usa o readcache sem refazer buscas", async () => {
+    installFetch({ geminiText: () => "{nao é json" });
+    const first = await runDossierJob({ company: "Acme", lang: "pt-BR" });
+    expect(first.ok).toBe(false);
+    expect(loadDossiers()[0].status).toBe("failed");
+
+    // Sem chave Tavily: o retry só pode funcionar se sair do cache.
+    saveSettings({ research: { tavilyKey: "", braveKey: "", jinaKey: "", youtubeKey: "", githubToken: "" } });
+    const retryFetch = installFetch({ geminiText: () => JSON.stringify({ history: { summary: "do cache" } }) });
+    const stages: string[] = [];
+    const retry = await runDossierJob({ company: "Acme", lang: "pt-BR", onStage: (s) => stages.push(s) });
+
+    expect(retry.ok).toBe(true);
+    expect(retryFetch.mock.calls.every((call) => String(call[0]).includes("generativelanguage"))).toBe(true);
+    expect(stages).toEqual(["synthesize"]);
+    expect(loadDossiers()[0].status).toBe("done");
+    expect(loadDossiers()[0].history.summary).toBe("do cache");
+  });
+
+  it("chama onStage na ordem search/official/read/synthesize", async () => {
     installFetch();
     const stages: string[] = [];
     await runDossierJob({ company: "Acme", lang: "pt-BR", onStage: (s) => stages.push(s) });
-    expect(stages).toContain("search");
-    expect(stages).toContain("read");
-    expect(stages).toContain("official");
-    expect(stages).toContain("synthesize");
+    expect(stages).toEqual(["search", "official", "read", "synthesize"]);
   });
 
   it("aplica o invariante: derruba URL inventada e preserva deep link lido", async () => {
@@ -191,30 +261,72 @@ describe("runDossierFromDocs", () => {
     expect(d.legal.razaoSocial).toBe("ACME LTDA");
     expect(d.sources[0].url).toBe("https://acme.com");
   });
+
+  it("não substitui um dossiê done quando a re-síntese falha", async () => {
+    seedDossier({ history: { summary: "bom" } });
+    installFetch({ geminiText: () => "{nao é json" });
+    const r = await runDossierFromDocs({
+      company: "Acme",
+      lang: "en",
+      docs: [{ url: "https://acme.com", title: "Acme", publishedAt: null, content: DOC_TEXT, provider: "jina" }],
+    });
+    expect(r.ok).toBe(false);
+    expect(r.dossier).toBeNull();
+    const [kept] = loadDossiers();
+    expect(kept.status).toBe("done");
+    expect(kept.history.summary).toBe("bom");
+    expect(kept.lang).toBe("pt-BR");
+  });
+
+  it("mantém citável a URL de docs além do teto de 40 sources", async () => {
+    const docs = Array.from({ length: 41 }, (_, i) => ({
+      url: `https://site.example/doc-${i}`,
+      title: `Doc ${i}`,
+      publishedAt: null,
+      content: `conteúdo ${i}`,
+      provider: "jina" as const,
+    }));
+    installFetch({
+      geminiText: (user) =>
+        user.includes("reputation")
+          ? JSON.stringify({ reputation: { reviews: [], redFlags: [] }, contacts: [], socials: [] })
+          : JSON.stringify({
+              history: { summary: "x" },
+              products: [{ name: "P", evidence: [{ claim: "c", sourceUrl: docs[40].url }] }],
+            }),
+    });
+    const r = await runDossierFromDocs({ company: "Acme", lang: "pt-BR", docs });
+    expect(r.ok).toBe(true);
+    const d = loadDossiers()[0];
+    expect(d.sources).toHaveLength(40);
+    expect(d.products[0].evidence[0].sourceUrl).toBe(docs[40].url);
+  });
+
+  it("pula entradas do readcache que não couberem, sem descartar as antigas menores", async () => {
+    saveReadCache([{ url: "https://antigo.example", content: "curto", publishedAt: null, fetchedAt: new Date(Date.now() - 60_000).toISOString() }]);
+    const docs = Array.from({ length: 4 }, (_, i) => ({
+      url: `https://grande.example/${i}`,
+      title: `G${i}`,
+      publishedAt: null,
+      content: "x".repeat(50_000),
+      provider: "jina" as const,
+    }));
+    installFetch();
+    const r = await runDossierFromDocs({ company: "Acme", lang: "pt-BR", docs });
+    expect(r.ok).toBe(true);
+    const cache = loadReadCache();
+    expect(cache.map((entry) => entry.url)).toContain("https://antigo.example");
+    expect(cache.length).toBeGreaterThanOrEqual(4);
+    expect(JSON.stringify(cache).length).toBeLessThanOrEqual(150 * 1024);
+  });
 });
 
 describe("runDossierMatch", () => {
   it("grava o match na candidatura usando o resume tailored", async () => {
     const dossier = seedDossier();
-    const app = StoredAppSchema.parse({
-      id: "a1",
-      jobText: "vaga de devs",
-      fileName: "f.pdf",
-      resume: RESUME,
-      cargo: "Dev",
-      empresa: "Acme",
-      matchPercent: 80,
-      strengths: ["s"],
-      weaknesses: ["w"],
-      emailBody: "e",
-      chatMessage: "c",
-      status: "done",
-      errorLog: "",
-      lang: "pt-BR",
-      createdAt: ISO,
-    });
+    const app = makeApp();
     saveApps([app]);
-    installFetch({
+    const fetchMock = installFetch({
       geminiText: () =>
         JSON.stringify({
           alignment: { score: 70, verdict: "vai", dimensions: [] },
@@ -234,30 +346,30 @@ describe("runDossierMatch", () => {
     expect(saved.dossierId).toBe(dossier.id);
     expect(saved.dossierMatch?.createdAt).toBeTruthy();
     expect(saved.dossierMatch?.updatedAt).toBeTruthy();
+    const geminiCall = fetchMock.mock.calls.find((call) => String(call[0]).includes("generativelanguage"));
+    const body = String((geminiCall?.[1] as RequestInit | undefined)?.body ?? "");
+    expect(body).toContain("vaga de devs");
+    expect(body).toContain("Ana");
   });
 
   it("devolve notFound quando não há dossiê da empresa", async () => {
-    const app = StoredAppSchema.parse({
-      id: "a1",
-      jobText: "j",
-      fileName: "f.pdf",
-      resume: RESUME,
-      cargo: "Dev",
-      empresa: "Nope",
-      matchPercent: 80,
-      strengths: ["s"],
-      weaknesses: ["w"],
-      emailBody: "e",
-      chatMessage: "c",
-      status: "done",
-      createdAt: ISO,
-    });
+    const app = makeApp({ id: "a2", jobText: "j", empresa: "Nope" });
     saveApps([app]);
     const fetchMock = installFetch();
     const r = await runDossierMatch(loadApps()[0]);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toMatch(/encontrado|not found/i);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("guarda o detalhe técnico no errorLog da candidatura quando o match falha", async () => {
+    seedDossier();
+    saveApps([makeApp()]);
+    installFetch({ geminiText: () => "{nao é json" });
+    const r = await runDossierMatch(loadApps()[0]);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe(tErr("pt-BR", "dossierFailed"));
+    expect(loadApps()[0].errorLog).toContain("gemini-3.8-flash");
   });
 });
 

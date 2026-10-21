@@ -52,6 +52,7 @@ export type DossierJobResult =
 
 const CORPUS_DOC_CHARS = 1200;
 const READ_CACHE_MAX_BYTES = 150 * 1024;
+const READ_CACHE_ENTRY_MAX_CHARS = 40_000;
 const READ_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_SOURCES = 40;
 
@@ -124,10 +125,12 @@ function urlsInText(text: string): string[] {
     .filter(Boolean);
 }
 
-/** Corpus citável = URLs lidas + URLs que aparecem no texto lido (deep links
- * legítimos, como um vídeo do YouTube citado na página). */
+/** Corpus citável = URLs de TODOS os docs lidos + URLs que aparecem no texto
+ * lido (deep links legítimos, como um vídeo do YouTube citado na página). Não
+ * usa apenas `sources`, que tem teto de 40. */
 function corpusUrls(docs: ReadDoc[], sources: SourceRef[]): string[] {
   return dedupeUrls([
+    ...docs.map((doc) => canonicalUrl(doc.url)),
     ...sources.map((source) => source.url),
     ...docs.flatMap((doc) => [...urlsInText(doc.title), ...urlsInText(doc.content)]),
   ]);
@@ -157,9 +160,29 @@ function readCacheMap(): Map<string, ReadDoc> {
   return map;
 }
 
+/** Reconstrói os `docs` do retry a partir do readcache, cobrindo exatamente as
+ * `sources` do dossiê que falhou. `null` = cache não cobre tudo (aí sim vale
+ * refazer a coleta). */
+function docsFromSources(sources: SourceRef[]): ReadDoc[] | null {
+  if (sources.length === 0) return null;
+  const cache = readCacheMap();
+  const docs: ReadDoc[] = [];
+  for (const source of sources) {
+    const cached = cache.get(canonicalUrl(source.url));
+    if (!cached) return null;
+    docs.push({
+      ...cached,
+      title: cached.title || source.title,
+      publishedAt: cached.publishedAt ?? source.publishedAt,
+    });
+  }
+  return docs;
+}
+
 /** Grava o cache de leitura respeitando o teto de 150 KB (mantém os mais
- * recentes) e o TTL de 7 dias. Best-effort: falha de cache não invalida o
- * dossiê já sintetizado. */
+ * recentes), o TTL de 7 dias e um teto por entrada. Entradas que não couberem
+ * são puladas (não interrompem as mais antigas e menores). Best-effort: falha
+ * de cache não invalida o dossiê já sintetizado. */
 function persistReadCache(docs: ReadDoc[]): void {
   try {
     const now = Date.now();
@@ -167,11 +190,16 @@ function persistReadCache(docs: ReadDoc[]): void {
     const merged = new Map<string, ReadCacheEntry>();
     for (const entry of loadReadCache()) {
       const url = canonicalUrl(entry.url);
-      merged.set(url, { ...entry, url });
+      merged.set(url, { ...entry, url, content: entry.content.slice(0, READ_CACHE_ENTRY_MAX_CHARS) });
     }
     for (const doc of docs) {
       const url = canonicalUrl(doc.url);
-      merged.set(url, { url, content: doc.content, publishedAt: doc.publishedAt, fetchedAt });
+      merged.set(url, {
+        url,
+        content: doc.content.slice(0, READ_CACHE_ENTRY_MAX_CHARS),
+        publishedAt: doc.publishedAt,
+        fetchedAt,
+      });
     }
     const sorted = [...merged.values()]
       .filter((entry) => {
@@ -184,7 +212,7 @@ function persistReadCache(docs: ReadDoc[]): void {
     let bytes = 2; // "[]"
     for (const entry of sorted) {
       const size = JSON.stringify(entry).length + 1; // + vírgula
-      if (bytes + size > READ_CACHE_MAX_BYTES) break;
+      if (bytes + size > READ_CACHE_MAX_BYTES) continue;
       kept.push(entry);
       bytes += size;
     }
@@ -286,6 +314,44 @@ function buildFailedDossier(
   }
 }
 
+async function synthesizeAndStore(params: {
+  base: Envelope;
+  legal: Dossier["legal"];
+  docs: ReadDoc[];
+  sources: SourceRef[];
+  settings: Settings;
+  locale: UiLocale;
+  onStage?: (stage: DossierStage) => void;
+  /** Um dossiê `done` existente não é substituído por um `failed`. */
+  preserveExistingOnFailure?: boolean;
+}): Promise<DossierJobResult> {
+  params.onStage?.("synthesize");
+  try {
+    const dossier = await synthesize({
+      company: params.base.company,
+      key: params.base.companyKey,
+      lang: params.base.lang,
+      cnpj: params.base.cnpj,
+      legal: params.legal,
+      docs: params.docs,
+      sources: params.sources,
+      settings: params.settings,
+      locale: params.locale,
+    });
+    upsertDossier(dossier);
+    persistReadCache(params.docs);
+    return { ok: true, dossier, match: null };
+  } catch (err) {
+    // O que já foi lido é preservado para o retry não refazer as buscas.
+    if (params.docs.length > 0) persistReadCache(params.docs);
+    const failed = params.preserveExistingOnFailure
+      ? null
+      : buildFailedDossier(params.base, params.legal, params.sources, err);
+    if (failed) upsertDossier(failed);
+    return { ok: false, error: tErr(params.locale, "dossierFailed"), dossier: failed };
+  }
+}
+
 export async function runDossierJob(opts: {
   company: string;
   cnpj?: string | null;
@@ -302,11 +368,43 @@ export async function runDossierJob(opts: {
   }
 
   const settings = loadSettings();
+  if (!settings.geminiKey.trim()) {
+    return { ok: false, error: tErr(locale, "noKey"), dossier: null };
+  }
+
+  const createdAt = nowIso();
+
+  // Retry de uma síntese que falhou: re-sintetiza do readcache, sem refazer as
+  // buscas (que custam crédito). Só cai para `collectCompany` se o cache não
+  // cobrir todas as URLs já lidas.
+  if (existing?.status === "failed" && opts.force !== true) {
+    const cachedDocs = docsFromSources(existing.sources);
+    if (cachedDocs) {
+      const base: Envelope = {
+        id: existing.id,
+        companyKey: key,
+        company: opts.company,
+        lang: opts.lang,
+        cnpj: existing.cnpj ?? opts.cnpj ?? null,
+        createdAt,
+        updatedAt: createdAt,
+      };
+      return synthesizeAndStore({
+        base,
+        legal: existing.legal,
+        docs: cachedDocs,
+        sources: existing.sources,
+        settings,
+        locale,
+        onStage: opts.onStage,
+      });
+    }
+  }
+
   if (!settings.research.tavilyKey.trim()) {
     return { ok: false, error: tErr(locale, "noResearchKey"), dossier: null };
   }
 
-  const createdAt = nowIso();
   const base: Envelope = {
     id: `dsr_${key}`,
     companyKey: key,
@@ -318,9 +416,9 @@ export async function runDossierJob(opts: {
   };
   let sources: SourceRef[] = [];
   let docs: ReadDoc[] = [];
+  let legal = emptyLegal();
 
   try {
-    opts.onStage?.("search");
     const collected = await collectCompany({
       company: opts.company,
       lang: opts.lang,
@@ -334,27 +432,20 @@ export async function runDossierJob(opts: {
     docs = collected.docs;
     sources = buildSources(docs);
     base.cnpj = collected.cnpj ?? opts.cnpj ?? null;
-    const legal: Dossier["legal"] = collected.legal ?? emptyLegal();
+    legal = collected.legal ?? emptyLegal();
 
-    opts.onStage?.("synthesize");
-    const dossier = await synthesize({
-      company: opts.company,
-      key,
-      lang: opts.lang,
-      cnpj: base.cnpj,
+    return await synthesizeAndStore({
+      base,
       legal,
       docs,
       sources,
       settings,
       locale,
+      onStage: opts.onStage,
     });
-    upsertDossier(dossier);
-    persistReadCache(docs);
-    return { ok: true, dossier, match: null };
   } catch (err) {
-    // O que já foi lido é preservado para o retry não refazer as buscas.
     if (docs.length > 0) persistReadCache(docs);
-    const failed = buildFailedDossier(base, emptyLegal(), sources, err);
+    const failed = buildFailedDossier(base, legal, sources, err);
     if (failed) upsertDossier(failed);
     return { ok: false, error: tErr(locale, "dossierFailed"), dossier: failed };
   }
@@ -384,28 +475,16 @@ export async function runDossierFromDocs(opts: {
   const legal = existing?.legal ?? emptyLegal();
   const sources = buildSources(opts.docs);
 
-  try {
-    opts.onStage?.("synthesize");
-    const dossier = await synthesize({
-      company: opts.company,
-      key,
-      lang: opts.lang,
-      cnpj: base.cnpj,
-      legal,
-      docs: opts.docs,
-      sources,
-      settings,
-      locale,
-    });
-    upsertDossier(dossier);
-    persistReadCache(opts.docs);
-    return { ok: true, dossier, match: null };
-  } catch (err) {
-    if (opts.docs.length > 0) persistReadCache(opts.docs);
-    const failed = buildFailedDossier(base, legal, sources, err);
-    if (failed) upsertDossier(failed);
-    return { ok: false, error: tErr(locale, "dossierFailed"), dossier: failed };
-  }
+  return synthesizeAndStore({
+    base,
+    legal,
+    docs: opts.docs,
+    sources,
+    settings,
+    locale,
+    onStage: opts.onStage,
+    preserveExistingOnFailure: existing?.status === "done",
+  });
 }
 
 export async function runDossierMatch(
@@ -445,7 +524,10 @@ export async function runDossierMatch(
     });
     saveApps(loadApps().map((item) => (item.id === app.id ? { ...item, dossierId: dossier.id, dossierMatch: match } : item)));
     return { ok: true, match };
-  } catch {
+  } catch (err) {
+    // O toast recebe uma chave; o detalhe técnico fica no errorLog da candidatura.
+    const errorLog = errorText(err);
+    saveApps(loadApps().map((item) => (item.id === app.id ? { ...item, errorLog } : item)));
     return { ok: false, error: tErr(locale, "dossierFailed") };
   }
 }
