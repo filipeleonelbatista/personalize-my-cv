@@ -7,8 +7,6 @@ import { loadApps, type StoredApp } from "@/lib/store";
 import { DossierDialog } from "./DossierDialog";
 import { GenerateModal } from "./GenerateModal";
 import { VacancyTable } from "./VacancyTable";
-import { BaseMenu } from "./BaseMenu";
-import { SettingsDialog } from "./SettingsDialog";
 import { ReportsSection } from "./ReportsSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import type { BaseLang } from "../../lib/llm/prompts";
@@ -42,10 +40,8 @@ export function DashboardTabs({ apps: initialApps, lang }: { apps: StoredApp[]; 
             <LuChartColumn /> {t("reports")}
           </TabsTrigger>
         </TabsList>
-        <div id="settings" className="flex flex-wrap gap-2">
+        <div id="settings" className="flex flex-wrap items-center justify-end gap-2">
           <GenerateModal defaultLang={lang} onChanged={setApps} />
-          <BaseMenu />
-          <SettingsDialog />
         </div>
       </div>
       <TabsContent value="curriculos">

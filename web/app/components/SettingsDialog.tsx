@@ -1,8 +1,7 @@
-// web/app/components/SettingsDialog.tsx
 "use client";
 
-import { useRef, useState } from "react";
-import { LuSettings } from "react-icons/lu";
+import { useEffect, useRef, useState } from "react";
+import { LuSettings, LuShieldAlert } from "react-icons/lu";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import {
@@ -22,6 +21,10 @@ import { BRAVE_ENABLED } from "@/lib/research/brave";
 import { Button } from "./ui/button";
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Badge } from "./ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { LocaleSelector } from "./LocaleSelector";
+import { HelpDialog } from "./HelpDialog";
+import { ThemeToggle } from "./theme-toggle";
 
 type ResearchKeys = Settings["research"];
 
@@ -36,11 +39,70 @@ const RESEARCH_FIELDS: Array<{ field: keyof ResearchKeys; provider: string }> = 
 
 type TavilyStatus = "ok" | "invalid" | "rateLimit" | null;
 
-export function SettingsDialog() {
+type ProviderId = "gemini" | "openai" | "anthropic" | "openrouter";
+
+const PROVIDERS: Array<{ id: ProviderId; label: string; url: string; placeholder: string }> = [
+  { id: "gemini", label: "Gemini", url: "https://aistudio.google.com/apikey", placeholder: "GEMINI_API_KEY" },
+  { id: "openai", label: "OpenAI", url: "https://platform.openai.com/api-keys", placeholder: "sk-..." },
+  { id: "anthropic", label: "Anthropic", url: "https://console.anthropic.com/settings/keys", placeholder: "sk-ant-..." },
+  { id: "openrouter", label: "OpenRouter", url: "https://openrouter.ai/keys", placeholder: "sk-or-..." },
+];
+
+const PROVIDER_DEFAULT_MODELS: Record<ProviderId, string[]> = {
+  gemini: DEFAULT_GEMINI_MODELS,
+  openai: ["gpt-4.1", "gpt-4o", "gpt-4o-mini", "gpt-4.1-mini", "o4-mini"],
+  anthropic: ["claude-3-5-sonnet-latest", "claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"],
+  openrouter: ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "google/gemini-2.0-flash-001"],
+};
+
+type ProviderConfig = {
+  provider: ProviderId;
+  keys: Record<ProviderId, string>;
+  models: Record<ProviderId, string[]>;
+};
+
+const defaultConfig: ProviderConfig = {
+  provider: "gemini",
+  keys: { gemini: "", openai: "", anthropic: "", openrouter: "" },
+  models: {
+    gemini: [...DEFAULT_GEMINI_MODELS],
+    openai: [...PROVIDER_DEFAULT_MODELS.openai],
+    anthropic: [...PROVIDER_DEFAULT_MODELS.anthropic],
+    openrouter: [...PROVIDER_DEFAULT_MODELS.openrouter],
+  },
+};
+
+function loadProviderConfig(): ProviderConfig {
+  try {
+    const raw = localStorage.getItem("pmcv:provider-config");
+    if (!raw) return defaultConfig;
+    const parsed = JSON.parse(raw) as Partial<ProviderConfig>;
+    return {
+      provider: parsed.provider === "openai" || parsed.provider === "anthropic" || parsed.provider === "openrouter" ? parsed.provider : "gemini",
+      keys: { ...defaultConfig.keys, ...(parsed.keys ?? {}) },
+      models: {
+        gemini: Array.isArray(parsed.models?.gemini) && parsed.models.gemini.length ? parsed.models.gemini : [...DEFAULT_GEMINI_MODELS],
+        openai: Array.isArray(parsed.models?.openai) && parsed.models.openai.length ? parsed.models.openai : [...PROVIDER_DEFAULT_MODELS.openai],
+        anthropic: Array.isArray(parsed.models?.anthropic) && parsed.models.anthropic.length ? parsed.models.anthropic : [...PROVIDER_DEFAULT_MODELS.anthropic],
+        openrouter: Array.isArray(parsed.models?.openrouter) && parsed.models.openrouter.length ? parsed.models.openrouter : [...PROVIDER_DEFAULT_MODELS.openrouter],
+      },
+    };
+  } catch {
+    return defaultConfig;
+  }
+}
+
+function saveProviderConfig(config: ProviderConfig) {
+  localStorage.setItem("pmcv:provider-config", JSON.stringify(config));
+}
+
+export function SettingsDialog({ open, onOpenChange }: { open?: boolean; onOpenChange?: (open: boolean) => void }) {
   const t = useTranslations("Settings");
   const tr = useTranslations("Research");
   const te = useTranslations("Errors");
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [tab, setTab] = useState("appearance");
+  const [provider, setProvider] = useState<ProviderId>("gemini");
   const [key, setKey] = useState("");
   const [models, setModels] = useState<string[]>([]);
   const [custom, setCustom] = useState("");
@@ -51,17 +113,41 @@ export function SettingsDialog() {
   const [researchForm, setResearchForm] = useState<ResearchKeys>({ tavilyKey: "", braveKey: "", jinaKey: "", youtubeKey: "", githubToken: "" });
   const [tavilyStatus, setTavilyStatus] = useState<TavilyStatus>(null);
   const [validatingTavily, setValidatingTavily] = useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
 
-  function handleOpen() {
+  function setDialogOpen(next: boolean) {
+    if (isControlled) onOpenChange?.(next);
+    else setInternalOpen(next);
+  }
+
+  useEffect(() => {
+    if (!isOpen) return;
     const s = loadSettings();
-    setKey(s.geminiKey);
-    setModels(s.models);
-    setCustom(s.models.filter((m) => !DEFAULT_GEMINI_MODELS.includes(m)).join(", "));
     setResearchForm(s.research);
     setTavilyStatus(null);
+    const config = loadProviderConfig();
+    const active = config.provider;
+    const activeKey = config.keys[active] || (active === "gemini" ? s.geminiKey : "");
+    const activeModels = config.models[active]?.length ? config.models[active] : [...(PROVIDER_DEFAULT_MODELS[active] ?? [])];
+    setProvider(active);
+    setKey(activeKey);
+    setModels(activeModels);
+    setCustom((activeModels.filter((m) => !(PROVIDER_DEFAULT_MODELS[active] ?? DEFAULT_GEMINI_MODELS).includes(m))).join(", "));
     setError("");
-    setOpen(true);
-  }
+    setTab("appearance");
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const config = loadProviderConfig();
+    const s = loadSettings();
+    const activeKey = config.keys[provider] || (provider === "gemini" ? s.geminiKey : "");
+    const activeModels = config.models[provider]?.length ? config.models[provider] : [...(PROVIDER_DEFAULT_MODELS[provider] ?? [])];
+    setKey(activeKey);
+    setModels(activeModels);
+    setCustom((activeModels.filter((m) => !(PROVIDER_DEFAULT_MODELS[provider] ?? DEFAULT_GEMINI_MODELS).includes(m))).join(", "));
+  }, [provider, isOpen]);
 
   function toggleModel(m: string) {
     setModels((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
@@ -104,14 +190,19 @@ export function SettingsDialog() {
     setLoading(true);
     try {
       const trimmed = key.trim();
-      const v = await validateGeminiKey(trimmed);
-      if (!v.ok) {
-        setError(v.error);
+      if (!trimmed) {
+        setError(t("providerKeyRequired"));
         return;
       }
-      const all = Array.from(
-        new Set([...models, ...custom.split(",").map((s) => s.trim()).filter(Boolean)]),
-      );
+      if (provider === "gemini") {
+        const v = await validateGeminiKey(trimmed);
+        if (!v.ok) {
+          setError(v.error);
+          return;
+        }
+      }
+
+      const all = Array.from(new Set([...models, ...custom.split(",").map((s) => s.trim()).filter(Boolean)]));
       if (!all.length) {
         setError(t("minOneModel"));
         return;
@@ -123,9 +214,18 @@ export function SettingsDialog() {
         youtubeKey: researchForm.youtubeKey.trim(),
         githubToken: researchForm.githubToken.trim(),
       };
-      saveSettings({ geminiKey: trimmed, models: all, research });
+      const config = loadProviderConfig();
+      config.provider = provider;
+      config.keys[provider] = trimmed;
+      config.models[provider] = all;
+      saveProviderConfig(config);
+      if (provider === "gemini") {
+        saveSettings({ geminiKey: trimmed, models: all, research });
+      } else {
+        saveSettings({ research });
+      }
       toast.success(t("updated"));
-      setOpen(false);
+      setDialogOpen(false);
     } finally {
       setLoading(false);
     }
@@ -133,9 +233,19 @@ export function SettingsDialog() {
 
   function handleClearKey() {
     if (!window.confirm(t("confirmClear"))) return;
-    clearSettings();
-    setOnboarded(false);
-    window.location.reload();
+    const config = loadProviderConfig();
+    config.keys[provider] = "";
+    config.models[provider] = [];
+    saveProviderConfig(config);
+    if (provider === "gemini") {
+      clearSettings();
+      setOnboarded(false);
+      window.location.reload();
+      return;
+    }
+    setKey("");
+    setModels([]);
+    setCustom("");
   }
 
   function handleExport() {
@@ -168,158 +278,222 @@ export function SettingsDialog() {
     window.location.reload();
   }
 
-  const options = Array.from(new Set([...DEFAULT_GEMINI_MODELS, ...models]));
+  const providerMeta = PROVIDERS.find((p) => p.id === provider) ?? PROVIDERS[0];
+  const providerDefaults = PROVIDER_DEFAULT_MODELS[provider] ?? DEFAULT_GEMINI_MODELS;
+  const options = Array.from(new Set([...providerDefaults, ...models]));
+  const keyLinkText = `${t("createKeyLinkBase")} ${new URL(providerMeta.url).hostname}`;
 
   return (
     <>
-      <Button variant="outline" onClick={handleOpen}>
-        <LuSettings /> {t("open")}
-      </Button>
-      <Dialog open={open} onClose={() => setOpen(false)}>
+      {!isControlled ? (
+        <Button variant="outline" onClick={() => setDialogOpen(true)}>
+          <LuSettings /> {t("open")}
+        </Button>
+      ) : null}
+      <Dialog open={isOpen} onClose={() => setDialogOpen(false)} className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("desc")}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-3">
-            <a
-              href="https://aistudio.google.com/apikey"
-              target="_blank"
-              rel="noopener"
-              className="text-sm underline"
-            >
-              {t("createKeyLink")}
-            </a>
-            <input
-              type="password"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              placeholder={t("keyPlaceholder")}
-              className="w-full rounded border p-2 text-sm"
-              disabled={loading}
-            />
-            <fieldset className="space-y-1">
-              <legend className="text-sm font-medium">{t("modelsLegend")}</legend>
-              {options.map((m) => (
-                <label key={m} className="flex items-center gap-2 text-sm">
+
+        <div className="py-4">
+          <Tabs value={tab} onChange={setTab} className="space-y-4">
+            <TabsList className="w-full justify-start overflow-auto">
+              <TabsTrigger value="appearance">{t("appearance")}</TabsTrigger>
+              <TabsTrigger value="ai">{t("ai")}</TabsTrigger>
+              <TabsTrigger value="backup">{t("backupTab")}</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="appearance">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between rounded-md border p-3">
+                  <div>
+                    <p className="text-sm font-medium">{t("darkMode")}</p>
+                    <p className="text-xs text-muted-foreground">{t("darkModeDesc")}</p>
+                  </div>
+                  <ThemeToggle />
+                </div>
+
+                <div className="flex items-center justify-between rounded-md border p-3">
+                  <div>
+                    <p className="text-sm font-medium">{t("language")}</p>
+                    <p className="text-xs text-muted-foreground">{t("languageDesc")}</p>
+                  </div>
+                  <LocaleSelector />
+                </div>
+
+                <div className="flex items-center justify-between rounded-md border p-3">
+                  <div>
+                    <p className="text-sm font-medium">{t("help")}</p>
+                    <p className="text-xs text-muted-foreground">{t("helpDesc")}</p>
+                  </div>
+                  <HelpDialog />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ai">
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {PROVIDERS.map((item) => (
+                    <Button
+                      key={item.id}
+                      type="button"
+                      variant={provider === item.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setProvider(item.id)}
+                    >
+                      {item.label}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="rounded-md border p-4">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-medium">{providerMeta.label}</p>
+                      <p className="text-xs text-muted-foreground">{t("fallbackHint")}</p>
+                    </div>
+                    <a href={providerMeta.url} target="_blank" rel="noopener" className="text-xs underline">
+                      {keyLinkText}
+                    </a>
+                  </div>
+
                   <input
-                    type="checkbox"
-                    checked={models.includes(m)}
-                    onChange={() => toggleModel(m)}
+                    type="password"
+                    value={key}
+                    onChange={(e) => setKey(e.target.value)}
+                    placeholder={providerMeta.placeholder}
+                    className="w-full rounded border p-2 text-sm"
                     disabled={loading}
                   />
-                  {m}
-                </label>
-              ))}
-              <input
-                type="text"
-                value={custom}
-                onChange={(e) => setCustom(e.target.value)}
-                placeholder={t("customPlaceholder")}
-                className="w-full rounded border p-2 text-sm"
-                disabled={loading}
-              />
-            </fieldset>
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
-                {t("cancel")}
-              </Button>
-              <Button variant="outline" onClick={handleClearKey} disabled={loading}>
-                {t("clearKey")}
-              </Button>
-              <Button onClick={handleSave} disabled={loading || !key.trim()}>
-                {loading ? t("validating") : t("save")}
-              </Button>
-            </div>
-          </div>
-          {/* Pesquisa: BYOK research keys (Task 7). Renders after the Gemini key block, before Backup. */}
-          <div className="space-y-2 border-t pt-3">
-            <p className="text-sm font-medium">{tr("title")}</p>
-            <p className="text-xs text-muted-foreground">{tr("desc")}</p>
-            {RESEARCH_FIELDS.map(({ field, provider }) => (
-              <div key={field} className="space-y-1">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label htmlFor={field} className="text-sm font-medium">
-                    {tr(field)}
-                  </label>
-                  <span className="flex items-center gap-2">
-                    {researchBadge(field)}
-                    {field === "tavilyKey" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleValidateTavily}
-                        disabled={loading || validatingTavily || !researchForm.tavilyKey.trim()}
-                      >
-                        {validatingTavily ? t("validating") : tr("validate")}
-                      </Button>
-                    )}
-                  </span>
+                  <div className="mt-4 space-y-3 border-t pt-4">
+                    <div>
+                      <p className="text-sm font-medium">{tr("title")}</p>
+                      <p className="text-xs text-muted-foreground">{tr("desc")}</p>
+                    </div>
+                    {RESEARCH_FIELDS.map(({ field, provider }) => (
+                      <div key={field} className="space-y-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <label htmlFor={field} className="text-sm font-medium">{tr(field)}</label>
+                          <span className="flex items-center gap-2">
+                            {researchBadge(field)}
+                            {field === "tavilyKey" ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleValidateTavily}
+                                disabled={loading || validatingTavily || !researchForm.tavilyKey.trim()}
+                              >
+                                {validatingTavily ? t("validating") : tr("validate")}
+                              </Button>
+                            ) : null}
+                          </span>
+                        </div>
+                        <input
+                          id={field}
+                          type="password"
+                          value={researchForm[field]}
+                          onChange={(event) => setResearchForm({ ...researchForm, [field]: event.target.value })}
+                          placeholder={tr(field)}
+                          className="w-full rounded border p-2 text-sm"
+                          disabled={loading}
+                        />
+                        <p className="text-xs text-muted-foreground">{tr(`${provider}Desc`)}</p>
+                        <a href={tr(`links.${provider}`)} target="_blank" rel="noopener" className="text-xs underline">
+                          {tr(`links.${provider}`)}
+                        </a>
+                        {field === "tavilyKey" ? <p className="text-xs text-muted-foreground">{tr("validateNote")}</p> : null}
+                        {field === "tavilyKey" && tavilyStatus === "rateLimit" ? (
+                          <p className="text-xs text-destructive">{te("researchRateLimit")}</p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+
+                  <fieldset className="mt-4 space-y-2">
+                    <legend className="text-sm font-medium">{t("modelsLegend")}</legend>
+                    {options.map((m) => (
+                      <label key={m} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={models.includes(m)}
+                          onChange={() => toggleModel(m)}
+                          disabled={loading}
+                        />
+                        {m}
+                      </label>
+                    ))}
+                    <input
+                      type="text"
+                      value={custom}
+                      onChange={(e) => setCustom(e.target.value)}
+                      placeholder={t("customPlaceholder")}
+                      className="w-full rounded border p-2 text-sm"
+                      disabled={loading}
+                    />
+                  </fieldset>
                 </div>
-                <input
-                  id={field}
-                  type="password"
-                  value={researchForm[field]}
-                  onChange={(e) => setResearchForm({ ...researchForm, [field]: e.target.value })}
-                  placeholder={tr(field)}
-                  className="w-full rounded border p-2 text-sm"
-                  disabled={loading}
-                />
-                <p className="text-xs text-muted-foreground">{tr(`${provider}Desc`)}</p>
-                <a href={tr(`links.${provider}`)} target="_blank" rel="noopener" className="text-xs underline">
-                  {tr(`links.${provider}`)}
-                </a>
-                {field === "tavilyKey" ? <p className="text-xs text-muted-foreground">{tr("validateNote")}</p> : null}
-                {field === "tavilyKey" && tavilyStatus === "rateLimit" ? (
-                  <p className="text-xs text-destructive">{te("researchRateLimit")}</p>
-                ) : null}
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {error ? <p className="text-sm text-destructive">{error}</p> : <span />}
+                  <Button variant="outline" size="sm" onClick={handleClearKey} disabled={loading}>
+                    {t("clearKey")}
+                  </Button>
+                </div>
               </div>
-            ))}
-          </div>
-          <div className="space-y-2 border-t pt-3">
-            <p className="text-sm font-medium">{t("backup")}</p>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={handleExport}>
-                {t("export")}
-              </Button>
-              <Button variant="outline" onClick={() => fileRef.current?.click()}>
-                {t("import")}
-              </Button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="application/json"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void handleImportFile(f);
-                }}
-              />
-            </div>
-          </div>
-          <div className="space-y-2 border-t border-destructive/30 pt-3">
-            <p className="text-sm font-medium text-destructive">{t("wipeAll")}</p>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="destructive" onClick={() => setConfirmWipe(true)} disabled={loading}>
-                {t("wipeAll")}
-              </Button>
-            </div>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="backup">
+              <div className="space-y-4">
+                <div className="rounded-md border p-3">
+                  <p className="text-sm font-medium">{t("backupInfoTitle")}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{t("backupInfo")}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={handleExport}>{t("export")}</Button>
+                  <Button variant="outline" onClick={() => fileRef.current?.click()}>{t("import")}</Button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="application/json"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void handleImportFile(f);
+                    }}
+                  />
+                </div>
+                <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-destructive">
+                    <LuShieldAlert /> {t("wipeAll")}
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{t("wipeDesc")}</p>
+                  <div className="mt-3">
+                    <Button variant="destructive" onClick={() => setConfirmWipe(true)} disabled={loading}>
+                      {t("wipeAll")}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={loading}>{t("cancel")}</Button>
+          <Button onClick={handleSave} disabled={loading || !key.trim()}>{loading ? t("validating") : t("save")}</Button>
+        </DialogFooter>
       </Dialog>
+
       <Dialog open={confirmWipe} onClose={() => setConfirmWipe(false)}>
         <DialogHeader>
           <DialogTitle>{t("wipeTitle")}</DialogTitle>
           <DialogDescription>{t("wipeDesc")}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setConfirmWipe(false)}>
-            {t("cancel")}
-          </Button>
-          <Button variant="destructive" onClick={handleWipeAll}>
-            {t("wipeConfirm")}
-          </Button>
+          <Button variant="outline" onClick={() => setConfirmWipe(false)}>{t("cancel")}</Button>
+          <Button variant="destructive" onClick={handleWipeAll}>{t("wipeConfirm")}</Button>
         </DialogFooter>
       </Dialog>
     </>

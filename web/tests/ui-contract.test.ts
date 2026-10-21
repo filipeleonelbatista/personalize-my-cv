@@ -82,7 +82,7 @@ describe("base setup dialog", () => {
     const page = readFileSync("app/page.tsx", "utf8");
     expect(page).toContain("BaseSetupDialog");
     expect(page).toContain("DashboardTabs");
-    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("BaseMenu");
+    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).not.toContain("UserMenu");
   });
 });
 
@@ -96,7 +96,7 @@ describe("base gear menu", () => {
     expect(menu).toContain('useTranslations("Base")');
     const pt = JSON.parse(readFileSync("messages/pt-BR.json", "utf8"));
     expect(pt.Base.update).toBe("Atualizar currículo");
-    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("BaseMenu");
+    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).not.toContain("UserMenu");
   });
 });
 
@@ -166,10 +166,10 @@ describe("dossiê", () => {
 });
 
 describe("settings dialog (post-onboarding)", () => {
-  it("is mounted on the dashboard toolbar", () => {
+  it("is mounted inside the user dropdown menu", () => {
     const tabs = readFileSync("app/components/DashboardTabs.tsx", "utf8");
-    expect(tabs).toContain("SettingsDialog");
-    expect(tabs).toContain("<SettingsDialog />");
+    expect(tabs).not.toContain("UserMenu");
+    expect(readFileSync("app/components/UserMenu.tsx", "utf8")).toContain("SettingsDialog");
     expect(readFileSync("app/components/SettingsDialog.tsx", "utf8")).toContain('t("open")');
     expect(JSON.parse(readFileSync("messages/pt-BR.json", "utf8")).Settings.open).toBe("Configurações");
   });

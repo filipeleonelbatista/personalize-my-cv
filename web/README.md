@@ -19,7 +19,8 @@ envie o PDF do currículo base.
 ## Uso
 
 1. Envie o PDF do currículo → a IA cataloga os dados e salva a base no navegador.
-2. Clique em **Personalizar com IA**, escolha o idioma, cole o texto da vaga → gera:
+2. Clique em **Personalizar com IA**, escolha o idioma, cole o texto da vaga e
+   (opcionalmente) a **URL da vaga** → gera:
    - PDF para download (gerado no navegador, na hora)
    - % de afinidade + pontos fortes/fracos
    - email de apresentação + mensagem instantânea (botões Copiar)
@@ -29,6 +30,10 @@ envie o PDF do currículo base.
    analise a vaga para gerar pontos de atenção, correlações e um plano de abordagem.
    O dossiê pode ficar parcial quando um site bloqueia a leitura e é exportado em
    Markdown (não há PDF do dossiê).
+5. Ao abrir uma vaga, use **Abrir vaga** para voltar ao link do anúncio e
+   **Conversar com a vaga** para perguntar à IA sobre aquela vaga (análise,
+   currículo gerado e texto original). O chat é só de consulta: o histórico
+   fica na memória da tela e some ao fechar.
 
 ## Dossiê de empresa
 

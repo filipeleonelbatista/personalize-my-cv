@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export function Dialog({ open, onClose, children, size = "md" }: { open: boolean; onClose: () => void; children: React.ReactNode; size?: "md" | "wide" }) {
+export function Dialog({ open, onClose, children, size = "md", className }: { open: boolean; onClose: () => void; children: React.ReactNode; size?: "md" | "wide"; className?: string }) {
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -25,6 +25,7 @@ export function Dialog({ open, onClose, children, size = "md" }: { open: boolean
         className={cn(
           "max-h-[90vh] w-full overflow-y-auto rounded-lg border border-border bg-background p-6 shadow-lg animate-in fade-in zoom-in-95 duration-150",
           size === "wide" ? "max-w-5xl" : "max-w-2xl",
+          className,
         )}
       >
         {children}

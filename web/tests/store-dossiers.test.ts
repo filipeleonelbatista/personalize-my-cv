@@ -31,7 +31,7 @@ describe("store: dossiês", () => {
 
   it("deleteDossier remove o dossiê e zera o dossierId das apps, preservando o match", () => {
     saveDossiers([dossier]);
-    saveApps([{ id: "a1", jobText: "j", fileName: "f.pdf", resume: RESUME, cargo: "Vaga", empresa: "Acme", matchPercent: 50, strengths: ["a"], weaknesses: ["b"], emailBody: "e", chatMessage: "c", status: "done", errorLog: "", lang: "pt-BR", createdAt: "2026-10-01T00:00:00.000Z", dossierId: "dsr_acme", dossierMatch: { dossierId: "dsr_acme", appId: "a1", lang: "pt-BR", alignment: { score: 70, verdict: "vai", dimensions: [] }, attentionPoints: [], correlations: [], gaps: [], questions: [], outreach: [], redFlagSummary: [], sources: [], stale: false, createdAt: "2026-10-01T00:00:00.000Z", updatedAt: "2026-10-01T00:00:00.000Z" } }]);
+    saveApps([{ id: "a1", jobText: "j", jobUrl: "", fileName: "f.pdf", resume: RESUME, cargo: "Vaga", empresa: "Acme", matchPercent: 50, strengths: ["a"], weaknesses: ["b"], emailBody: "e", chatMessage: "c", status: "done", errorLog: "", lang: "pt-BR", createdAt: "2026-10-01T00:00:00.000Z", dossierId: "dsr_acme", dossierMatch: { dossierId: "dsr_acme", appId: "a1", lang: "pt-BR", alignment: { score: 70, verdict: "vai", dimensions: [] }, attentionPoints: [], correlations: [], gaps: [], questions: [], outreach: [], redFlagSummary: [], sources: [], stale: false, createdAt: "2026-10-01T00:00:00.000Z", updatedAt: "2026-10-01T00:00:00.000Z" } }]);
     deleteDossier("dsr_acme");
     expect(loadDossiers()).toHaveLength(0);
     const app = loadApps()[0];

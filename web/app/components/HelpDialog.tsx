@@ -20,7 +20,7 @@ export function HelpDialog() {
           <DialogDescription>{t("desc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-4 text-sm">
-            {["s1", "s2", "s3", "s4", "s5"].map((s) => (
+          {["s1", "s2", "s3", "s4", "s5"].map((s) => (
             <div key={s}>
               <p className="font-bold">{t(`${s}t`)}</p>
               <p className="text-muted-foreground">{t(`${s}d`)}</p>

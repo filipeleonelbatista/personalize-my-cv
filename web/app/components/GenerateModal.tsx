@@ -7,6 +7,7 @@ import { LuSparkles, LuLoaderCircle } from "react-icons/lu";
 import { loadApps, quotaMessage, type StoredApp } from "@/lib/store";
 import { getLocale, tErr } from "@/lib/i18n/locale";
 import { runTailorJob } from "@/lib/tailor-client";
+import { isValidJobUrl, normalizeJobUrl } from "@/lib/job-url";
 import type { BaseLang } from "../../lib/llm/prompts";
 import { Button } from "./ui/button";
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -18,11 +19,13 @@ export function GenerateModal({ defaultLang = "pt-BR", onChanged }: { defaultLan
   const t = useTranslations("Generate");
   const [open, setOpen] = useState(false);
   const [jobText, setJobText] = useState("");
+  const [jobUrl, setJobUrl] = useState("");
   const [lang, setLang] = useState<BaseLang>(defaultLang);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const stages = [t("stage1"), t("stage2"), t("stage3")];
   const stage = useStagedSteps(stages, loading, 8000);
+  const urlInvalid = jobUrl.trim().length > 0 && !isValidJobUrl(jobUrl);
 
   async function onGenerate() {
     if (!navigator.onLine) {
@@ -34,12 +37,13 @@ export function GenerateModal({ defaultLang = "pt-BR", onChanged }: { defaultLan
     setError("");
     setLoading(true);
     try {
-      const r = await runTailorJob(jobText, lang);
+      const r = await runTailorJob(jobText, lang, normalizeJobUrl(jobUrl));
       if (r.ok) {
         toast.success(t("success"));
         onChanged?.(loadApps());
         setOpen(false);
         setJobText("");
+        setJobUrl("");
       } else {
         setError(r.error);
         toast.error(t("failSaved"), { description: r.error.slice(0, 200) });
@@ -84,6 +88,22 @@ export function GenerateModal({ defaultLang = "pt-BR", onChanged }: { defaultLan
             placeholder={t("placeholder")}
             disabled={loading}
           />
+          <div className="space-y-1">
+            <label htmlFor="job-url" className="block text-sm font-medium">
+              {t("jobUrl")}
+            </label>
+            <input
+              id="job-url"
+              type="url"
+              inputMode="url"
+              value={jobUrl}
+              onChange={(e) => setJobUrl(e.target.value)}
+              placeholder={t("jobUrlPlaceholder")}
+              className="w-full rounded border p-2 text-sm"
+              disabled={loading}
+            />
+            {urlInvalid ? <p className="text-sm text-destructive">{t("jobUrlInvalid")}</p> : null}
+          </div>
           {loading ? (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <LuLoaderCircle className="animate-spin" /> {stages[stage]} {t("loadingNote")}
@@ -109,7 +129,7 @@ export function GenerateModal({ defaultLang = "pt-BR", onChanged }: { defaultLan
           <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
             {t("cancel")}
           </Button>
-          <Button onClick={onGenerate} disabled={loading || jobText.trim().length < 20}>
+          <Button onClick={onGenerate} disabled={loading || jobText.trim().length < 20 || urlInvalid}>
             {loading && <LuLoaderCircle className="animate-spin" />}
             {loading ? t("generating") : t("submit")}
           </Button>

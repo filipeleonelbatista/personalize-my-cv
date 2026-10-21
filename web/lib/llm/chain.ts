@@ -1,4 +1,4 @@
-import { chatJsonGemini, chatJsonGeminiLong, geminiModels } from "./gemini";
+import { chatJsonGemini, chatJsonGeminiLong, chatTextGemini, geminiModels } from "./gemini";
 import { getLocale, tErr, type UiLocale } from "@/lib/i18n/locale";
 
 export type Provider = string;
@@ -20,6 +20,16 @@ export async function generateJsonLong(system: string, user: string, key: string
   const list = geminiModels(models).slice(0, Math.max(1, maxModels));
   for (const model of list) {
     try { return { data: await chatJsonGeminiLong(system, user, key, model, locale), provider: `gemini:${model}` }; }
+    catch (e) { errs.push(`${model}: ${(e as Error).message}`); }
+  }
+  throw new Error(errs.join(" | "));
+}
+
+/** Mesma política de fallback do generateJson, mas devolve texto puro. */
+export async function generateText(system: string, user: string, key: string, models?: string[], locale: UiLocale = getLocale()): Promise<{ text: string; provider: Provider }> {
+  const errs: string[] = [];
+  for (const model of geminiModels(models)) {
+    try { return { text: await chatTextGemini(system, user, key, model, locale), provider: `gemini:${model}` }; }
     catch (e) { errs.push(`${model}: ${(e as Error).message}`); }
   }
   throw new Error(errs.join(" | "));
