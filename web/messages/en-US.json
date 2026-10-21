@@ -297,7 +297,8 @@
       "goal": { "rh": "Talk to HR", "gestor": "Talk to the manager", "indicacao": "Ask for a referral", "cargo": "Discuss the job opening" },
       "channel": { "linkedin": "LinkedIn", "email": "Email", "telefone": "Phone", "site": "Website", "other": "Other" },
       "network": { "linkedin": "LinkedIn", "instagram": "Instagram", "youtube": "YouTube", "x": "X", "facebook": "Facebook", "github": "GitHub", "tiktok": "TikTok", "other": "Other" },
-      "source": { "glassdoor": "Glassdoor", "linkedin": "LinkedIn", "jusbrasil": "Jusbrasil", "reclameaqui": "Reclame Aqui", "indeed": "Indeed", "reddit": "Reddit", "other": "Other" }
+      "source": { "glassdoor": "Glassdoor", "linkedin": "LinkedIn", "jusbrasil": "Jusbrasil", "reclameaqui": "Reclame Aqui", "indeed": "Indeed", "reddit": "Reddit", "other": "Other" },
+      "category": { "processo_trabalhista": "Labor lawsuit", "cultura": "Culture", "financeiro": "Financial", "produto": "Product", "reputacao": "Reputation", "outro": "Other" }
     }
   },
   "Research": {

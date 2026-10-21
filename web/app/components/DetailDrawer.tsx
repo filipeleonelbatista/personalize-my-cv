@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { LuCopy, LuCheck, LuDownload, LuPrinter } from "react-icons/lu";
+import { LuDownload, LuPrinter, LuBuilding2 } from "react-icons/lu";
 import { resumeToBlob, openResumePdf } from "@/lib/pdf/client";
 import { getLocale } from "@/lib/i18n/locale";
 import type { StoredApp } from "@/lib/store";
@@ -11,36 +10,19 @@ import { Button } from "./ui/button";
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
+import { CopyButton } from "./CopyButton";
 
 export type AppRow = StoredApp;
 
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const t = useTranslations("Detail");
-  const [done, setDone] = useState(false);
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-    }
-    setDone(true);
-    toast.success(t("copied", { label }));
-    setTimeout(() => setDone(false), 1500);
-  }
-  return (
-    <Button variant="ghost" size="sm" onClick={copy}>
-      {done ? <LuCheck /> : <LuCopy />} {t("copy")}
-    </Button>
-  );
+function verdictVariant(verdict: "vai" | "cautela" | "desistir") {
+  if (verdict === "vai") return "success" as const;
+  if (verdict === "desistir") return "destructive" as const;
+  return "default" as const;
 }
 
-export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => void }) {
+export function DetailDrawer({ app, onClose, onOpenDossier }: { app: AppRow; onClose: () => void; onOpenDossier?: (app: StoredApp) => void }) {
   const t = useTranslations("Detail");
+  const td = useTranslations("Dossier");
   async function onDownload() {
     try {
       const blob = await resumeToBlob(app.resume, app.lang);
@@ -76,12 +58,15 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
 
       <div className="space-y-4 py-4">
         {app.status === "done" ? (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={onDownload}>
               <LuDownload /> {t("download")}
             </Button>
             <Button variant="outline" size="sm" onClick={onPrint}>
               <LuPrinter /> {t("print")}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onOpenDossier?.(app)}>
+              <LuBuilding2 /> {td("open")}
             </Button>
             <Badge variant="success">{t("done")}</Badge>
           </div>
@@ -113,6 +98,18 @@ export function DetailDrawer({ app, onClose }: { app: AppRow; onClose: () => voi
                 </ul>
               </div>
             </div>
+            {app.dossierMatch ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={verdictVariant(app.dossierMatch.alignment.verdict)}>
+                  {td(`enums.verdict.${app.dossierMatch.alignment.verdict}`)}
+                </Badge>
+                <Badge variant="outline">{app.dossierMatch.alignment.score}%</Badge>
+                <Badge variant="destructive">
+                  {td("sections.reputacao")}: {app.dossierMatch.redFlagSummary.length}
+                </Badge>
+                {app.dossierMatch.stale ? <Badge variant="outline">{td("stale")}</Badge> : null}
+              </div>
+            ) : null}
             <div>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-bold">{t("email")}</p>

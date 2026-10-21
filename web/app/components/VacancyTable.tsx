@@ -25,7 +25,15 @@ function isQuotaErrorText(text: string): boolean {
   return (["pt-BR", "en-US", "es-ES"] as const).some((l) => text.includes(quotaMessage(l)));
 }
 
-export function VacancyTable({ apps, onChanged }: { apps: StoredApp[]; onChanged?: (apps: StoredApp[]) => void }) {
+export function VacancyTable({
+  apps,
+  onChanged,
+  onOpenDossier,
+}: {
+  apps: StoredApp[];
+  onChanged?: (apps: StoredApp[]) => void;
+  onOpenDossier?: (app: StoredApp) => void;
+}) {
   const t = useTranslations("Vacancy");
   const [selected, setSelected] = useState<StoredApp | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -208,7 +216,7 @@ export function VacancyTable({ apps, onChanged }: { apps: StoredApp[]; onChanged
           </label>
         </div>
       </div>
-      {selected ? <DetailDrawer app={selected} onClose={() => setSelected(null)} /> : null}
+      {selected ? <DetailDrawer app={selected} onClose={() => setSelected(null)} onOpenDossier={onOpenDossier} /> : null}
     </div>
   );
 }

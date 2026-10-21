@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { LuFileText, LuChartColumn } from "react-icons/lu";
 import { useTranslations } from "next-intl";
 import { loadApps, type StoredApp } from "@/lib/store";
+import { DossierDialog } from "./DossierDialog";
 import { GenerateModal } from "./GenerateModal";
 import { VacancyTable } from "./VacancyTable";
 import { BaseMenu } from "./BaseMenu";
@@ -16,6 +17,7 @@ export function DashboardTabs({ apps: initialApps, lang }: { apps: StoredApp[]; 
   const t = useTranslations("Dashboard");
   const [tab, setTab] = useState("curriculos");
   const [apps, setApps] = useState<StoredApp[]>(initialApps);
+  const [dossierApp, setDossierApp] = useState<StoredApp | null>(null);
 
   useEffect(() => {
     setApps(initialApps);
@@ -40,14 +42,15 @@ export function DashboardTabs({ apps: initialApps, lang }: { apps: StoredApp[]; 
             <LuChartColumn /> {t("reports")}
           </TabsTrigger>
         </TabsList>
-        <div className="flex flex-wrap gap-2">
+        <div id="settings" className="flex flex-wrap gap-2">
           <GenerateModal defaultLang={lang} onChanged={setApps} />
           <BaseMenu />
           <SettingsDialog />
         </div>
       </div>
       <TabsContent value="curriculos">
-        <VacancyTable apps={apps} onChanged={setApps} />
+        <VacancyTable apps={apps} onChanged={setApps} onOpenDossier={(app) => setDossierApp(app)} />
+        {dossierApp ? <DossierDialog app={dossierApp} onClose={() => setDossierApp(null)} onChanged={setApps} /> : null}
       </TabsContent>
       <TabsContent value="relatorios">
         <ReportsSection />

@@ -297,7 +297,8 @@
       "goal": { "rh": "Falar com o RH", "gestor": "Falar com o gestor", "indicacao": "Pedir indicação", "cargo": "Falar sobre a vaga" },
       "channel": { "linkedin": "LinkedIn", "email": "E-mail", "telefone": "Telefone", "site": "Site", "other": "Outro" },
       "network": { "linkedin": "LinkedIn", "instagram": "Instagram", "youtube": "YouTube", "x": "X", "facebook": "Facebook", "github": "GitHub", "tiktok": "TikTok", "other": "Outra" },
-      "source": { "glassdoor": "Glassdoor", "linkedin": "LinkedIn", "jusbrasil": "Jusbrasil", "reclameaqui": "Reclame Aqui", "indeed": "Indeed", "reddit": "Reddit", "other": "Outra" }
+      "source": { "glassdoor": "Glassdoor", "linkedin": "LinkedIn", "jusbrasil": "Jusbrasil", "reclameaqui": "Reclame Aqui", "indeed": "Indeed", "reddit": "Reddit", "other": "Outra" },
+      "category": { "processo_trabalhista": "Trabalhista", "cultura": "Cultura", "financeiro": "Financeiro", "produto": "Produto", "reputacao": "Reputação", "outro": "Outro" }
     }
   },
   "Research": {

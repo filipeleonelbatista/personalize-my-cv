@@ -129,6 +129,33 @@ describe("client dashboard", () => {
   });
 });
 
+describe("dossiê", () => {
+  it("os componentes do dossiê existem", () => {
+    for (const f of ["app/components/DossierDialog.tsx", "app/components/DossierPanel.tsx"]) expect(existsSync(f), f).toBe(true);
+  });
+  it("a DetailDrawer tem o botão de montar dossiê", () => {
+    const s = readFileSync("app/components/DetailDrawer.tsx", "utf8");
+    expect(s).toContain('useTranslations("Dossier")');
+    expect(s).toContain("onOpenDossier");
+  });
+  it("o DossierDialog NÃO é montado dentro do DetailDrawer (scroll-lock)", () => {
+    const drawer = readFileSync("app/components/DetailDrawer.tsx", "utf8");
+    expect(drawer).not.toContain("DossierDialog");
+    const tabs = readFileSync("app/components/DashboardTabs.tsx", "utf8");
+    expect(tabs).toContain("DossierDialog");
+  });
+  it("nenhum componente do dossiê usa /api/ nem server actions", () => {
+    for (const f of ["app/components/DossierDialog.tsx", "app/components/DossierPanel.tsx", "app/components/DetailDrawer.tsx"]) {
+      const s = readFileSync(f, "utf8");
+      expect(s, f).not.toContain("../actions");
+      expect(s, f).not.toContain("app/api/");
+    }
+  });
+  it("o diálogo aceita o tamanho largo", () => {
+    expect(readFileSync("app/components/ui/dialog.tsx", "utf8")).toContain("size");
+  });
+});
+
 describe("settings dialog (post-onboarding)", () => {
   it("is mounted on the dashboard toolbar", () => {
     const tabs = readFileSync("app/components/DashboardTabs.tsx", "utf8");
