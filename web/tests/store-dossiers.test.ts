@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { loadDossiers, saveDossiers, upsertDossier, findDossierByCompany, deleteDossier, loadReadCache, saveReadCache, loadSettings, saveSettings, loadApps, saveApps, exportBackup, importBackup, wipeAll } from "@/lib/store";
+import { loadDossiers, saveDossiers, upsertDossier, findDossierByCompany, deleteDossier, loadReadCache, saveReadCache, loadSettings, saveSettings, loadApps, saveApps, exportBackup, importBackup, wipeAll, type StoredDossier, type ReadCacheEntry } from "@/lib/store";
+import { DossierSchema } from "@/lib/dossier-schema";
 
-const dossier = { id: "dsr_acme", companyKey: "acme", company: "Acme", lang: "pt-BR", createdAt: "2026-10-01T00:00:00.000Z", updatedAt: "2026-10-01T00:00:00.000Z" };
+// Fixture completo (parse preenche os blocos) para passar no tipo StoredDossier.
+const dossier = DossierSchema.parse({ id: "dsr_acme", companyKey: "acme", company: "Acme", lang: "pt-BR", createdAt: "2026-10-01T00:00:00.000Z", updatedAt: "2026-10-01T00:00:00.000Z" });
 const RESUME = { cabecalho: { nome: "Ana", titulo_profissional: "Dev", contatos: [{ tipo: "email" as const, valor: "a@a.com", link: null }] }, secoes: { resumo: "X", experiencia: [], formacao: [], habilidades: [], certificacoes: [], idiomas: [], projetos: [] } };
 
 describe("store: dossiês", () => {
@@ -43,6 +45,14 @@ describe("store: dossiês", () => {
     setItem.mockRestore();
   });
 
+  it("saveDossiers lança com item inválido (valida na escrita, como saveBase)", () => {
+    expect(() => saveDossiers([{ garbage: true } as unknown as StoredDossier])).toThrow();
+  });
+
+  it("saveReadCache lança com entrada inválida (valida na escrita)", () => {
+    expect(() => saveReadCache([{ garbage: true } as unknown as ReadCacheEntry])).toThrow();
+  });
+
   it("faz round-trip do cache de leitura", () => {
     saveReadCache([{ url: "https://a.com", content: "x", publishedAt: null, fetchedAt: "2026-10-01T00:00:00.000Z" }]);
     expect(loadReadCache()[0].url).toBe("https://a.com");
@@ -68,6 +78,12 @@ describe("store: backup", () => {
     saveDossiers([dossier]);
     importBackup(JSON.stringify({ base: null, apps: [] }));
     expect(loadDossiers()).toHaveLength(1);
+  });
+
+  it("importBackup com a chave dossiers SUBSTITUI os dossiês locais", () => {
+    saveDossiers([dossier]);
+    importBackup(JSON.stringify({ base: null, apps: [], dossiers: [{ ...dossier, id: "dsr_beta", companyKey: "beta" }] }));
+    expect(loadDossiers().map((d) => d.companyKey)).toEqual(["beta"]);
   });
 });
 

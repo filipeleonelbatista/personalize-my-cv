@@ -46,17 +46,14 @@ export function saveApps(a: StoredApp[]): void {
 
 export type StoredDossier = Dossier;
 export function loadDossiers(): StoredDossier[] { return readArr("pmcv:dossiers", DossierSchema); }
-export function saveDossiers(d: unknown[]): void {
-  // Mesmo padrão de readArr: valida cada item pelo Zod e descarta o inválido
-  // também na escrita; localStorage cheio → mensagem de quota via throwQuota.
-  const items: StoredDossier[] = [];
-  for (const item of d) { try { items.push(DossierSchema.parse(item)); } catch { /* descarta item inválido */ } }
-  try { localStorage.setItem("pmcv:dossiers", JSON.stringify(items)); }
+export function saveDossiers(d: StoredDossier[]): void {
+  // Valida na escrita como saveBase: item inválido lança (não some em silêncio);
+  // localStorage cheio → mensagem de quota via throwQuota.
+  try { localStorage.setItem("pmcv:dossiers", JSON.stringify(d.map((item) => DossierSchema.parse(item)))); }
   catch (e) { throwQuota(e); }
 }
-export function upsertDossier(d: unknown): void {
-  const parsed = DossierSchema.parse(d);
-  saveDossiers([parsed, ...loadDossiers().filter((x) => x.companyKey !== parsed.companyKey)]);
+export function upsertDossier(d: StoredDossier): void {
+  saveDossiers([d, ...loadDossiers().filter((x) => x.companyKey !== d.companyKey)]);
 }
 export function findDossierByCompany(companyKey: string): StoredDossier | null { return loadDossiers().find((d) => d.companyKey === companyKey) ?? null; }
 export function deleteDossier(id: string): void {
@@ -67,10 +64,9 @@ export function deleteDossier(id: string): void {
 const ReadCacheSchema = z.object({ url: z.string(), content: z.string(), publishedAt: z.string().nullable(), fetchedAt: z.string() });
 export type ReadCacheEntry = z.infer<typeof ReadCacheSchema>;
 export function loadReadCache(): ReadCacheEntry[] { return readArr("pmcv:readcache", ReadCacheSchema); }
-export function saveReadCache(c: unknown[]): void {
-  const items: ReadCacheEntry[] = [];
-  for (const item of c) { try { items.push(ReadCacheSchema.parse(item)); } catch { /* descarta entrada inválida */ } }
-  try { localStorage.setItem("pmcv:readcache", JSON.stringify(items)); }
+export function saveReadCache(c: ReadCacheEntry[]): void {
+  // Valida na escrita (item inválido lança); localStorage cheio → throwQuota.
+  try { localStorage.setItem("pmcv:readcache", JSON.stringify(c.map((item) => ReadCacheSchema.parse(item)))); }
   catch (e) { throwQuota(e); }
 }
 export function loadSettings(): Settings { try { const s = getSecure("pmcv:settings"); if (!s) return SettingsSchema.parse({}); return SettingsSchema.parse(JSON.parse(s)); } catch { return SettingsSchema.parse({}); } }
@@ -102,8 +98,9 @@ export function importBackup(json: string): void {
 }
 export function touchUpdatedAt(): string { return new Date().toISOString(); }
 
-/** Apaga TUDO do navegador (base, vagas, chave, onboarding, idioma, tema,
- *  consentimento + cookie). Irreversível. Falhas isoladas não travam o resto. */
+/** Apaga TUDO do navegador (base, vagas, dossiês, cache de leitura, chave,
+ *  onboarding, idioma, tema, consentimento + cookie). Irreversível. Falhas
+ *  isoladas não travam o resto. */
 export function wipeAll(): void {
   try {
     clearSettings();
