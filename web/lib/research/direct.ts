@@ -48,12 +48,12 @@ export async function fetchGithubEvents(org: string, token?: string): Promise<Re
 }
 
 export async function fetchYoutubePosts(channelId: string, key: string): Promise<ReadDoc | null> {
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${encodeURIComponent(channelId)}&order=date&maxResults=5&key=${encodeURIComponent(key)}`;
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${encodeURIComponent(channelId)}&order=date&type=video&maxResults=5&key=${encodeURIComponent(key)}`;
   const res = await fetchWithTimeout(url, {}, 20_000);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`youtube ${res.status}`);
   const j = (await res.json()) as { items?: { snippet?: { publishedAt?: string; title?: string; description?: string }; id?: { videoId?: string } }[] };
-  const lines = (j.items ?? []).map((it) => `${it.snippet?.publishedAt ?? ""} | ${it.snippet?.title ?? ""} | https://www.youtube.com/watch?v=${it.id?.videoId ?? ""}`);
+  const lines = (j.items ?? []).filter((it) => it.id?.videoId).map((it) => `${it.snippet?.publishedAt ?? ""} | ${it.snippet?.title ?? ""} | https://www.youtube.com/watch?v=${it.id?.videoId ?? ""}`);
   if (!lines.length) return null;
   return { url: `https://www.youtube.com/channel/${channelId}`, title: `YouTube ${channelId}`, publishedAt: null, content: lines.join("\n"), provider: "direct" };
 }
