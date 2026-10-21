@@ -203,7 +203,7 @@
   "Help": {
     "open": "Como usar o app",
     "title": "Como usar",
-    "desc": "Do zero ao CV sob medida em 4 passos.",
+    "desc": "Do zero ao CV sob medida e preparado para entrevistas em 5 passos.",
     "s1t": "1. Conecte sua chave Gemini",
     "s1d": "Crie uma chave gratuita em aistudio.google.com/apikey e cole no onboarding ou em Configurações. Ela fica só no seu browser.",
     "s2t": "2. Cadastre o currículo base",
@@ -211,10 +211,12 @@
     "s3t": "3. Gere por vaga",
     "s3d": "Cole o texto da vaga e gere: match, pontos fortes/fracos, email e mensagem. Falhou? Use o retry.",
     "s4t": "4. Backup e idioma",
-    "s4d": "Exporte o backup em Configurações. Troque o idioma da interface no seletor do topo — o idioma do CV é escolhido a cada geração."
+    "s4d": "Exporte o backup em Configurações. Troque o idioma da interface no seletor do topo — o idioma do CV é escolhido a cada geração.",
+    "s5t": "5. Monte o dossiê da empresa",
+    "s5d": "Em uma candidatura, abra “Montar dossiê” e pesquise automaticamente, informe URLs ou cole material. Depois analise a vaga para ver pontos de atenção, correlações com seu currículo, perguntas de entrevista e um plano de abordagem. O dossiê pode ser parcial e pode ser exportado em Markdown."
   },
   "Cookie": {
-    "message": "Usamos apenas armazenamento local no seu navegador (sem cookies próprios). Google Fonts e a API Gemini (com sua chave) são carregadas de terceiros.", 
+    "message": "Usamos armazenamento local no navegador, sem cookies próprios. Além de Google Fonts e Gemini, a pesquisa do dossiê consulta Tavily, Jina, BrasilAPI, YouTube e GitHub diretamente do navegador.",
     "accept": "Aceitar", 
     "decline": "Recusar", 
     "learnMore": "Saiba mais"
@@ -228,9 +230,9 @@
     "s2h": "2. Cookies", 
     "s2b": "Não usamos cookies próprios nem rastreadores. O aviso de cookies existe por transparência: guardamos apenas a sua escolha de consentimento (pmcv:consent) e as suas preferências (idioma, tema) no armazenamento local.", 
     "s3h": "3. Serviços de terceiros", 
-    "s3b": "Duas conexões externas acontecem direto do seu navegador: Google Fonts (carrega a fonte Roboto) e a API Google Gemini (generativelanguage.googleapis.com), chamada com a SUA chave para gerar os currículos. Valem as políticas de privacidade do Google.", 
+    "s3b": "As conexões externas são feitas direto do navegador: Google Fonts, API Google Gemini e, na pesquisa do dossiê, Tavily, Jina Reader, BrasilAPI, YouTube Data API e GitHub API. Consultas e URLs públicas da empresa pesquisada podem ser enviadas a esses provedores; a Gemini também recebe o conteúdo para estruturar o dossiê. As chaves de API usadas são suas, quando aplicável. Consulte as políticas de privacidade dos serviços.",
     "s4h": "4. Sua chave Gemini", 
-    "s4b": "A chave é sua e fica ofuscada no navegador (secure-ls, não é um cofre). Use uma chave com limites de cota, nunca a compartilhe e revogue-a em https://aistudio.google.com/apikey se achar que foi exposta.", 
+    "s4b": "As chaves Gemini e de pesquisa ficam ofuscadas no navegador (secure-ls, não é um cofre). Use chaves com limites de cota, não as compartilhe e revogue-as se achar que foram expostas. O dossiê pode conter dados pessoais públicos de terceiros, como nomes e cargos; ele fica no localStorage e não é publicado nem compartilhado pelo app, mas seu conteúdo é enviado à Gemini para estruturação.",
     "s5h": "5. Seus direitos (LGPD)", 
     "s5b": "Acesso, correção, portabilidade e eliminação: tudo está na sua mão. Exporte o backup em Configurações para portabilidade; apague vagas, limpe a base ou remova a chave para eliminação. Base legal do tratamento: seu consentimento (art. 7º da LGPD).", 
     "s6h": "6. Contato", 
@@ -249,7 +251,7 @@
     "s4h": "4. Sem garantias", 
     "s4b": "A IA pode errar (datas, traduções, afinidade). Revise cada currículo antes de enviar a recrutadores. O app é fornecido como está, sem garantias de qualquer tipo.", 
     "s5h": "5. Uso aceitável", 
-    "s5b": "Não use o app para burlar limites da API do Google, enviar spam a recrutadores ou gerar conteúdo ilícito. Respeite os termos de uso do Google.", 
+    "s5b": "Não use o app para burlar limites de APIs, enviar spam ou gerar conteúdo ilícito. O app não faz login em sites, não contorna CAPTCHA nem realiza scraping massivo (há limites de 22 créditos de busca e 15 leituras de página por dossiê). Você é responsável por respeitar os termos dos sites e serviços consultados.",
     "s6h": "6. Contato e alterações", 
     "s6b": "Canal de contato pelo LinkedIn no rodapé. Podemos atualizar estes termos; o uso contínuo após mudanças significa concordância."
   },

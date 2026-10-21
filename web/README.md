@@ -24,6 +24,27 @@ envie o PDF do currículo base.
    - % de afinidade + pontos fortes/fracos
    - email de apresentação + mensagem instantânea (botões Copiar)
 3. A tabela lista tudo com data de geração, download e retry.
+4. Abra uma candidatura e escolha **Montar dossiê** para preparar a entrevista:
+   pesquise automaticamente com Tavily, informe URLs ou cole material; depois,
+   analise a vaga para gerar pontos de atenção, correlações e um plano de abordagem.
+   O dossiê pode ficar parcial quando um site bloqueia a leitura e é exportado em
+   Markdown (não há PDF do dossiê).
+
+## Dossiê de empresa
+
+O dossiê combina informações públicas da empresa com uma análise específica da
+candidatura e do currículo. As fontes podem ser pesquisa automática, URLs
+informadas por você ou material colado. A pesquisa automática usa Tavily e a
+leitura de páginas usa Jina; consultas de CNPJ, YouTube e GitHub usam BrasilAPI,
+YouTube Data API e GitHub API quando aplicável. Essas chamadas saem diretamente
+do navegador; não há servidor do Personalize My CV. As chaves de pesquisa
+opcionais (Tavily, Jina, YouTube e GitHub) são configuradas em Configurações e
+pertencem ao usuário. O app não cobra pela pesquisa, mas cotas e eventuais custos
+dos provedores se aplicam.
+
+O resultado pode ser parcial se fontes bloquearem a leitura. Confira as fontes,
+datas e evidências antes de usar as informações em uma entrevista. É possível
+exportar o dossiê como arquivo Markdown; exportação em PDF não está disponível.
 
 ## Backup import/export
 
@@ -50,7 +71,15 @@ Regenerar: `npm run icons` (usa sharp). Para SEO completo, adicione
 A chave Gemini fica guardada via `secure-ls` (ofuscação com AES + chave
 embarcada no bundle). Isso **não** é um cofre seguro: qualquer pessoa com
 acesso ao navegador consegue extrair a chave. Use uma chave com limites de
-uso/cota e revogue se necessário.
+uso/cota e revogue se necessário. As chaves opcionais dos provedores de pesquisa
+recebem o mesmo tratamento: ficam ofuscadas no navegador, não protegidas como
+em um cofre.
+
+O dossiê pode conter dados pessoais públicos de terceiros, como nomes e cargos.
+Ele fica no `localStorage` do navegador e não é publicado nem compartilhado pelo
+app, mas seu conteúdo é enviado à API Gemini para estruturação. URLs públicas
+pesquisadas também são consultadas pelos provedores descritos na política de
+privacidade.
 
 ## Troubleshooting
 
