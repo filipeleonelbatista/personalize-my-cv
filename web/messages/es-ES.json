@@ -278,6 +278,8 @@
     "recalc": "Recalcular análisis",
     "stale": "Análisis desactualizado — el dossier se actualizó después.",
     "noDossier": "Aún no hay dossier.",
+    "noMatch": "Aún no hay análisis de esta vacante.",
+    "noData": "Datos insuficientes.",
     "consentNotice": "Las URLs públicas de esta empresa se enviarán a Tavily/Jina y extractos a Gemini para montar el dossier.",
     "langBadge": "Generado en {lang}",
     "regenerateLang": "Regenerar en {lang}",
@@ -287,7 +289,29 @@
     "coveragePartial": "{n} secciones sin evidencia suficiente — revisa las fuentes.",
     "noSource": "sin fuente verificable",
     "tabs": { "panorama": "Panorama", "empresa": "Empresa", "lideranca": "Liderazgo", "produtos": "Productos", "reputacao": "Reputación", "contatos": "Contactos", "redes": "Redes sociales", "abordagem": "Plan de enfoque", "perguntas": "Preguntas", "fontes": "Fuentes" },
-    "sections": { "historia": "Historia", "lideranca": "Liderazgo", "produtos": "Productos", "reputacao": "Reputación", "contatos": "Contactos", "redes": "Redes sociales", "cnpj": "Datos legales" },
+    "sections": {
+      "historia": "Historia",
+      "lideranca": "Liderazgo",
+      "produtos": "Productos",
+      "reputacao": "Reputación",
+      "contatos": "Contactos",
+      "redes": "Redes sociales",
+      "cnpj": "Datos legales",
+      "history": { "founded": "Fundada en" },
+      "legal": { "openedAt": "Apertura", "cnae": "CNAE", "porte": "Tamaño", "capital": "Capital social", "partners": "Socios" }
+    },
+    "sources": { "materialTitle": "Material pegado" },
+    "errors": { "readFailed": "No se pudo leer: {urls}" },
+    "match": {
+      "attentionPoints": "Puntos de atención",
+      "gaps": "Brechas",
+      "correlations": "Correlaciones",
+      "correlationTheme": "Tema",
+      "correlationTheirs": "Lo que valora la empresa",
+      "correlationMine": "Lo que muestra tu currículum",
+      "redFlags": "Red flags para prepararte",
+      "redFlagCount": "Red flags: {n}"
+    },
     "enums": {
       "severity": { "high": "Alta", "medium": "Media", "low": "Baja" },
       "kind": { "rh": "RRHH", "gestor": "Gestor", "dpo": "DPO", "recrutador": "Reclutador", "executivo": "Ejecutivo", "other": "Otro" },
@@ -298,7 +322,8 @@
       "channel": { "linkedin": "LinkedIn", "email": "Email", "telefone": "Teléfono", "site": "Sitio", "other": "Otro" },
       "network": { "linkedin": "LinkedIn", "instagram": "Instagram", "youtube": "YouTube", "x": "X", "facebook": "Facebook", "github": "GitHub", "tiktok": "TikTok", "other": "Otra" },
       "source": { "glassdoor": "Glassdoor", "linkedin": "LinkedIn", "jusbrasil": "Jusbrasil", "reclameaqui": "Reclame Aqui", "indeed": "Indeed", "reddit": "Reddit", "other": "Otra" },
-      "category": { "processo_trabalhista": "Proceso laboral", "cultura": "Cultura", "financeiro": "Financiero", "produto": "Producto", "reputacao": "Reputación", "outro": "Otro" }
+      "category": { "processo_trabalhista": "Proceso laboral", "cultura": "Cultura", "financeiro": "Financiero", "produto": "Producto", "reputacao": "Reputación", "outro": "Otro" },
+      "dimension": { "cultura": "Cultura", "produto": "Producto", "processo": "Proceso", "gestao": "Gestión", "setor": "Sector", "cargo": "Cargo" }
     }
   },
   "Research": {

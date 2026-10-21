@@ -236,6 +236,16 @@ function hasText(value: string | null | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+export function coverageGapCount(d: Dossier): number {
+  return d.coverage.filter((item) => item.status === "ausente" || item.status === "parcial").length;
+}
+
+export function verdictVariant(verdict: "vai" | "cautela" | "desistir") {
+  if (verdict === "vai") return "success" as const;
+  if (verdict === "desistir") return "destructive" as const;
+  return "default" as const;
+}
+
 export function computeCoverage(d: Dossier): Dossier["coverage"] {
   const history = d.history ?? { founded: null, timeline: [], mission: null, vision: null, values: [], summary: "" };
   const reputation = d.reputation ?? { reviews: [], redFlags: [] };

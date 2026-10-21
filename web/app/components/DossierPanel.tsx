@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Dossier, DossierMatch, Evidence } from "@/lib/dossier-schema";
+import { coverageGapCount, verdictVariant } from "@/lib/dossier";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
@@ -10,12 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { CopyButton } from "./CopyButton";
 
 const SEVERITIES = ["high", "medium", "low"] as const;
-
-function verdictVariant(verdict: "vai" | "cautela" | "desistir") {
-  if (verdict === "vai") return "success" as const;
-  if (verdict === "desistir") return "destructive" as const;
-  return "default" as const;
-}
 
 function severityVariant(severity: "high" | "medium" | "low") {
   if (severity === "high") return "destructive" as const;
@@ -30,7 +25,7 @@ function sentimentVariant(sentiment: "pro" | "contra" | "neutro") {
 }
 
 /** Evidência com URL vira link; sem URL mostra `noSource` e nunca um link. */
-function EvidenceList({ items }: { items: Evidence[] }) {
+export function EvidenceList({ items }: { items: Evidence[] }) {
   const t = useTranslations("Dossier");
   if (items.length === 0) return null;
   return (
@@ -72,12 +67,15 @@ export function DossierPanel({
   const te = useTranslations("Dossier.enums");
   const [tab, setTab] = useState("panorama");
 
-  const missingCoverage = dossier.coverage.filter((item) => item.status === "ausente" || item.status === "parcial").length;
+  const missingCoverage = coverageGapCount(dossier);
+  const redFlagSummary = match?.redFlagSummary ?? [];
+  const hasReputation =
+    redFlagSummary.length > 0 || dossier.reputation.redFlags.length > 0 || dossier.reputation.reviews.length > 0;
 
   function noAnalysis() {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">{t("noDossier")}</p>
+        <p className="text-sm text-muted-foreground">{t("noMatch")}</p>
         <Button onClick={onAnalyze} disabled={busy}>
           {t("analyze")}
         </Button>
@@ -113,7 +111,10 @@ export function DossierPanel({
                 {match.alignment.dimensions.map((dimension) => (
                   <div key={dimension.key} className="space-y-1">
                     <div className="flex items-center justify-between gap-2 text-xs">
-                      <span>{dimension.note}</span>
+                      <span>
+                        {te(`dimension.${dimension.key}`)}
+                        {dimension.note ? <span className="text-muted-foreground"> — {dimension.note}</span> : null}
+                      </span>
                       <span className="text-muted-foreground">{dimension.score}%</span>
                     </div>
                     <Progress value={dimension.score} />
@@ -121,9 +122,52 @@ export function DossierPanel({
                 ))}
               </div>
             ) : null}
-            <Badge variant={missingCoverage > 0 ? "destructive" : "success"} className="text-sm font-normal">
-              {missingCoverage > 0 ? t("coveragePartial", { n: missingCoverage }) : t("coverageOk")}
-            </Badge>
+            {match.attentionPoints.length > 0 ? (
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold">{t("match.attentionPoints")}</h3>
+                <ul className="list-disc space-y-1 pl-5 text-sm">
+                  {match.attentionPoints.map((point, index) => (
+                    <li key={`${point}-${index}`}>{point}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {match.gaps.length > 0 ? (
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold">{t("match.gaps")}</h3>
+                <ul className="list-disc space-y-1 pl-5 text-sm">
+                  {match.gaps.map((gap, index) => (
+                    <li key={`${gap}-${index}`}>{gap}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {match.correlations.length > 0 ? (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold">{t("match.correlations")}</h3>
+                {match.correlations.map((correlation, index) => (
+                  <div key={`${correlation.theme}-${index}`} className="space-y-1 rounded-md border border-border p-3 text-sm">
+                    <p>
+                      <span className="text-muted-foreground">{t("match.correlationTheme")}: </span>
+                      {correlation.theme}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">{t("match.correlationTheirs")}: </span>
+                      {correlation.theirs}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">{t("match.correlationMine")}: </span>
+                      {correlation.mine}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {dossier.coverage.length > 0 ? (
+              <Badge variant={missingCoverage > 0 ? "destructive" : "success"} className="text-sm font-normal">
+                {missingCoverage > 0 ? t("coveragePartial", { n: missingCoverage }) : t("coverageOk")}
+              </Badge>
+            ) : null}
           </div>
         ) : (
           noAnalysis()
@@ -134,7 +178,12 @@ export function DossierPanel({
         <div className="space-y-4">
           <h3 className="text-sm font-semibold">{t("sections.historia")}</h3>
           {dossier.history.summary ? <p className="text-sm">{dossier.history.summary}</p> : null}
-          {dossier.history.founded ? <Badge variant="outline">{dossier.history.founded}</Badge> : null}
+          {dossier.history.founded ? (
+            <p className="text-sm">
+              <span className="text-muted-foreground">{t("sections.history.founded")}: </span>
+              {dossier.history.founded}
+            </p>
+          ) : null}
           {dossier.history.timeline.length > 0 ? (
             <div className="space-y-1 text-sm">
               {dossier.history.timeline.map((entry) => (
@@ -160,17 +209,41 @@ export function DossierPanel({
             <p className="text-sm font-semibold">{t("sections.cnpj")}</p>
             {dossier.legal.razaoSocial ? <p>{dossier.legal.razaoSocial}</p> : null}
             {dossier.legal.nomeFantasia ? <p className="text-muted-foreground">{dossier.legal.nomeFantasia}</p> : null}
-            {[dossier.legal.openedAt, dossier.legal.cnae, dossier.legal.porte, dossier.legal.capitalSocial].some(Boolean) ? (
+            {dossier.legal.openedAt ? (
               <p className="text-muted-foreground">
-                {[dossier.legal.openedAt, dossier.legal.cnae, dossier.legal.porte, dossier.legal.capitalSocial].filter(Boolean).join(" · ")}
+                <span>{t("sections.legal.openedAt")}: </span>
+                {dossier.legal.openedAt}
               </p>
             ) : null}
-            {dossier.legal.partners.map((partner) => (
-              <p key={`${partner.name}-${partner.role}`} className="text-muted-foreground">
-                {partner.name} — {partner.role}
-                {partner.since ? ` (${partner.since})` : ""}
+            {dossier.legal.cnae ? (
+              <p className="text-muted-foreground">
+                <span>{t("sections.legal.cnae")}: </span>
+                {dossier.legal.cnae}
               </p>
-            ))}
+            ) : null}
+            {dossier.legal.porte ? (
+              <p className="text-muted-foreground">
+                <span>{t("sections.legal.porte")}: </span>
+                {dossier.legal.porte}
+              </p>
+            ) : null}
+            {dossier.legal.capitalSocial ? (
+              <p className="text-muted-foreground">
+                <span>{t("sections.legal.capital")}: </span>
+                {dossier.legal.capitalSocial}
+              </p>
+            ) : null}
+            {dossier.legal.partners.length > 0 ? (
+              <div className="text-muted-foreground">
+                <p>{t("sections.legal.partners")}</p>
+                {dossier.legal.partners.map((partner) => (
+                  <p key={`${partner.name}-${partner.role}`}>
+                    {partner.name} — {partner.role}
+                    {partner.since ? ` (${partner.since})` : ""}
+                  </p>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       </TabsContent>
@@ -184,23 +257,38 @@ export function DossierPanel({
             <EvidenceList items={dossier.leadership.ceo.highlights} />
           </div>
         ) : null}
+        {dossier.leadership.ceo ? null : <p className="text-sm text-muted-foreground">{t("noData")}</p>}
       </TabsContent>
 
       <TabsContent value="produtos">
-        <div className="grid gap-3 sm:grid-cols-2">
-          {dossier.products.map((product) => (
-            <div key={product.name} className="space-y-1 rounded-md border border-border p-3">
-              <p className="font-medium">{product.name}</p>
-              {product.description ? <p className="text-sm">{product.description}</p> : null}
-              {product.customerSignal ? <p className="text-sm text-muted-foreground">{product.customerSignal}</p> : null}
-              <EvidenceList items={product.evidence} />
-            </div>
-          ))}
-        </div>
+        {dossier.products.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noData")}</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {dossier.products.map((product) => (
+              <div key={product.name} className="space-y-1 rounded-md border border-border p-3">
+                <p className="font-medium">{product.name}</p>
+                {product.description ? <p className="text-sm">{product.description}</p> : null}
+                {product.customerSignal ? <p className="text-sm text-muted-foreground">{product.customerSignal}</p> : null}
+                <EvidenceList items={product.evidence} />
+              </div>
+            ))}
+          </div>
+        )}
       </TabsContent>
 
       <TabsContent value="reputacao">
         <div className="space-y-4">
+          {redFlagSummary.length > 0 ? (
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold">{t("match.redFlags")}</h3>
+              <ul className="list-disc space-y-1 pl-5 text-sm">
+                {redFlagSummary.map((flag, index) => (
+                  <li key={`${flag}-${index}`}>{flag}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {SEVERITIES.map((severity) => {
             const flags = dossier.reputation.redFlags.filter((flag) => flag.severity === severity);
             if (flags.length === 0) return null;
@@ -247,60 +335,69 @@ export function DossierPanel({
               ))}
             </div>
           ) : null}
+          {hasReputation ? null : <p className="text-sm text-muted-foreground">{t("noData")}</p>}
         </div>
       </TabsContent>
 
       <TabsContent value="contatos">
-        <div className="grid gap-3 sm:grid-cols-2">
-          {dossier.contacts.map((contact) => (
-            <div key={`${contact.name}-${contact.channel}`} className="space-y-1 rounded-md border border-border p-3">
-              <p className="font-medium">{contact.name}</p>
-              {contact.role ? <p className="text-xs text-muted-foreground">{contact.role}</p> : null}
-              <div className="flex flex-wrap gap-1">
-                <Badge variant="secondary">{te(`kind.${contact.kind}`)}</Badge>
-                <Badge variant="outline">{te(`channel.${contact.channel}`)}</Badge>
-                <Badge variant="outline">{te(`confidence.${contact.confidence}`)}</Badge>
+        {dossier.contacts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noData")}</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {dossier.contacts.map((contact) => (
+              <div key={`${contact.name}-${contact.channel}`} className="space-y-1 rounded-md border border-border p-3">
+                <p className="font-medium">{contact.name}</p>
+                {contact.role ? <p className="text-xs text-muted-foreground">{contact.role}</p> : null}
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary">{te(`kind.${contact.kind}`)}</Badge>
+                  <Badge variant="outline">{te(`channel.${contact.channel}`)}</Badge>
+                  <Badge variant="outline">{te(`confidence.${contact.confidence}`)}</Badge>
+                </div>
+                {contact.hint ? <p className="text-sm">{contact.hint}</p> : null}
+                {contact.url ? (
+                  <a href={contact.url} target="_blank" rel="noopener" className="break-all text-xs underline">
+                    {contact.url}
+                  </a>
+                ) : null}
               </div>
-              {contact.hint ? <p className="text-sm">{contact.hint}</p> : null}
-              {contact.url ? (
-                <a href={contact.url} target="_blank" rel="noopener" className="break-all text-xs underline">
-                  {contact.url}
-                </a>
-              ) : null}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </TabsContent>
 
       <TabsContent value="redes">
-        <div className="space-y-3">
-          {dossier.socials.map((social) => (
-            <div key={`${social.network}-${social.handle ?? ""}`} className="space-y-1 rounded-md border border-border p-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary">{te(`network.${social.network}`)}</Badge>
-                {social.handle ? <span className="text-xs text-muted-foreground">{social.handle}</span> : null}
+        {dossier.socials.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noData")}</p>
+        ) : (
+          <div className="space-y-3">
+            {dossier.socials.map((social) => (
+              <div key={`${social.network}-${social.handle ?? ""}`} className="space-y-1 rounded-md border border-border p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary">{te(`network.${social.network}`)}</Badge>
+                  {social.handle ? <span className="text-xs text-muted-foreground">{social.handle}</span> : null}
+                </div>
+                {social.tone ? <p className="text-sm">{social.tone}</p> : null}
+                {social.posts.map((post, index) => (
+                  <p key={`${post.date ?? ""}-${index}`} className="text-sm">
+                    {post.date ? <span className="text-muted-foreground">{post.date} — </span> : null}
+                    {post.url ? (
+                      <a href={post.url} target="_blank" rel="noopener" className="underline">
+                        {post.text}
+                      </a>
+                    ) : (
+                      post.text
+                    )}
+                  </p>
+                ))}
+                {social.url ? (
+                  <a href={social.url} target="_blank" rel="noopener" className="break-all text-xs underline">
+                    {social.url}
+                  </a>
+                ) : null}
               </div>
-              {social.tone ? <p className="text-sm">{social.tone}</p> : null}
-              {social.posts.map((post, index) => (
-                <p key={`${post.date ?? ""}-${index}`} className="text-sm">
-                  {post.date ? <span className="text-muted-foreground">{post.date} — </span> : null}
-                  {post.url ? (
-                    <a href={post.url} target="_blank" rel="noopener" className="underline">
-                      {post.text}
-                    </a>
-                  ) : (
-                    post.text
-                  )}
-                </p>
-              ))}
-              {social.url ? (
-                <a href={social.url} target="_blank" rel="noopener" className="break-all text-xs underline">
-                  {social.url}
-                </a>
-              ) : null}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </TabsContent>
 
       <TabsContent value="abordagem">
@@ -353,28 +450,32 @@ export function DossierPanel({
       </TabsContent>
 
       <TabsContent value="fontes">
-        <div className="space-y-2">
-          {dossier.sources.map((source) => (
-            <div key={source.url} className="space-y-1 text-sm">
-              <a href={source.url} target="_blank" rel="noopener" className="break-all underline">
-                {source.title || source.url}
-              </a>
-              <p className="break-all text-xs text-muted-foreground">
-                {[source.url, source.publishedAt, source.provider].filter(Boolean).join(" · ")}
-              </p>
-            </div>
-          ))}
-        </div>
+        {dossier.sources.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noData")}</p>
+        ) : (
+          <div className="space-y-2">
+            {dossier.sources.map((source) => (
+              <div key={source.url} className="space-y-1 text-sm">
+                <a href={source.url} target="_blank" rel="noopener" className="break-all underline">
+                  {source.title || source.url}
+                </a>
+                <p className="break-all text-xs text-muted-foreground">
+                  {[source.url, source.publishedAt, source.provider].filter(Boolean).join(" · ")}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </TabsContent>
 
       <div className="flex flex-wrap gap-2 border-t border-border pt-4">
         <Button onClick={onAnalyze} disabled={busy}>
           {t("analyze")}
         </Button>
-        <Button variant="outline" onClick={onRefresh}>
+        <Button variant="outline" onClick={onRefresh} disabled={busy}>
           {t("refresh")}
         </Button>
-        <Button variant="outline" onClick={onExportMd}>
+        <Button variant="outline" onClick={onExportMd} disabled={busy}>
           {t("exportMd")}
         </Button>
       </div>

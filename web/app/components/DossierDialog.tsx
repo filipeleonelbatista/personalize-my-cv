@@ -8,7 +8,7 @@ import { runDossierFromDocs, runDossierJob, runDossierMatch, type DossierStage }
 import { companyKey, isPlaceholderCompany } from "@/lib/dossier";
 import type { Dossier, DossierMatch } from "@/lib/dossier-schema";
 import { buildDossierMarkdown, dossierMarkdownFileName } from "@/lib/dossier-markdown";
-import { findDossierByCompany, loadApps, loadSettings, saveApps, type StoredApp } from "@/lib/store";
+import { findDossierByCompany, loadApps, loadDossiers, loadSettings, saveApps, type StoredApp } from "@/lib/store";
 import { jinaRead } from "@/lib/research/jina";
 import type { ReadDoc } from "@/lib/research/providers";
 import { getLocale, tErr } from "@/lib/i18n/locale";
@@ -34,11 +34,15 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
   const [urlsText, setUrlsText] = useState("");
   const [materialText, setMaterialText] = useState("");
   const [dossier, setDossier] = useState<Dossier | null>(() => {
+    const byId = app.dossierId ? loadDossiers().find((item) => item.id === app.dossierId) : null;
+    if (byId && byId.status === "done") return byId;
     if (placeholderCompany) return null;
     const existing = findDossierByCompany(companyKey(app.empresa));
     return existing && existing.status === "done" ? existing : null;
   });
-  const [match, setMatch] = useState<DossierMatch | null>(() => (dossier ? app.dossierMatch ?? null : null));
+  const [match, setMatch] = useState<DossierMatch | null>(() =>
+    dossier && app.dossierMatch?.dossierId === dossier.id ? app.dossierMatch : null,
+  );
   const [phase, setPhase] = useState<Phase>(dossier ? "ready" : "form");
   const [stage, setStage] = useState<DossierStage | null>(null);
   const [error, setError] = useState("");
@@ -57,6 +61,28 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
     (mode !== "auto" || hasTavilyKey) &&
     (mode !== "urls" || urlLines.length > 0) &&
     (mode !== "text" || materialText.trim().length > 0);
+
+  function changeCompany(value: string) {
+    setCompany(value);
+    const found = value.trim() ? findDossierByCompany(companyKey(value)) : null;
+    if (found && found.status === "done") {
+      setDossier(found);
+      setMatch(app.dossierMatch?.dossierId === found.id ? app.dossierMatch : null);
+      setPhase("ready");
+      setError("");
+    }
+  }
+
+  function persistStale(dossierId: string) {
+    saveApps(
+      loadApps().map((item) =>
+        item.dossierId === dossierId
+          ? { ...item, dossierMatch: item.dossierMatch ? { ...item.dossierMatch, stale: true } : null }
+          : item,
+      ),
+    );
+    onChanged?.(loadApps());
+  }
 
   async function build() {
     const name = company.trim();
@@ -103,16 +129,17 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
             failed.push(url);
           }
         }
+        const readError = failed.length > 0 ? t("errors.readFailed", { urls: failed.join(", ") }) : "";
         if (docs.length === 0) {
-          setError(failed.join("\n") || tErr(locale, "noUrls"));
+          setError(readError || tErr(locale, "noUrls"));
           setPhase("form");
           return;
         }
-        if (failed.length > 0) setError(failed.join("\n"));
+        if (readError) setError(readError);
       } else {
         docs.push({
           url: "pmcv:material:1",
-          title: t("manualText"),
+          title: t("sources.materialTitle"),
           publishedAt: null,
           content: materialText,
           provider: "user",
@@ -154,41 +181,38 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
   }
 
   async function refresh() {
-    if (!dossier) return;
+    if (!dossier || busy || phase === "busy") return;
     const current = dossier;
     setBusy(true);
+    setStage(null);
+    setPhase("busy");
     try {
-      const result = await runDossierJob({ company: current.company, lang: app.lang, force: true });
+      const result = await runDossierJob({ company: current.company, lang: app.lang, force: true, onStage: setStage });
       if (!result.ok) {
         toast.error(result.error);
         return;
       }
       setDossier(result.dossier);
       setMatch((previous) => (previous ? { ...previous, stale: true } : previous));
-      saveApps(
-        loadApps().map((item) =>
-          item.dossierId === current.id
-            ? { ...item, dossierMatch: item.dossierMatch ? { ...item.dossierMatch, stale: true } : null }
-            : item,
-        ),
-      );
-      onChanged?.(loadApps());
+      persistStale(current.id);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
+      setPhase("ready");
     }
   }
 
   async function regenerateLang() {
-    if (!dossier) return;
+    if (!dossier || busy || phase === "busy") return;
+    const current = dossier;
     setError("");
     setStage(null);
     setPhase("busy");
     try {
       const jinaKey = loadSettings().research.jinaKey || undefined;
       const docs: ReadDoc[] = [];
-      for (const source of dossier.sources) {
+      for (const source of current.sources) {
         try {
           docs.push(await jinaRead(source.url, jinaKey));
         } catch {
@@ -200,7 +224,7 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
         setPhase("ready");
         return;
       }
-      const result = await runDossierFromDocs({ company: dossier.company, lang: app.lang, docs, onStage: setStage });
+      const result = await runDossierFromDocs({ company: current.company, lang: app.lang, docs, onStage: setStage });
       if (!result.ok) {
         setError(result.error);
         setPhase("ready");
@@ -208,6 +232,7 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
       }
       setDossier(result.dossier);
       setMatch((previous) => (previous ? { ...previous, stale: true } : previous));
+      persistStale(current.id);
       setPhase("ready");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -250,7 +275,7 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
                 <span className="font-medium">{t("company")}</span>
                 <input
                   value={company}
-                  onChange={(event) => setCompany(event.target.value)}
+                  onChange={(event) => changeCompany(event.target.value)}
                   placeholder={t("companyPlaceholder")}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />

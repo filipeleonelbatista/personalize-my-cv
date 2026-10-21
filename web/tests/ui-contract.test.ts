@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
+import * as React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { NextIntlClientProvider } from "next-intl";
+import ptBR from "@/messages/pt-BR.json";
+import { DossierPanel, EvidenceList } from "@/app/components/DossierPanel";
+import { DossierMatchSchema, DossierSchema, EvidenceSchema, type Dossier, type DossierMatch } from "@/lib/dossier-schema";
+
+const { createElement } = React;
+(globalThis as typeof globalThis & { React: typeof React }).React = React;
 
 describe("ui contract", () => {
   it("page and components exist", () => {
@@ -207,7 +216,7 @@ describe("settings dialog (post-onboarding)", () => {
     expect(s).toContain("ThemeToggle");
   });
   it("no hardcoded PT UI strings remain in flows", () => {
-    for (const f of ["app/components/GenerateModal.tsx", "app/components/VacancyTable.tsx", "app/components/DetailDrawer.tsx", "app/components/ReportsSection.tsx", "app/components/SettingsDialog.tsx"]) {
+    for (const f of ["app/components/GenerateModal.tsx", "app/components/VacancyTable.tsx", "app/components/DetailDrawer.tsx", "app/components/ReportsSection.tsx", "app/components/SettingsDialog.tsx", "app/components/DossierDialog.tsx", "app/components/DossierPanel.tsx"]) {
       const s = readFileSync(f, "utf8");
       expect(s, f).not.toMatch(/Currículos|Relatórios|Personalizar com IA|Baixar|Excluir|Configurações/);
     }
@@ -243,5 +252,104 @@ describe("settings dialog (post-onboarding)", () => {
       expect(s, f).not.toContain("../actions");
       expect(s, f).not.toContain("app/api/");
     }
+  });
+});
+
+describe("dossiê — regra de evidência e cobertura", () => {
+  function renderPanel(dossier: Dossier, match: DossierMatch | null): string {
+    return renderToStaticMarkup(
+      createElement(NextIntlClientProvider, {
+        locale: "pt-BR",
+        messages: ptBR,
+        timeZone: "America/Sao_Paulo",
+        children: createElement(DossierPanel, {
+          dossier,
+          match,
+          onAnalyze: () => {},
+          onRefresh: () => {},
+          onExportMd: () => {},
+          busy: false,
+        }),
+      }),
+    );
+  }
+
+  const dossierBase: Dossier = DossierSchema.parse({
+    id: "dsr_acme",
+    companyKey: "acme",
+    company: "Acme",
+    lang: "pt-BR",
+    createdAt: "2026-10-21T00:00:00.000Z",
+    updatedAt: "2026-10-21T00:00:00.000Z",
+  });
+
+  const matchBase: DossierMatch = DossierMatchSchema.parse({
+    dossierId: "dsr_acme",
+    appId: "app_1",
+    lang: "pt-BR",
+    alignment: {
+      score: 72,
+      verdict: "vai",
+      dimensions: [{ key: "cultura", score: 80 }],
+    },
+    attentionPoints: ["Ponto de atenção A"],
+    gaps: ["Lacuna B"],
+    correlations: [{ theme: "Tema C", theirs: "Valor D", mine: "Currículo E" }],
+    redFlagSummary: ["Red flag F"],
+    createdAt: "2026-10-21T00:00:00.000Z",
+    updatedAt: "2026-10-21T00:00:00.000Z",
+  });
+
+  it("evidência sem sourceUrl não vira link", () => {
+    const html = renderToStaticMarkup(
+      createElement(NextIntlClientProvider, {
+        locale: "pt-BR",
+        messages: ptBR,
+        timeZone: "America/Sao_Paulo",
+        children: createElement(EvidenceList, {
+          items: [
+            EvidenceSchema.parse({ claim: "Com fonte", sourceUrl: "https://example.com/fonte" }),
+            EvidenceSchema.parse({ claim: "Sem fonte", sourceUrl: null, unsourced: true }),
+          ],
+        }),
+      }),
+    );
+    expect(html).toContain('href="https://example.com/fonte"');
+    expect(html).toContain("Sem fonte");
+    expect(html).toContain("sem fonte verificável");
+    expect(html.match(/<a /g) ?? []).toHaveLength(1);
+  });
+
+  it("mostra os campos gerados e não afirma cobertura completa sem dados", () => {
+    const html = renderPanel(
+      {
+        ...dossierBase,
+        coverage: [
+          { section: "historia", status: "ok" },
+          { section: "contatos", status: "ausente" },
+          { section: "redes", status: "parcial" },
+        ],
+      },
+      matchBase,
+    );
+    expect(html).toContain("2 seções sem evidência suficiente");
+    expect(html).toContain("Cultura");
+    expect(html).toContain("Pontos de atenção");
+    expect(html).toContain("Ponto de atenção A");
+    expect(html).toContain("Lacunas");
+    expect(html).toContain("Lacuna B");
+    expect(html).toContain("Correlações");
+    expect(html).toContain("Tema C");
+    expect(html).toContain("Valor D");
+    expect(html).toContain("Currículo E");
+
+    const withoutCoverage = renderPanel(dossierBase, matchBase);
+    expect(withoutCoverage).not.toContain("Cobertura completa.");
+  });
+
+  it("Reputação inclui o redFlagSummary como lista", () => {
+    const src = readFileSync("app/components/DossierPanel.tsx", "utf8");
+    expect(src).toContain("redFlagSummary");
+    expect(src).toContain('t("match.redFlags")');
   });
 });

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { LuDownload, LuPrinter, LuBuilding2 } from "react-icons/lu";
 import { resumeToBlob, openResumePdf } from "@/lib/pdf/client";
 import { getLocale } from "@/lib/i18n/locale";
+import { verdictVariant } from "@/lib/dossier";
 import type { StoredApp } from "@/lib/store";
 import { Button } from "./ui/button";
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -13,12 +14,6 @@ import { Progress } from "./ui/progress";
 import { CopyButton } from "./CopyButton";
 
 export type AppRow = StoredApp;
-
-function verdictVariant(verdict: "vai" | "cautela" | "desistir") {
-  if (verdict === "vai") return "success" as const;
-  if (verdict === "desistir") return "destructive" as const;
-  return "default" as const;
-}
 
 export function DetailDrawer({ app, onClose, onOpenDossier }: { app: AppRow; onClose: () => void; onOpenDossier?: (app: StoredApp) => void }) {
   const t = useTranslations("Detail");
@@ -105,7 +100,7 @@ export function DetailDrawer({ app, onClose, onOpenDossier }: { app: AppRow; onC
                 </Badge>
                 <Badge variant="outline">{app.dossierMatch.alignment.score}%</Badge>
                 <Badge variant="destructive">
-                  {td("sections.reputacao")}: {app.dossierMatch.redFlagSummary.length}
+                  {td("match.redFlagCount", { n: app.dossierMatch.redFlagSummary.length })}
                 </Badge>
                 {app.dossierMatch.stale ? <Badge variant="outline">{td("stale")}</Badge> : null}
               </div>
