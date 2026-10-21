@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
 import ptBR from "@/messages/pt-BR.json";
 import enUS from "@/messages/en-US.json";
 import esES from "@/messages/es-ES.json";
@@ -38,6 +39,17 @@ describe("i18n", () => {
     expect(tErr("es-ES", "noKey")).toMatch(/clave/i);
     expect(tErr("pt-BR", "noKey")).toMatch(/chave/i);
     expect(tErr("en-US", "missing.key" as never)).toBe(tErr("pt-BR", "missing.key" as never));
+  });
+  it("tem os namespaces Dossier e Research nos 3 locales", () => {
+    for (const loc of ["pt-BR", "en-US", "es-ES"]) {
+      const m = JSON.parse(readFileSync(`messages/${loc}.json`, "utf8"));
+      expect(m.Dossier, loc).toBeTruthy();
+      expect(m.Research, loc).toBeTruthy();
+      expect(m.Dossier.enums, loc).toBeTruthy();
+      for (const k of ["noResearchKey", "researchInvalidKey", "researchRateLimit", "dossierFailed", "noUrls", "placeholderCompany"]) {
+        expect(m.Errors[k], `${loc}.${k}`).toBeTruthy();
+      }
+    }
   });
   it("lib errors resolve per locale", async () => {
     const { validateGeminiKey } = await import("@/lib/llm/chain");
