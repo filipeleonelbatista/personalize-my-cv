@@ -201,4 +201,20 @@ describe("settings dialog (post-onboarding)", () => {
     expect(s).not.toMatch(/key=\{locale\}/);
     expect(s).toMatch(/useState<UiLocale>\(\(\) => loadLocale\(\)\)/);
   });
+  it("tem a seção de pesquisa com as chaves de search", () => {
+    const s = readFileSync("app/components/SettingsDialog.tsx", "utf8");
+    expect(s).toContain('useTranslations("Research")');
+    for (const field of ["tavilyKey", "braveKey", "jinaKey", "youtubeKey", "githubToken"]) {
+      expect(s, field).toContain(field);
+    }
+    expect(s).toContain("loadSettings");
+    expect(s).toContain("saveSettings");
+  });
+  it("nenhum componente novo usa /api/ ou server actions", () => {
+    for (const f of ["app/components/SettingsDialog.tsx"]) {
+      const s = readFileSync(f, "utf8");
+      expect(s, f).not.toContain("../actions");
+      expect(s, f).not.toContain("app/api/");
+    }
+  });
 });
