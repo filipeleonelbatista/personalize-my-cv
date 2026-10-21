@@ -6,12 +6,12 @@ export function canonicalUrl(u: string): string {
   try {
     const url = new URL(u);
     url.hash = "";
-    url.hostname = url.hostname.toLowerCase().replace(/^www\.|^m\./, "");
+    url.hostname = url.hostname.toLowerCase().replace(/^(?:www\.|m\.)+/, "");
     for (const key of [...url.searchParams.keys()]) {
       if (/^utm_/i.test(key) || key === "fbclid" || key === "gclid") url.searchParams.delete(key);
     }
     url.protocol = "https:";
-    return url.toString().replace(/\/$/, "");
+    return url.toString().replace(/\/+$/, "");
   } catch {
     return u.trim();
   }
@@ -31,10 +31,17 @@ export function dedupeUrls(urls: string[]): string[] {
 
 export async function fetchWithTimeout(url: string, init?: RequestInit, timeoutMs = 30_000): Promise<Response> {
   const ctl = new AbortController();
+  const caller = init?.signal ?? undefined;
+  const onAbort = () => ctl.abort();
+  if (caller) {
+    if (caller.aborted) ctl.abort();
+    else caller.addEventListener("abort", onAbort, { once: true });
+  }
   const t = setTimeout(() => ctl.abort(), timeoutMs);
   try {
-    return await fetch(url, { ...init, signal: init?.signal ?? ctl.signal });
+    return await fetch(url, { ...init, signal: ctl.signal });
   } finally {
     clearTimeout(t);
+    caller?.removeEventListener("abort", onAbort);
   }
 }

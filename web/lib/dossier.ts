@@ -58,12 +58,33 @@ export function normalizeVerdict(v: unknown): "vai" | "cautela" | "desistir" {
   return "cautela";
 }
 
+export function normalizeDate(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(v);
+  if (!match) return null;
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) return null;
+  if (match[3] === undefined) return v;
+  const day = Number(match[3]);
+  const daysInMonth = new Date(Date.UTC(Number(match[1]), month, 0)).getUTCDate();
+  return day >= 1 && day <= daysInMonth ? v : null;
+}
+
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
 function asArray(v: unknown): unknown[] {
   return Array.isArray(v) ? v : [];
+}
+
+function withNormalizedDate(raw: unknown): Record<string, unknown> {
+  const item = isRecord(raw) ? { ...raw } : {};
+  return { ...item, date: normalizeDate(item.date) };
+}
+
+function withNormalizedEvidenceDates(v: unknown): unknown {
+  return Array.isArray(v) ? v.map(withNormalizedDate) : v;
 }
 
 export function normalizeDossier(
@@ -84,11 +105,31 @@ export function normalizeDossier(
     const reputation = content.reputation;
     content.reputation = {
       ...reputation,
+      reviews: Array.isArray(reputation.reviews) ? reputation.reviews.map(withNormalizedDate) : reputation.reviews,
       redFlags: asArray(reputation.redFlags).map((rawFlag) => {
         const flag = isRecord(rawFlag) ? { ...rawFlag } : {};
-        return { ...flag, severity: normalizeSeverity(flag.severity) };
+        return {
+          ...flag,
+          severity: normalizeSeverity(flag.severity),
+          evidence: withNormalizedEvidenceDates(flag.evidence),
+        };
       }),
     };
+  }
+
+  if (isRecord(content.leadership) && isRecord(content.leadership.ceo)) {
+    const ceo = content.leadership.ceo;
+    content.leadership = {
+      ...content.leadership,
+      ceo: { ...ceo, highlights: withNormalizedEvidenceDates(ceo.highlights) },
+    };
+  }
+
+  if (Array.isArray(content.products)) {
+    content.products = content.products.map((rawProduct) => {
+      const product = isRecord(rawProduct) ? { ...rawProduct } : {};
+      return { ...product, evidence: withNormalizedEvidenceDates(product.evidence) };
+    });
   }
 
   if (Array.isArray(content.contacts)) {
@@ -98,16 +139,13 @@ export function normalizeDossier(
     });
   }
 
-  // `alignment` não faz parte de `Dossier`, mas o plano manda normalizar o
-  // veredito antes do parse; mantém a normalização para chamadas futuras.
-  if (isRecord(content.alignment)) {
-    content.alignment = { ...content.alignment, verdict: normalizeVerdict(content.alignment.verdict) };
-  }
-
   return DossierSchema.parse({
     ...content,
     ...envelope,
     cnpj: envelope.cnpj ?? null,
+    legal: {},
+    status: "done",
+    errorLog: "",
     // `coverage` e `sources` são escritos pelo código (D13), nunca pelo modelo.
     coverage: [],
     sources: [],
@@ -146,15 +184,17 @@ export function applyEvidenceInvariant(d: Dossier, corpusUrls: string[], corpusT
   const reputation = d.reputation ?? { reviews: [], redFlags: [] };
   const products = d.products ?? [];
   const contacts = d.contacts ?? [];
+  const socials = d.socials ?? [];
   const ceo = d.leadership?.ceo ?? null;
 
   const redFlags = reputation.redFlags
     .map((flag) => ({ ...flag, evidence: flag.evidence.map((e) => scrubEvidence(e, corpus)) }))
-    .filter((flag) => flag.evidence.some((e) => e.sourceUrl !== null || e.origin === "user"));
+    .filter((flag) => flag.evidence.some((e) => e.sourceUrl !== null));
 
-  // Review só sobrevive sem URL (material colado pelo usuário) ou com URL no corpus.
+  // Review só sobrevive com URL no corpus: material do usuário cita
+  // `pmcv:material:<n>`, que entra no corpus como qualquer outra fonte.
   const reviews = reputation.reviews
-    .filter((review) => review.sourceUrl === null || corpus.has(canonicalUrl(review.sourceUrl)))
+    .filter((review) => review.sourceUrl !== null && corpus.has(canonicalUrl(review.sourceUrl)))
     .map((review) => ({ ...review }));
 
   const cleanContacts = contacts
@@ -168,6 +208,15 @@ export function applyEvidenceInvariant(d: Dossier, corpusUrls: string[], corpusT
     ? { ceo: { ...ceo, highlights: ceo.highlights.map((e) => scrubEvidence(e, corpus)) } }
     : { ceo: null };
 
+  const cleanSocials = socials.map((social) => ({
+    ...social,
+    url: social.url !== null && !corpus.has(canonicalUrl(social.url)) ? null : social.url,
+    posts: social.posts.map((post) => ({
+      ...post,
+      url: post.url !== null && !corpus.has(canonicalUrl(post.url)) ? null : post.url,
+    })),
+  }));
+
   return {
     ...d,
     leadership,
@@ -177,6 +226,7 @@ export function applyEvidenceInvariant(d: Dossier, corpusUrls: string[], corpusT
     })),
     reputation: { ...reputation, reviews, redFlags },
     contacts: cleanContacts,
+    socials: cleanSocials,
   };
 }
 
@@ -215,11 +265,10 @@ export function computeCoverage(d: Dossier): Dossier["coverage"] {
       case "reputacao": {
         const { reviews, redFlags } = reputation;
         if (reviews.length === 0 && redFlags.length === 0) return "ausente";
-        // Depois do invariante toda review restante é válida: ou tem URL no
-        // corpus, ou é material do usuário (sourceUrl null, mantido de propósito).
+        // Depois do invariante toda review restante tem URL no corpus.
         const hasValidEvidence =
-          reviews.length > 0 ||
-          redFlags.some((flag) => flag.evidence.some((e) => e.sourceUrl !== null || e.origin === "user"));
+          reviews.some((review) => review.sourceUrl !== null) ||
+          redFlags.some((flag) => flag.evidence.some((e) => e.sourceUrl !== null));
         return hasValidEvidence ? "ok" : "parcial";
       }
       case "contatos":

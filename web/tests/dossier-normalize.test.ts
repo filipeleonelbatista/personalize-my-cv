@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { applyEvidenceInvariant, computeCoverage, companyKey, isPlaceholderCompany, normalizeDossier, normalizeKind, normalizeSeverity, normalizeVerdict } from "@/lib/dossier";
-import { canonicalUrl, dedupeUrls } from "@/lib/research/providers";
+import { describe, expect, it, vi } from "vitest";
+import { applyEvidenceInvariant, computeCoverage, companyKey, isPlaceholderCompany, normalizeDate, normalizeDossier, normalizeKind, normalizeSeverity, normalizeVerdict } from "@/lib/dossier";
+import { canonicalUrl, dedupeUrls, fetchWithTimeout } from "@/lib/research/providers";
 
 const base = {
   id: "dsr_acme", companyKey: "acme", company: "Acme", lang: "pt-BR" as const,
@@ -79,16 +79,72 @@ describe("invariante de evidência", () => {
     expect(applyEvidenceInvariant(d as never, ["https://lido.com/y"]).reputation.redFlags).toHaveLength(0);
   });
 
+  it("não aceita origin=user do modelo como substituto de URL no corpus", () => {
+    const d = {
+      ...base,
+      reputation: { reviews: [], redFlags: [{
+        severity: "high" as const, category: "cultura" as const, title: "t", detail: "", date: null, mitigation: null,
+        evidence: [{ claim: "c", sourceUrl: null, sourceTitle: "", date: null, quote: "", origin: "user" as const, unsourced: false }],
+      }] },
+    };
+    expect(applyEvidenceInvariant(d as never, []).reputation.redFlags).toHaveLength(0);
+  });
+
   it("descarta review sem URL no corpus", () => {
     const d = { ...base, reputation: { reviews: [{ source: "glassdoor" as const, sentiment: "pro" as const, topic: "", date: null, quote: "q", sourceUrl: "https://inventado.com/r" }], redFlags: [] } };
     expect(applyEvidenceInvariant(d as never, []).reputation.reviews).toHaveLength(0);
   });
 
-  it("mantém review de material do usuário (sem URL) e marca origin=user", () => {
+  it("descarta review sem URL (não há como verificar a fonte)", () => {
     const d = { ...base, reputation: { reviews: [{ source: "other" as const, sentiment: "contra" as const, topic: "demissão", date: null, quote: "q", sourceUrl: null }], redFlags: [] } };
-    const out = applyEvidenceInvariant(d as never, []);
+    expect(applyEvidenceInvariant(d as never, []).reputation.reviews).toHaveLength(0);
+  });
+
+  it("mantém review que cita material do usuário no corpus", () => {
+    const d = { ...base, reputation: { reviews: [{ source: "other" as const, sentiment: "contra" as const, topic: "demissão", date: null, quote: "q", sourceUrl: "pmcv:material:1" }], redFlags: [] } };
+    const out = applyEvidenceInvariant(d as never, ["pmcv:material:1"]);
     expect(out.reputation.reviews).toHaveLength(1);
-    expect(out.reputation.reviews[0].sourceUrl).toBeNull();
+    expect(out.reputation.reviews[0].sourceUrl).toBe("pmcv:material:1");
+  });
+
+  it("limpa evidências de produtos e highlights do CEO fora do corpus", () => {
+    const d = {
+      ...base,
+      leadership: { ceo: { name: "Ana", role: "", bio: "", highlights: [
+        { claim: "ok", sourceUrl: "https://lido.com/ceo", sourceTitle: "", date: null, quote: "", origin: "web" as const, unsourced: false },
+        { claim: "bad", sourceUrl: "https://inventado.com/ceo", sourceTitle: "", date: null, quote: "", origin: "web" as const, unsourced: false },
+      ] } },
+      products: [{ name: "P", description: "", customerSignal: "", evidence: [
+        { claim: "ok", sourceUrl: "https://lido.com/p", sourceTitle: "", date: null, quote: "", origin: "web" as const, unsourced: false },
+        { claim: "bad", sourceUrl: "https://inventado.com/p", sourceTitle: "", date: null, quote: "", origin: "web" as const, unsourced: false },
+      ] }],
+    };
+    const out = applyEvidenceInvariant(d as never, ["https://lido.com/ceo", "https://lido.com/p"]);
+    expect(out.leadership.ceo?.highlights[0].sourceUrl).toBe("https://lido.com/ceo");
+    expect(out.leadership.ceo?.highlights[1].sourceUrl).toBeNull();
+    expect(out.leadership.ceo?.highlights[1].unsourced).toBe(true);
+    expect(out.products[0].evidence[0].sourceUrl).toBe("https://lido.com/p");
+    expect(out.products[0].evidence[1].sourceUrl).toBeNull();
+    expect(out.products[0].evidence[1].unsourced).toBe(true);
+  });
+
+  it("zera URL de rede social e de post fora do corpus, mantendo a entrada", () => {
+    const d = {
+      ...base,
+      socials: [
+        { network: "linkedin" as const, handle: "acme", tone: "", url: "https://lido.com/in/acme", posts: [
+          { date: null, text: "", url: "https://lido.com/post" },
+          { date: null, text: "", url: "https://inventado.com/post" },
+        ] },
+        { network: "instagram" as const, handle: "acme", tone: "", url: "https://inventado.com/ig", posts: [] },
+      ],
+    };
+    const out = applyEvidenceInvariant(d as never, ["https://lido.com/in/acme", "https://lido.com/post"]);
+    expect(out.socials).toHaveLength(2);
+    expect(out.socials[0].url).toBe("https://lido.com/in/acme");
+    expect(out.socials[0].posts[0].url).toBe("https://lido.com/post");
+    expect(out.socials[0].posts[1].url).toBeNull();
+    expect(out.socials[1].url).toBeNull();
   });
 
   it("não muta o dossiê original", () => {
@@ -151,8 +207,13 @@ describe("normalização de enums", () => {
     expect(normalizeSeverity("HIGH")).toBe("high");
     expect(normalizeSeverity("média")).toBe("medium");
     expect(normalizeSeverity("qualquer")).toBe("medium");
+    expect(normalizeSeverity("baixa")).toBe("low");
+    expect(normalizeSeverity("LOW")).toBe("low");
     expect(normalizeVerdict("vai")).toBe("vai");
     expect(normalizeVerdict("Cautela")).toBe("cautela");
+    expect(normalizeVerdict("desistir")).toBe("desistir");
+    expect(normalizeVerdict("no-go")).toBe("desistir");
+    expect(normalizeVerdict("qualquer")).toBe("cautela");
   });
 
   it("normaliza os tipos de contato", () => {
@@ -164,12 +225,33 @@ describe("normalização de enums", () => {
   });
 });
 
+describe("normalizeDate", () => {
+  it("aceita YYYY-MM e YYYY-MM-DD sem alterar", () => {
+    expect(normalizeDate("2026-10")).toBe("2026-10");
+    expect(normalizeDate("2026-10-05")).toBe("2026-10-05");
+    expect(normalizeDate("2024-02-29")).toBe("2024-02-29");
+  });
+
+  it("devolve null para vazio, formato inválido ou não-string", () => {
+    for (const value of ["", "2026", "2026-1", "2026-13", "2026-10-32", "2023-02-29", "10/2026", null, undefined, 20261005]) {
+      expect(normalizeDate(value)).toBeNull();
+    }
+  });
+});
+
 describe("normalizeDossier", () => {
   it("aplica os enums antes do parse e deixa o envelope vencer o modelo", () => {
     const envelope = { ...base, cnpj: null };
     const out = normalizeDossier({
       id: "dsr_inventado", companyKey: "inventado", company: "Inventado", lang: "en",
-      reputation: { reviews: [], redFlags: [{ severity: "alta", category: "cultura", title: "t", evidence: [{ claim: "c", origin: "web" }] }] },
+      status: "failed", errorLog: "modelo tentou escrever",
+      legal: { razaoSocial: "Inventada S.A.", openedAt: "1999-01-01" },
+      reputation: {
+        reviews: [{ source: "glassdoor", sentiment: "pro", topic: "", quote: "q", sourceUrl: "pmcv:material:1", date: "2026-13-01" }],
+        redFlags: [{ severity: "alta", category: "cultura", title: "t", evidence: [{ claim: "c", origin: "web", date: "2026-10-05" }] }],
+      },
+      leadership: { ceo: { name: "Ana", highlights: [{ claim: "c", date: "invalida" }] } },
+      products: [{ name: "P", evidence: [{ claim: "c", date: "2026-10" }] }],
       contacts: [{ name: "Ana", kind: "gerente", channel: "linkedin" }],
       coverage: [{ section: "historia", status: "ok" }],
       sources: [{ url: "https://inventado.com/x", retrievedAt: base.createdAt, provider: "tavily" }],
@@ -178,7 +260,15 @@ describe("normalizeDossier", () => {
     expect(out.companyKey).toBe("acme");
     expect(out.company).toBe("Acme");
     expect(out.lang).toBe("pt-BR");
+    expect(out.status).toBe("done");
+    expect(out.errorLog).toBe("");
+    expect(out.legal.razaoSocial).toBeNull();
+    expect(out.legal.openedAt).toBeNull();
     expect(out.reputation.redFlags[0].severity).toBe("high");
+    expect(out.reputation.redFlags[0].evidence[0].date).toBe("2026-10-05");
+    expect(out.reputation.reviews[0].date).toBeNull();
+    expect(out.leadership.ceo?.highlights[0].date).toBeNull();
+    expect(out.products[0].evidence[0].date).toBe("2026-10");
     expect(out.contacts[0].kind).toBe("gestor");
     expect(out.coverage).toEqual([]);
     expect(out.sources).toEqual([]);
@@ -189,5 +279,36 @@ describe("URLs canônicas", () => {
   it("remove hash, tracking e normaliza host/protocolo", () => {
     expect(canonicalUrl("http://www.Example.com/a/?utm_source=x&fbclid=y#top")).toBe("https://example.com/a");
     expect(dedupeUrls(["https://www.acme.com/", "https://acme.com", "http://acme.com/#x"])).toEqual(["https://acme.com"]);
+  });
+
+  it("remove prefixos www/m repetidos e barras finais repetidas", () => {
+    expect(canonicalUrl("https://www.m.Example.com///")).toBe("https://example.com");
+  });
+});
+
+describe("fetchWithTimeout", () => {
+  const hangingFetch = () => vi.fn((_url: string, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+    init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+  }));
+
+  it("ainda aborta pelo timeout quando o chamador passa um signal", async () => {
+    vi.stubGlobal("fetch", hangingFetch());
+    try {
+      await expect(fetchWithTimeout("https://x.com", { signal: new AbortController().signal }, 10)).rejects.toMatchObject({ name: "AbortError" });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("propaga o abort do signal do chamador", async () => {
+    vi.stubGlobal("fetch", hangingFetch());
+    const caller = new AbortController();
+    try {
+      const pending = fetchWithTimeout("https://x.com", { signal: caller.signal }, 10_000);
+      caller.abort();
+      await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
