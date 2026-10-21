@@ -1,4 +1,4 @@
-import { chatJsonGemini, geminiModels } from "./gemini";
+import { chatJsonGemini, chatJsonGeminiLong, geminiModels } from "./gemini";
 import { getLocale, tErr, type UiLocale } from "@/lib/i18n/locale";
 
 export type Provider = string;
@@ -7,6 +7,19 @@ export async function generateJson(system: string, user: string, key: string, mo
   const errs: string[] = [];
   for (const model of geminiModels(models)) {
     try { return { data: await chatJsonGemini(system, user, key, model, locale), provider: `gemini:${model}` }; }
+    catch (e) { errs.push(`${model}: ${(e as Error).message}`); }
+  }
+  throw new Error(errs.join(" | "));
+}
+
+/** Chain do dossiê: timeout longo e no máximo 2 models (evita 5 × 60 s de
+ * espera). Ao falhar, lança UMA mensagem agregada — o caller mapeia para uma
+ * chave `tErr` e guarda o detalhe no `errorLog`. */
+export async function generateJsonLong(system: string, user: string, key: string, models?: string[], locale: UiLocale = getLocale(), maxModels = 2): Promise<{ data: unknown; provider: Provider }> {
+  const errs: string[] = [];
+  const list = geminiModels(models).slice(0, Math.max(1, maxModels));
+  for (const model of list) {
+    try { return { data: await chatJsonGeminiLong(system, user, key, model, locale), provider: `gemini:${model}` }; }
     catch (e) { errs.push(`${model}: ${(e as Error).message}`); }
   }
   throw new Error(errs.join(" | "));

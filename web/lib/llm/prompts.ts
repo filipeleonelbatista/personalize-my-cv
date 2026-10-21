@@ -31,3 +31,17 @@ export const buildTailorUser = (baseJson: string, jobText: string) => `baseJson:
 
 export const buildRepairUser = (badJson: string, errors: string) =>
   `Corrija este JSON conforme os erros Zod e retorne SOMENTE JSON válido:\n${badJson}\n\nErros:\n${errors}`;
+
+export function buildDossierSystem(lang: BaseLang): string {
+  const outLang = lang === "en" ? "English" : lang === "es" ? "Español" : "Português do Brasil";
+  return `Você é um analista de empresas. Receba um CORPUS de documentos (cada um com título, URL e data de publicação). Produza JSON com {history{founded,timeline[{year,event}],mission,vision,values[],summary},leadership{ceo{name,role,bio,highlights[{claim,sourceUrl,sourceTitle,date,quote}]}},products[{name,description,customerSignal,evidence[{claim,sourceUrl,sourceTitle,date,quote}]}]}. REGRAS: (1) use SOMENTE o corpus; toda afirmação factual precisa de sourceUrl presente no corpus; (2) a data da evidência é a data do documento; se não houver data, use null — NUNCA invente data; (3) não preencha com conhecimento geral do modelo: sem evidência, o campo fica vazio ou null; (4) separe fato da empresa (history, leadership) de reclamação de cliente (products.customerSignal); (5) máximo 3 products, máximo 10 timeline, máximo 10 values, máximo 10 highlights. Literais permitidos: severity=high|medium|low; kind=rh|gestor|dpo|recrutador|executivo|other; sentiment=pro|contra|neutro; network=linkedin|instagram|youtube|x|facebook|github|tiktok|other; channel=linkedin|email|telefone|site|other. Escreva todos os textos livres em ${outLang}. Retorne SOMENTE JSON.`;
+}
+
+export const buildDossierUser = (corpus: string) => `corpus:\n${corpus}`;
+
+export function buildMatchSystem(lang: BaseLang): string {
+  const outLang = lang === "en" ? "English" : lang === "es" ? "Español" : "Português do Brasil";
+  return `Receba um DOSSIÊ (JSON da empresa) + a VAGA (texto) + o RESUME (currículo tailored do candidato para aquela vaga). Produza JSON com {alignment{score 0-100, verdict=vai|cautela|desistir, dimensions[{key=cultura|produto|processo|gestao|setor|cargo,score 0-100,note}]},attentionPoints[],correlations[{theme,theirs,mine}],gaps[],questions[{question,why,sourceUrl}],outreach[{target,role,goal=rh|gestor|indicacao|cargo,channel=linkedin|email|telefone|site|other,angle,message,sourceUrl}],redFlagSummary[],sources[]}. REGRAS: (1) alignment.score é honesto, ancorado nas dimensões — não é porcentagem de palavras em comum; (2) correlations só cita skills/experiências que estão no RESUME; (3) questions: 5 a 8 perguntas, cada uma com why e sourceUrl quando derivar de uma evidência do dossiê; (4) outreach: 3 a 5 ações de contorno de ATS, cada uma com message PRONTA PARA COPIAR no tom do canal (LinkedIn ≠ e-mail), usando apenas fatos do dossiê e do RESUME; (5) redFlagSummary lista as red flags para as quais preparar objeção. Escreva todos os textos em ${outLang}. Retorne SOMENTE JSON.`;
+}
+
+export const buildMatchUser = (payload: string) => `payload:\n${payload}`;
