@@ -26,7 +26,7 @@ describe("store", () => {
   it("surfaces quota errors with guidance", () => {
     const big = "x".repeat(100);
     const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => { throw new DOMException("full", "QuotaExceededError"); });
-    expect(() => saveApps([{ id: "1", jobText: big, fileName: "f.pdf", resume: base.resume, cargo: "Vaga", empresa: "Empresa", matchPercent: 0, strengths: ["a"], weaknesses: ["b"], emailBody: "e", chatMessage: "c", status: "done", errorLog: "", lang: "pt-BR", createdAt: new Date().toISOString() }])).toThrow(/Armazenamento cheio/);
+    expect(() => saveApps([{ id: "1", jobText: big, fileName: "f.pdf", resume: base.resume, cargo: "Vaga", empresa: "Empresa", matchPercent: 0, strengths: ["a"], weaknesses: ["b"], emailBody: "e", chatMessage: "c", status: "done", errorLog: "", lang: "pt-BR", dossierId: null, dossierMatch: null, createdAt: new Date().toISOString() }])).toThrow(/Armazenamento cheio/);
     setItem.mockRestore();
   });
   it("defaults missing app lang to pt-BR and keeps explicit lang", () => {
@@ -47,7 +47,8 @@ describe("store", () => {
   });
   it("round-trips settings through secure storage", () => {
     saveSettings({ geminiKey: "K", models: ["m1", "m2"] });
-    expect(loadSettings()).toEqual({ geminiKey: "K", models: ["m1", "m2"] });
+    expect(loadSettings()).toMatchObject({ geminiKey: "K", models: ["m1", "m2"] });
+    expect(loadSettings().research).toEqual({ tavilyKey: "", braveKey: "", jinaKey: "", youtubeKey: "", githubToken: "" });
   });
   it("saveBase surfaces quota errors with guidance", () => {
     const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => { throw new DOMException("full", "QuotaExceededError"); });

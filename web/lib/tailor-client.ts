@@ -68,6 +68,8 @@ function failedApp(jobText: string, lang: BaseLang, msg: string): StoredApp {
     status: "failed",
     errorLog: msg,
     lang,
+    dossierId: null,
+    dossierMatch: null,
     createdAt: new Date().toISOString(),
   };
 }
@@ -86,6 +88,8 @@ export async function runTailorJob(jobText: string, lang: BaseLang, locale: UiLo
       status: "done",
       errorLog: "",
       lang,
+      dossierId: null,
+      dossierMatch: null,
       createdAt: new Date().toISOString(),
     };
     saveApps([app, ...loadApps()]);
@@ -112,6 +116,8 @@ export async function retryStoredApp(id: string, locale: UiLocale = getLocale())
       status: "done",
       errorLog: "",
       lang: current.lang,
+      dossierId: null,
+      dossierMatch: null,
       createdAt: new Date().toISOString(),
     };
     saveApps([app, ...loadApps().filter((a) => a.id !== id)]);

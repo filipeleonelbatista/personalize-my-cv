@@ -2,25 +2,26 @@
 import { z } from "zod";
 import { ResumeSchema, TailorEnvelopeSchema } from "./resume-schema";
 import { parseBaseLang, type BaseLang } from "./llm/prompts";
+import { DossierSchema, DossierMatchSchema, type Dossier } from "./dossier-schema";
 import { getSecure, setSecure, removeSecure } from "./secure-store";
 import { DEFAULT_LOCALE, type UiLocale } from "./i18n/config";
 import { tErr } from "./i18n/locale";
 
 export const StoredBaseSchema = z.object({ resume: ResumeSchema, lang: z.enum(["pt-BR", "en", "es"]), updatedAt: z.string() });
 export type StoredBase = z.infer<typeof StoredBaseSchema>;
-export const StoredAppSchema = TailorEnvelopeSchema.extend({ id: z.string().min(1), jobText: z.string(), fileName: z.string(), status: z.enum(["done", "failed"]), errorLog: z.string().default(""), lang: z.enum(["pt-BR", "en", "es"]).default("pt-BR"), createdAt: z.string() });
+export const StoredAppSchema = TailorEnvelopeSchema.extend({ id: z.string().min(1), jobText: z.string(), fileName: z.string(), status: z.enum(["done", "failed"]), errorLog: z.string().default(""), lang: z.enum(["pt-BR", "en", "es"]).default("pt-BR"), createdAt: z.string(), dossierId: z.string().nullable().default(null), dossierMatch: DossierMatchSchema.nullable().default(null) });
 export type StoredApp = z.infer<typeof StoredAppSchema>;
-export const SettingsSchema = z.object({ geminiKey: z.string().default(""), models: z.array(z.string()).min(1).default(["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]) });
+export const SettingsSchema = z.object({ geminiKey: z.string().default(""), models: z.array(z.string()).min(1).default(["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]), research: z.object({ tavilyKey: z.string().default(""), braveKey: z.string().default(""), jinaKey: z.string().default(""), youtubeKey: z.string().default(""), githubToken: z.string().default("") }).default(() => ({ tavilyKey: "", braveKey: "", jinaKey: "", youtubeKey: "", githubToken: "" })) });
 export type Settings = z.infer<typeof SettingsSchema>;
 
-function readArr(key: string): StoredApp[] {
+function readArr<T>(key: string, schema: { parse(item: unknown): T }): T[] {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return [];
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
-    const out: StoredApp[] = [];
-    for (const item of arr) { try { out.push(StoredAppSchema.parse(item)); } catch { /* descarta item inválido */ } }
+    const out: T[] = [];
+    for (const item of arr) { try { out.push(schema.parse(item)); } catch { /* descarta item inválido */ } }
     return out;
   } catch { return []; }
 }
@@ -37,13 +38,47 @@ export function saveBase(b: StoredBase): void {
   try { localStorage.setItem("pmcv:base", JSON.stringify(StoredBaseSchema.parse(b))); }
   catch (e) { throwQuota(e); }
 }
-export function loadApps(): StoredApp[] { return readArr("pmcv:apps"); }
+export function loadApps(): StoredApp[] { return readArr("pmcv:apps", StoredAppSchema); }
 export function saveApps(a: StoredApp[]): void {
   try { localStorage.setItem("pmcv:apps", JSON.stringify(a)); }
   catch (e) { throwQuota(e); }
 }
+
+export type StoredDossier = Dossier;
+export function loadDossiers(): StoredDossier[] { return readArr("pmcv:dossiers", DossierSchema); }
+export function saveDossiers(d: unknown[]): void {
+  // Mesmo padrão de readArr: valida cada item pelo Zod e descarta o inválido
+  // também na escrita; localStorage cheio → mensagem de quota via throwQuota.
+  const items: StoredDossier[] = [];
+  for (const item of d) { try { items.push(DossierSchema.parse(item)); } catch { /* descarta item inválido */ } }
+  try { localStorage.setItem("pmcv:dossiers", JSON.stringify(items)); }
+  catch (e) { throwQuota(e); }
+}
+export function upsertDossier(d: unknown): void {
+  const parsed = DossierSchema.parse(d);
+  saveDossiers([parsed, ...loadDossiers().filter((x) => x.companyKey !== parsed.companyKey)]);
+}
+export function findDossierByCompany(companyKey: string): StoredDossier | null { return loadDossiers().find((d) => d.companyKey === companyKey) ?? null; }
+export function deleteDossier(id: string): void {
+  saveDossiers(loadDossiers().filter((d) => d.id !== id));
+  saveApps(loadApps().map((a) => (a.dossierId === id ? { ...a, dossierId: null } : a)));
+}
+
+const ReadCacheSchema = z.object({ url: z.string(), content: z.string(), publishedAt: z.string().nullable(), fetchedAt: z.string() });
+export type ReadCacheEntry = z.infer<typeof ReadCacheSchema>;
+export function loadReadCache(): ReadCacheEntry[] { return readArr("pmcv:readcache", ReadCacheSchema); }
+export function saveReadCache(c: unknown[]): void {
+  const items: ReadCacheEntry[] = [];
+  for (const item of c) { try { items.push(ReadCacheSchema.parse(item)); } catch { /* descarta entrada inválida */ } }
+  try { localStorage.setItem("pmcv:readcache", JSON.stringify(items)); }
+  catch (e) { throwQuota(e); }
+}
 export function loadSettings(): Settings { try { const s = getSecure("pmcv:settings"); if (!s) return SettingsSchema.parse({}); return SettingsSchema.parse(JSON.parse(s)); } catch { return SettingsSchema.parse({}); } }
-export function saveSettings(s: Settings): void { setSecure("pmcv:settings", JSON.stringify(SettingsSchema.parse(s))); }
+export function saveSettings(s: Partial<Settings>): void {
+  // D14: MESCLA em vez de sobrescrever — salvar a chave Gemini não apaga research.
+  const cur = loadSettings();
+  setSecure("pmcv:settings", JSON.stringify(SettingsSchema.parse({ ...cur, ...s, research: { ...cur.research, ...(s.research ?? {}) } })));
+}
 export function clearSettings(): void { removeSecure("pmcv:settings"); }
 export function isOnboarded(): boolean { return localStorage.getItem("pmcv:onboarded") === "1" && !!loadSettings().geminiKey && !!loadBase(); }
 export function setOnboarded(v: boolean): void { localStorage.setItem("pmcv:onboarded", v ? "1" : "0"); }
@@ -59,10 +94,11 @@ export function loadLocale(): UiLocale {
 export function saveLocale(l: UiLocale): void {
   localStorage.setItem("pmcv:locale", l);
 }
-export function exportBackup(): string { return JSON.stringify({ base: loadBase(), apps: loadApps(), exportedAt: new Date().toISOString() }); }
+export function exportBackup(): string { return JSON.stringify({ base: loadBase(), apps: loadApps(), dossiers: loadDossiers(), exportedAt: new Date().toISOString() }); }
 export function importBackup(json: string): void {
-  const parsed = z.object({ base: StoredBaseSchema.nullable(), apps: z.array(StoredAppSchema) }).parse(JSON.parse(json));
+  const parsed = z.object({ base: StoredBaseSchema.nullable(), apps: z.array(StoredAppSchema), dossiers: z.array(DossierSchema).optional() }).parse(JSON.parse(json));
   if (parsed.base) saveBase(parsed.base); localStorage.setItem("pmcv:apps", JSON.stringify(parsed.apps));
+  if (parsed.dossiers) saveDossiers(parsed.dossiers); // D15: sem a chave, dossiês locais preservados
 }
 export function touchUpdatedAt(): string { return new Date().toISOString(); }
 
@@ -74,7 +110,7 @@ export function wipeAll(): void {
   } catch {
     /* segue o baile */
   }
-  for (const k of ["pmcv:base", "pmcv:apps", "pmcv:onboarded", "pmcv:locale", "pmcv:consent", "theme"]) {
+  for (const k of ["pmcv:base", "pmcv:apps", "pmcv:dossiers", "pmcv:readcache", "pmcv:onboarded", "pmcv:locale", "pmcv:consent", "theme"]) {
     try {
       localStorage.removeItem(k);
     } catch {
