@@ -47,9 +47,18 @@ try {
         pkg.version = next;
         writeJson(p, pkg);
         touched.push(p);
+        const lockPath = join("web", "package-lock.json");
+        const lock = readJson(lockPath);
+        if (!lock.packages?.[""]) {
+          throw new Error("package-lock.json is missing its root package entry");
+        }
+        lock.version = next;
+        lock.packages[""].version = next;
+        writeJson(lockPath, lock);
+        touched.push(lockPath);
       }
     } catch (e) {
-      console.error(`[bump-versions] web/package.json: ${e?.message ?? e}`);
+      console.error(`[bump-versions] web version: ${e?.message ?? e}`);
     }
   }
 

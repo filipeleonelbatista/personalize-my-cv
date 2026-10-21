@@ -8,6 +8,7 @@ import { HelpDialog } from "./components/HelpDialog";
 import { LocaleSelector } from "./components/LocaleSelector";
 import { Onboarding } from "./components/Onboarding";
 import { ThemeToggle } from "./components/theme-toggle";
+import { UserMenu } from "./components/UserMenu";
 import type { BaseLang } from "@/lib/llm/prompts";
 import type { Resume } from "@/lib/resume-schema";
 import { isOnboarded, loadApps, loadBase, loadSettings, setOnboarded, type StoredApp } from "@/lib/store";
@@ -82,11 +83,7 @@ export default function Page() {
             <p className="text-sm text-muted-foreground">{t("tagline")}</p>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          <LocaleSelector />
-          <HelpDialog />
-          <ThemeToggle />
-        </div>
+        <UserMenu />
       </header>
 
       {!base ? (

@@ -1,7 +1,8 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { generateJson } from "@/lib/llm/chain";
+import { generateText } from "@/lib/llm/chain";
 import { validateGeminiKey } from "@/lib/llm/chain";
-import { chatJsonGemini, geminiModels } from "@/lib/llm/gemini";
+import { chatJsonGemini, chatTextGemini, geminiModels } from "@/lib/llm/gemini";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -52,8 +53,38 @@ describe("generateJson fallback", () => {
   });
 });
 
-describe("byok", () => {
-  it("passes key in query string", async () => {
+describe("generateText fallback", () => {
+  it("returns the plain text answer", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: "olá, tudo certo" }] } }] }) })));
+    const r = await generateText("s", "u", "K");
+    expect(r.text).toBe("olá, tudo certo");
+    expect(r.provider).toBe("gemini:gemini-3.8-flash");
+  });
+  it("does not ask the API for a JSON answer", async () => {
+    const fetch = vi.fn(async (..._a: unknown[]) => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: "texto" }] } }] }) }));
+    vi.stubGlobal("fetch", fetch);
+    await generateText("s", "u", "K");
+    const init = fetch.mock.calls[0][1] as RequestInit | undefined;
+    const body = JSON.parse(String(init?.body));
+    expect(body.generationConfig?.responseMimeType).toBeUndefined();
+  });
+  it("falls back across the models", async () => {
+    const fetch = vi.fn()
+      .mockRejectedValueOnce(new Error("m1 down"))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: "segunda" }] } }] }) } as unknown as Response);
+    vi.stubGlobal("fetch", fetch);
+    const r = await generateText("s", "u", "K");
+    expect(r.provider).toBe("gemini:gemini-3.7-flash");
+    expect(r.text).toBe("segunda");
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+  it("rejects an empty answer with a readable error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ candidates: [] }) })));
+    await expect(chatTextGemini("s", "u", "K", "gemini-3.8-flash")).rejects.toThrow(/resposta vazia/);
+  });
+});
+
+describe("byok", () => {  it("passes key in query string", async () => {
     const fetch = vi.fn(async (..._a: unknown[]) => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"ok":1}' }] } }] }) }));
     vi.stubGlobal("fetch", fetch);
     await generateJson("s", "u", "KEY123");

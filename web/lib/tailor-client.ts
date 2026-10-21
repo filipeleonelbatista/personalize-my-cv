@@ -47,7 +47,7 @@ async function generateEnvelope(jobText: string, lang: BaseLang, locale: UiLocal
   return env;
 }
 
-function failedApp(jobText: string, lang: BaseLang, msg: string): StoredApp {
+function failedApp(jobText: string, lang: BaseLang, msg: string, jobUrl: string): StoredApp {
   // Caller guarantees a base exists (rethrown otherwise).
   const base = loadBase()!;
   const missing = MISSING_JOB[lang] ?? MISSING_JOB["pt-BR"];
@@ -64,6 +64,7 @@ function failedApp(jobText: string, lang: BaseLang, msg: string): StoredApp {
     chatMessage: "—",
     id: newId(),
     jobText,
+    jobUrl,
     fileName: buildFailedFileName(),
     status: "failed",
     errorLog: msg,
@@ -72,7 +73,7 @@ function failedApp(jobText: string, lang: BaseLang, msg: string): StoredApp {
   };
 }
 
-export async function runTailorJob(jobText: string, lang: BaseLang, locale: UiLocale = getLocale()): Promise<TailorResult> {
+export async function runTailorJob(jobText: string, lang: BaseLang, jobUrl = "", locale: UiLocale = getLocale()): Promise<TailorResult> {
   if (!jobText || jobText.trim().length < 20) {
     throw new Error(tErr(locale, "jobShort"));
   }
@@ -82,6 +83,7 @@ export async function runTailorJob(jobText: string, lang: BaseLang, locale: UiLo
       ...env,
       id: newId(),
       jobText,
+      jobUrl,
       fileName: buildFileName(env.resume.cabecalho.nome, env.cargo, env.empresa),
       status: "done",
       errorLog: "",
@@ -93,7 +95,7 @@ export async function runTailorJob(jobText: string, lang: BaseLang, locale: UiLo
   } catch (e) {
     if (!loadBase()) throw e;
     const msg = ((e instanceof Error ? e.message : String(e)) || tErr(locale, "unknownFail")).slice(0, 1000);
-    const app = failedApp(jobText, lang, msg);
+    const app = failedApp(jobText, lang, msg, jobUrl);
     saveApps([app, ...loadApps()]);
     return { ok: false, error: tErr(locale, "tailFail", { msg }), app };
   }
@@ -108,6 +110,7 @@ export async function retryStoredApp(id: string, locale: UiLocale = getLocale())
       ...env,
       id: newId(),
       jobText: current.jobText,
+      jobUrl: current.jobUrl,
       fileName: buildFileName(env.resume.cabecalho.nome, env.cargo, env.empresa),
       status: "done",
       errorLog: "",

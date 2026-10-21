@@ -8,7 +8,7 @@ beforeEach(() => localStorage.clear());
 const resume: StoredApp["resume"] = { cabecalho: { nome: "Ana", titulo_profissional: "Dev", contatos: [{ tipo: "email", valor: "a@a.com", link: null }] }, secoes: { resumo: "X", experiencia: [], formacao: [], habilidades: [], certificacoes: [], idiomas: [], projetos: [] } };
 
 function app(id: string): StoredApp {
-  return { id, jobText: "vaga com texto suficiente", fileName: `${id}.pdf`, resume, cargo: "Dev", empresa: "X", matchPercent: 80, strengths: ["React"], weaknesses: ["Inglês"], emailBody: "Olá", chatMessage: "Oi", status: "done", errorLog: "", lang: "pt-BR", createdAt: new Date().toISOString() };
+  return { id, jobText: "vaga com texto suficiente", jobUrl: "", fileName: `${id}.pdf`, resume, cargo: "Dev", empresa: "X", matchPercent: 80, strengths: ["React"], weaknesses: ["Inglês"], emailBody: "Olá", chatMessage: "Oi", status: "done", errorLog: "", lang: "pt-BR", createdAt: new Date().toISOString() };
 }
 
 describe("deleteApplication (store)", () => {
