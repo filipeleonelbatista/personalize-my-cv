@@ -8,7 +8,8 @@ import { runDossierFromDocs, runDossierJob, runDossierMatch, type DossierStage }
 import { companyKey, isPlaceholderCompany } from "@/lib/dossier";
 import type { Dossier, DossierMatch } from "@/lib/dossier-schema";
 import { buildDossierMarkdown, dossierMarkdownFileName } from "@/lib/dossier-markdown";
-import { findDossierByCompany, loadApps, loadDossiers, loadSettings, saveApps, type StoredApp } from "@/lib/store";
+import { findDossierByCompany, loadApps, loadDossiers, saveApps, type StoredApp } from "@/lib/store";
+import { getDossierResearchConfig, isDossierEnabled } from "@/lib/research/config";
 import { jinaRead } from "@/lib/research/jina";
 import type { ReadDoc } from "@/lib/research/providers";
 import { getLocale, tErr } from "@/lib/i18n/locale";
@@ -25,7 +26,7 @@ type Mode = "auto" | "urls" | "text";
 export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onClose: () => void; onChanged?: (apps: StoredApp[]) => void }) {
   const t = useTranslations("Dossier");
   const [locale] = useState(getLocale);
-  const [settings] = useState(loadSettings);
+  const research = getDossierResearchConfig();
   const placeholderCompany = isPlaceholderCompany(app.empresa, app.lang);
 
   const [company, setCompany] = useState(placeholderCompany ? "" : app.empresa);
@@ -48,7 +49,6 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const hasTavilyKey = !!settings.research.tavilyKey.trim();
   const urlLines = urlsText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 
   const modes: Array<{ id: Mode; title: string; description: string }> = [
@@ -57,10 +57,7 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
     { id: "text", title: t("manualText"), description: t("manualTextDesc") },
   ];
 
-  const canStart =
-    (mode !== "auto" || hasTavilyKey) &&
-    (mode !== "urls" || urlLines.length > 0) &&
-    (mode !== "text" || materialText.trim().length > 0);
+  const canStart = (mode !== "urls" || urlLines.length > 0) && (mode !== "text" || materialText.trim().length > 0);
 
   function changeCompany(value: string) {
     setCompany(value);
@@ -121,10 +118,9 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
       const docs: ReadDoc[] = [];
       if (mode === "urls") {
         const failed: string[] = [];
-        const jinaKey = loadSettings().research.jinaKey || undefined;
         for (const url of urlLines) {
           try {
-            docs.push(await jinaRead(url, jinaKey));
+            docs.push(await jinaRead(url, research.jinaKey));
           } catch {
             failed.push(url);
           }
@@ -210,11 +206,10 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
     setStage(null);
     setPhase("busy");
     try {
-      const jinaKey = loadSettings().research.jinaKey || undefined;
       const docs: ReadDoc[] = [];
       for (const source of current.sources) {
         try {
-          docs.push(await jinaRead(source.url, jinaKey));
+          docs.push(await jinaRead(source.url, research.jinaKey));
         } catch {
           /* fonte bloqueada: segue com as demais */
         }
@@ -252,6 +247,8 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
   }
+
+  if (!isDossierEnabled()) return null;
 
   return (
     <Dialog open onClose={onClose} size="wide">
@@ -306,12 +303,6 @@ export function DossierDialog({ app, onClose, onChanged }: { app: StoredApp; onC
                 </button>
               ))}
             </div>
-
-            {mode === "auto" && !hasTavilyKey ? (
-              <a href="#settings" onClick={onClose} className="block text-sm text-destructive underline">
-                {tErr(locale, "noResearchKey")}
-              </a>
-            ) : null}
 
             {mode === "urls" ? (
               <Textarea

@@ -16,6 +16,7 @@ npm run build      # generates web/out/
 - `lib/store.ts` is the source of truth (`pmcv:*` keys, Zod-validated, invalid items discarded). Gemini key is per-user (BYOK), obfuscated with `secure-ls` — explicitly NOT a vault (see web `README.md` security notice).
 - LLM calls go straight from the browser to `generativelanguage.googleapis.com` (`lib/llm/`, 60s timeout, 3-model fallback). CV content language (`BaseLang`) is independent from UI locale.
 - Company dossiers use `lib/dossier-schema.ts`, `lib/dossier.ts`, `lib/dossier-client.ts`, `lib/research/*`, and `lib/dossier-markdown.ts`. `pmcv:dossiers` stores company research and `pmcv:readcache` caches page reads; `app/components/DossierDialog.tsx` and `app/components/DossierPanel.tsx` provide the dossier UI.
+- Dossier research credentials and `NEXT_PUBLIC_IS_DOSSIE_ENABLED` are build-time values defined in `lib/research/config.ts` (see `.env.example`). The dossier is available only when the flag is exactly `true` and all five research credentials are non-empty. These `NEXT_PUBLIC_*` values are public in the static JavaScript bundle; use only quota-limited credentials. Research keys are not stored in settings or `localStorage`.
 - PDFs are generated on demand in the browser (`@react-pdf/renderer` → blob URL) and never persisted. PDF text extraction uses `pdfjs-dist` with a vendored local worker (`public/pdf.worker.min.mjs`, no CDN).
 - Reports are computed client-side from `pmcv:apps` (`lib/report.ts` + `weekRange`/`bucketByWeekday`).
 

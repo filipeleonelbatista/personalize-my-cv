@@ -11,7 +11,7 @@ export const StoredBaseSchema = z.object({ resume: ResumeSchema, lang: z.enum(["
 export type StoredBase = z.infer<typeof StoredBaseSchema>;
 export const StoredAppSchema = TailorEnvelopeSchema.extend({ id: z.string().min(1), jobText: z.string(), jobUrl: z.string().default(""), fileName: z.string(), status: z.enum(["done", "failed"]), errorLog: z.string().default(""), lang: z.enum(["pt-BR", "en", "es"]).default("pt-BR"), createdAt: z.string(), dossierId: z.string().nullable().default(null), dossierMatch: DossierMatchSchema.nullable().default(null) });
 export type StoredApp = z.infer<typeof StoredAppSchema>;
-export const SettingsSchema = z.object({ geminiKey: z.string().default(""), models: z.array(z.string()).min(1).default(["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]), research: z.object({ tavilyKey: z.string().default(""), braveKey: z.string().default(""), jinaKey: z.string().default(""), youtubeKey: z.string().default(""), githubToken: z.string().default("") }).default(() => ({ tavilyKey: "", braveKey: "", jinaKey: "", youtubeKey: "", githubToken: "" })) });
+export const SettingsSchema = z.object({ geminiKey: z.string().default(""), models: z.array(z.string()).min(1).default(["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]) });
 export type Settings = z.infer<typeof SettingsSchema>;
 
 function readArr<T>(key: string, schema: { parse(item: unknown): T }): T[] {
@@ -69,11 +69,23 @@ export function saveReadCache(c: ReadCacheEntry[]): void {
   try { localStorage.setItem("pmcv:readcache", JSON.stringify(c.map((item) => ReadCacheSchema.parse(item)))); }
   catch (e) { throwQuota(e); }
 }
-export function loadSettings(): Settings { try { const s = getSecure("pmcv:settings"); if (!s) return SettingsSchema.parse({}); return SettingsSchema.parse(JSON.parse(s)); } catch { return SettingsSchema.parse({}); } }
+export function loadSettings(): Settings {
+  try {
+    const raw = getSecure("pmcv:settings");
+    if (!raw) return SettingsSchema.parse({});
+    const parsed: unknown = JSON.parse(raw);
+    const settings = SettingsSchema.parse(parsed);
+    if (typeof parsed === "object" && parsed !== null && "research" in parsed) {
+      setSecure("pmcv:settings", JSON.stringify(settings));
+    }
+    return settings;
+  } catch {
+    return SettingsSchema.parse({});
+  }
+}
 export function saveSettings(s: Partial<Settings>): void {
-  // D14: MESCLA em vez de sobrescrever — salvar a chave Gemini não apaga research.
   const cur = loadSettings();
-  setSecure("pmcv:settings", JSON.stringify(SettingsSchema.parse({ ...cur, ...s, research: { ...cur.research, ...(s.research ?? {}) } })));
+  setSecure("pmcv:settings", JSON.stringify(SettingsSchema.parse({ ...cur, ...s })));
 }
 export function clearSettings(): void { removeSecure("pmcv:settings"); }
 export function isOnboarded(): boolean { return localStorage.getItem("pmcv:onboarded") === "1" && !!loadSettings().geminiKey && !!loadBase(); }

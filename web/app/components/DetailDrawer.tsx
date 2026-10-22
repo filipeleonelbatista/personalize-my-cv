@@ -7,6 +7,7 @@ import { LuCopy, LuCheck, LuDownload, LuPrinter, LuBuilding2, LuExternalLink, Lu
 import { resumeToBlob, openResumePdf } from "@/lib/pdf/client";
 import { getLocale } from "@/lib/i18n/locale";
 import { verdictVariant } from "@/lib/dossier";
+import { isDossierEnabled } from "@/lib/research/config";
 import type { StoredApp } from "@/lib/store";
 import { Button } from "./ui/button";
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -99,9 +100,11 @@ export function DetailDrawer({ app, onClose, onOpenDossier }: { app: AppRow; onC
                 <Button variant="outline" size="sm" onClick={onPrint}>
                   <LuPrinter /> {t("print")}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => onOpenDossier?.(app)}>
-                  <LuBuilding2 /> {td("open")}
-                </Button>
+                {isDossierEnabled() && onOpenDossier ? (
+                  <Button variant="outline" size="sm" onClick={() => onOpenDossier(app)}>
+                    <LuBuilding2 /> {td("open")}
+                  </Button>
+                ) : null}
                 <Button variant="outline" size="sm" onClick={() => setChatOpen(true)}>
                   <LuMessageCircle /> {t("chatWithVacancy")}
                 </Button>
@@ -137,7 +140,7 @@ export function DetailDrawer({ app, onClose, onOpenDossier }: { app: AppRow; onC
                     </ul>
                   </div>
                 </div>
-                {app.dossierMatch ? (
+                {isDossierEnabled() && app.dossierMatch ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={verdictVariant(app.dossierMatch.alignment.verdict)}>
                       {td(`enums.verdict.${app.dossierMatch.alignment.verdict}`)}

@@ -43,9 +43,26 @@ informadas por você ou material colado. A pesquisa automática usa Tavily e a
 leitura de páginas usa Jina; consultas de CNPJ, YouTube e GitHub usam BrasilAPI,
 YouTube Data API e GitHub API quando aplicável. Essas chamadas saem diretamente
 do navegador; não há servidor do Personalize My CV. As chaves de pesquisa
-opcionais (Tavily, Jina, YouTube e GitHub) são configuradas em Configurações e
-pertencem ao usuário. O app não cobra pela pesquisa, mas cotas e eventuais custos
-dos provedores se aplicam.
+devem ser configuradas no ambiente de build; todas são obrigatórias, inclusive
+nos modos de URL e material colado. Brave segue bloqueado por CORS, mas sua
+variável também é exigida para habilitar o dossiê.
+
+| Variável | Uso |
+|---|---|
+| `NEXT_PUBLIC_IS_DOSSIE_ENABLED` | Deve ser exatamente `true` |
+| `NEXT_PUBLIC_TAVILY_API_KEY` | Busca automática |
+| `NEXT_PUBLIC_BRAVE_API_KEY` | Exigida para habilitar; integração Brave continua desativada por CORS |
+| `NEXT_PUBLIC_JINA_API_KEY` | Leitura de URLs |
+| `NEXT_PUBLIC_YOUTUBE_API_KEY` | Credencial da API do YouTube |
+| `NEXT_PUBLIC_GITHUB_TOKEN` | Credencial da API do GitHub |
+
+Use `.env.example` como referência para `.env.local` ou defina as variáveis no
+provedor de build/deploy. Como o app é um site estático, todas as variáveis
+`NEXT_PUBLIC_*` são embutidas no JavaScript e visíveis a qualquer visitante.
+Use somente credenciais com cotas e permissões apropriadas; para manter chaves
+secretas seria necessário migrar as chamadas para um backend. A chave Gemini
+continua sendo configurada pelo usuário em Configurações. Cotas e custos dos
+provedores se aplicam.
 
 O resultado pode ser parcial se fontes bloquearem a leitura. Confira as fontes,
 datas e evidências antes de usar as informações em uma entrevista. É possível
@@ -77,8 +94,9 @@ A chave Gemini fica guardada via `secure-ls` (ofuscação com AES + chave
 embarcada no bundle). Isso **não** é um cofre seguro: qualquer pessoa com
 acesso ao navegador consegue extrair a chave. Use uma chave com limites de
 uso/cota e revogue se necessário. As chaves opcionais dos provedores de pesquisa
-recebem o mesmo tratamento: ficam ofuscadas no navegador, não protegidas como
-em um cofre.
+`NEXT_PUBLIC_*` são incluídas sem ofuscação no bundle estático e podem ser lidas
+por qualquer visitante; configure apenas credenciais com cotas e permissões
+apropriadas.
 
 O dossiê pode conter dados pessoais públicos de terceiros, como nomes e cargos.
 Ele fica no `localStorage` do navegador e não é publicado nem compartilhado pelo

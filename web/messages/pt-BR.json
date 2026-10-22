@@ -18,7 +18,8 @@
     "offline": "Sem conexão — a IA precisa de internet. Tente de novo online.",
     "tailFail": "As IAs falharam. Vaga salva como failed para retry. Detalhe: {msg}",
     "retryFailDetail": "Retry falhou. Detalhe: {msg}",
-    "noResearchKey": "Configure uma chave de pesquisa (Tavily) em Configurações, ou cole as URLs da empresa — sem chave, use o modo manual.",
+    "noResearchKey": "O dossiê está desabilitado porque as credenciais de pesquisa do ambiente não estão completas.",
+    "dossierDisabled": "Dossiê desabilitado. Ative a flag de ambiente e configure todas as chaves de pesquisa exigidas.",
     "researchInvalidKey": "Chave da API de pesquisa inválida (401). Confira em Configurações.",
     "researchRateLimit": "Limite de requisições da API de pesquisa atingido. Aguarde um pouco e tente de novo.",
     "dossierFailed": "Falha ao montar o dossiê. Os dados coletados foram salvos — use “Tentar de novo” para retomar sem refazer a pesquisa.",
@@ -83,7 +84,7 @@
     "storageFull": "Armazenamento cheio",
     "unknownFail": "Falha desconhecida."
   },
-  "Dashboard": { "resumes": "Currículos", "reports": "Relatórios" },
+  "Dashboard": { "resumes": "Currículos", "reports": "Relatórios", "dossierUnavailable": "Dossiê indisponível: configuração do ambiente incompleta." },
   "Theme": { "toggle": "Alternar tema" },
   "Splash": { "loading": "Carregando seus dados…" },
   "Offline": {
@@ -254,10 +255,10 @@
     "s4t": "4. Revise e guarde os resultados",
     "s4d": "Confira todas as informações antes de usar: a IA pode cometer erros. As candidaturas ficam salvas neste navegador; você pode gerar novamente e exportar um backup em Configurações.",
     "s5t": "5. Monte o dossiê da empresa",
-    "s5d": "Em uma candidatura, abra “Montar dossiê” e pesquise automaticamente, informe URLs ou cole material. Depois analise a vaga para ver pontos de atenção, correlações com seu currículo, perguntas de entrevista e um plano de abordagem. O dossiê pode ser parcial e pode ser exportado em Markdown."
+    "s5d": "Em uma candidatura, abra “Montar dossiê” e pesquise automaticamente, informe URLs ou cole material. Depois analise a vaga para ver pontos de atenção, correlações com seu currículo, perguntas de entrevista e um plano de abordagem. O recurso só aparece quando a flag e todas as chaves de pesquisa do ambiente estão configuradas. O dossiê pode ser parcial e pode ser exportado em Markdown."
   },
   "Cookie": {
-    "message": "Usamos armazenamento local no navegador, sem cookies próprios. Além de Google Fonts e Gemini, a pesquisa do dossiê consulta Tavily, Jina, BrasilAPI, YouTube e GitHub diretamente do navegador.",
+    "message": "Usamos armazenamento local no navegador, sem cookies próprios. Além de Google Fonts e Gemini, a pesquisa do dossiê consulta Tavily, Jina, BrasilAPI, YouTube e GitHub diretamente do navegador, com chaves definidas pelo deployment.",
     "accept": "Aceitar", 
     "decline": "Recusar", 
     "learnMore": "Saiba mais"
@@ -271,9 +272,9 @@
     "s2h": "2. Cookies", 
     "s2b": "Não usamos cookies próprios nem rastreadores. O aviso de cookies existe por transparência: guardamos apenas a sua escolha de consentimento (pmcv:consent) e as suas preferências (idioma, tema) no armazenamento local.", 
     "s3h": "3. Serviços de terceiros", 
-    "s3b": "As conexões externas são feitas direto do navegador: Google Fonts, API Google Gemini e, na pesquisa do dossiê, Tavily, Jina Reader, BrasilAPI, YouTube Data API e GitHub API. Consultas e URLs públicas da empresa pesquisada podem ser enviadas a esses provedores; a Gemini também recebe o conteúdo para estruturar o dossiê. As chaves de API usadas são suas, quando aplicável. Consulte as políticas de privacidade dos serviços.",
-    "s4h": "4. Sua chave Gemini", 
-    "s4b": "As chaves Gemini e de pesquisa ficam ofuscadas no navegador (secure-ls, não é um cofre). Use chaves com limites de cota, não as compartilhe e revogue-as se achar que foram expostas. O dossiê pode conter dados pessoais públicos de terceiros, como nomes e cargos; ele fica no localStorage e não é publicado nem compartilhado pelo app, mas seu conteúdo é enviado à Gemini para estruturação.",
+    "s3b": "As conexões externas são feitas direto do navegador: Google Fonts, API Google Gemini e, na pesquisa do dossiê, Tavily, Jina Reader, BrasilAPI, YouTube Data API e GitHub API. Consultas e URLs públicas da empresa pesquisada podem ser enviadas a esses provedores; a Gemini também recebe o conteúdo para estruturar o dossiê. As chaves de pesquisa são configuradas pelo deployment e embutidas publicamente no app estático. Consulte as políticas de privacidade dos serviços.",
+    "s4h": "4. Chaves de API",
+    "s4b": "A chave Gemini fica ofuscada no navegador (secure-ls, não é um cofre); as chaves de pesquisa NEXT_PUBLIC_* são públicas no JavaScript do app estático. Use chaves com limites de cota e permissões apropriadas, não as compartilhe e revogue-as se achar que foram expostas. O dossiê pode conter dados pessoais públicos de terceiros, como nomes e cargos; ele fica no localStorage e não é publicado nem compartilhado pelo app, mas seu conteúdo é enviado à Gemini para estruturação.",
     "s5h": "5. Seus direitos (LGPD)", 
     "s5b": "Acesso, correção, portabilidade e eliminação: tudo está na sua mão. Exporte o backup em Configurações para portabilidade; apague vagas, limpe a base ou remova a chave para eliminação. Base legal do tratamento: seu consentimento (art. 7º da LGPD).", 
     "s6h": "6. Contato", 
@@ -371,7 +372,8 @@
   },
   "Research": {
     "title": "Pesquisa",
-    "desc": "Chaves opcionais para coletar dados públicos da empresa. Ficam só no seu navegador.",
+    "desc": "Chaves definidas pela configuração do deployment.",
+    "environmentNotice": "As chaves de pesquisa e a flag NEXT_PUBLIC_IS_DOSSIE_ENABLED são definidas no ambiente de build. Como este app é estático, variáveis NEXT_PUBLIC ficam visíveis no JavaScript enviado ao navegador. Use chaves com cotas limitadas.",
     "tavilyKey": "Chave Tavily",
     "tavilyDesc": "Recomendado. Habilita a busca automática (1.000 créditos/mês grátis, sem cartão).",
     "braveKey": "Chave Brave",

@@ -18,7 +18,8 @@
     "offline": "Offline — the AI needs internet. Try again online.",
     "tailFail": "The AIs failed. Job saved as failed for retry. Detail: {msg}",
     "retryFailDetail": "Retry failed. Detail: {msg}",
-    "noResearchKey": "Set a research key (Tavily) in Settings, or paste the company URLs — without a key, use manual mode.",
+    "noResearchKey": "The dossier is disabled because the deployment's research credentials are incomplete.",
+    "dossierDisabled": "Company dossier is disabled. Enable the environment flag and configure all required research keys.",
     "researchInvalidKey": "Invalid research API key (401). Check it in Settings.",
     "researchRateLimit": "Research API rate limit reached. Wait a moment and try again.",
     "dossierFailed": "Failed to build the dossier. The collected data was saved — use “Try again” to resume without redoing the research.",
@@ -83,7 +84,7 @@
     "storageFull": "Storage full",
     "unknownFail": "Unknown failure."
   },
-  "Dashboard": { "resumes": "Resumes", "reports": "Reports" },
+  "Dashboard": { "resumes": "Resumes", "reports": "Reports", "dossierUnavailable": "Company dossier unavailable: environment configuration is incomplete." },
   "Theme": { "toggle": "Toggle theme" },
   "Splash": { "loading": "Loading your data…" },
   "Offline": {
@@ -254,10 +255,10 @@
     "s4t": "4. Review and save your results",
     "s4d": "Check all details before using them: AI can make mistakes. Applications are saved in this browser; you can generate again and export a backup in Settings.",
     "s5t": "5. Build a company dossier",
-    "s5d": "Open an application and choose “Build dossier” to research automatically, provide URLs, or paste material. Then analyze the job to see points to consider, resume correlations, interview questions, and an outreach plan. Coverage may be partial; dossiers can be exported as Markdown."
+    "s5d": "Open an application and choose “Build dossier” to research automatically, provide URLs, or paste material. Then analyze the job to see points to consider, resume correlations, interview questions, and an outreach plan. The feature is available only when its environment flag and all research keys are configured. Coverage may be partial; dossiers can be exported as Markdown."
   },
   "Cookie": {
-    "message": "We use local storage in your browser, not first-party cookies. Besides Google Fonts and Gemini, dossier research calls Tavily, Jina, BrasilAPI, YouTube and GitHub directly from your browser.",
+    "message": "We use local storage in your browser, not first-party cookies. Besides Google Fonts and Gemini, dossier research calls Tavily, Jina, BrasilAPI, YouTube and GitHub directly from your browser, using deployment-configured keys.",
     "accept": "Accept", 
     "decline": "Decline", 
     "learnMore": "Learn more"
@@ -271,9 +272,9 @@
     "s2h": "2. Cookies", 
     "s2b": "We use no first-party cookies and no trackers. The cookie notice exists for transparency: we only store your consent choice (pmcv:consent) and preferences (language, theme) in local storage.", 
     "s3h": "3. Third-party services", 
-    "s3b": "External connections are made directly from your browser: Google Fonts, the Google Gemini API, and, for dossier research, Tavily, Jina Reader, BrasilAPI, YouTube Data API and GitHub API. Company queries and public URLs may be sent to these providers; Gemini also receives the content to structure the dossier. API keys are yours where applicable. The providers'' privacy policies apply.",
-    "s4h": "4. Your Gemini key", 
-    "s4b": "Gemini and research keys stay obfuscated in the browser (secure-ls — not a vault). Use quota-limited keys, never share them, and revoke them if you think they leaked. A dossier may contain public personal data about third parties, such as names and job titles; it stays in localStorage and is not published or shared by the app, but its content is sent to Gemini for structuring.",
+    "s3b": "External connections are made directly from your browser: Google Fonts, the Google Gemini API, and, for dossier research, Tavily, Jina Reader, BrasilAPI, YouTube Data API and GitHub API. Company queries and public URLs may be sent to these providers; Gemini also receives the content to structure the dossier. Research keys are configured by the deployment and embedded publicly in the static app. The providers'' privacy policies apply.",
+    "s4h": "4. API keys",
+    "s4b": "The Gemini key is obfuscated in the browser (secure-ls — not a vault); NEXT_PUBLIC_* research keys are public in the static app's JavaScript. Use quota-limited keys with appropriate permissions, never share them, and revoke them if you think they leaked. A dossier may contain public personal data about third parties, such as names and job titles; it stays in localStorage and is not published or shared by the app, but its content is sent to Gemini for structuring.",
     "s5h": "5. Your rights", 
     "s5b": "Access, correction, portability and deletion are all in your hands. Export a backup in Settings for portability; delete applications, clear the base or remove the key for deletion. Legal basis: your consent.", 
     "s6h": "6. Contact", 
@@ -371,7 +372,8 @@
   },
   "Research": {
     "title": "Research",
-    "desc": "Optional keys to collect public company data. They stay in your browser only.",
+    "desc": "Keys are provided through deployment configuration.",
+    "environmentNotice": "Research keys and NEXT_PUBLIC_IS_DOSSIE_ENABLED are set in the build environment. Because this app is static, NEXT_PUBLIC variables are visible in the JavaScript sent to browsers. Use quota-limited keys.",
     "tavilyKey": "Tavily key",
     "tavilyDesc": "Recommended. Enables automatic search (1,000 free credits/month, no credit card).",
     "braveKey": "Brave key",

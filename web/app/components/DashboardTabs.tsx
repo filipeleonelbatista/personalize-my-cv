@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { LuFileText, LuChartColumn } from "react-icons/lu";
 import { useTranslations } from "next-intl";
 import { loadApps, type StoredApp } from "@/lib/store";
+import { isDossierEnabled } from "@/lib/research/config";
 import { DossierDialog } from "./DossierDialog";
 import { GenerateModal } from "./GenerateModal";
 import { VacancyTable } from "./VacancyTable";
@@ -41,11 +42,16 @@ export function DashboardTabs({ apps: initialApps, lang }: { apps: StoredApp[]; 
           </TabsTrigger>
         </TabsList>
         <div id="settings" className="flex flex-wrap items-center justify-end gap-2">
+          {!isDossierEnabled() ? <p className="text-xs text-muted-foreground">{t("dossierUnavailable")}</p> : null}
           <GenerateModal defaultLang={lang} onChanged={setApps} />
         </div>
       </div>
       <TabsContent value="curriculos">
-        <VacancyTable apps={apps} onChanged={setApps} onOpenDossier={(app) => setDossierApp(app)} />
+        <VacancyTable
+          apps={apps}
+          onChanged={setApps}
+          onOpenDossier={isDossierEnabled() ? (app) => setDossierApp(app) : undefined}
+        />
         {dossierApp ? <DossierDialog app={dossierApp} onClose={() => setDossierApp(null)} onChanged={setApps} /> : null}
       </TabsContent>
       <TabsContent value="relatorios">

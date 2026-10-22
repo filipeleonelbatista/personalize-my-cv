@@ -18,7 +18,8 @@
     "offline": "Sin conexión — la IA necesita internet. Inténtalo en línea.",
     "tailFail": "Las IAs fallaron. Vacante guardada como failed para reintentar. Detalle: {msg}",
     "retryFailDetail": "Reintento fallido. Detalle: {msg}",
-    "noResearchKey": "Configura una clave de investigación (Tavily) en Ajustes, o pega las URLs de la empresa — sin clave, usa el modo manual.",
+    "noResearchKey": "El dossier está desactivado porque las credenciales de investigación del despliegue están incompletas.",
+    "dossierDisabled": "El dossier está desactivado. Activa la variable de entorno y configura todas las claves de investigación requeridas.",
     "researchInvalidKey": "Clave de API de investigación inválida (401). Revisa en Ajustes.",
     "researchRateLimit": "Límite de peticiones de la API de investigación alcanzado. Espera un momento e inténtalo de nuevo.",
     "dossierFailed": "No se pudo montar el dossier. Los datos recopilados se guardaron — usa «Reintentar» para retomarlo sin rehacer la investigación.",
@@ -83,7 +84,7 @@
     "storageFull": "Almacenamiento lleno",
     "unknownFail": "Fallo desconocido."
   },
-  "Dashboard": { "resumes": "Currículums", "reports": "Informes" },
+  "Dashboard": { "resumes": "Currículums", "reports": "Informes", "dossierUnavailable": "Dossier de empresa no disponible: la configuración del entorno está incompleta." },
   "Theme": { "toggle": "Cambiar tema" },
   "Splash": { "loading": "Cargando tus datos…" },
   "Offline": {
@@ -254,10 +255,10 @@
     "s4t": "4. Revisa y guarda los resultados",
     "s4d": "Comprueba todos los datos antes de usarlos: la IA puede cometer errores. Las candidaturas se guardan en este navegador; puedes generar otra versión y exportar una copia en Ajustes.",
     "s5t": "5. Crea el dossier de la empresa",
-    "s5d": "Abre una candidatura y elige “Crear dossier” para investigar automáticamente, indicar URLs o pegar material. Después analiza la vacante para ver puntos de atención, correlaciones con tu CV, preguntas para la entrevista y un plan de contacto. La cobertura puede ser parcial y el dossier se exporta en Markdown."
+    "s5d": "Abre una candidatura y elige “Crear dossier” para investigar automáticamente, indicar URLs o pegar material. Después analiza la vacante para ver puntos de atención, correlaciones con tu CV, preguntas para la entrevista y un plan de contacto. La función solo está disponible cuando la variable de entorno y todas las claves de investigación están configuradas. La cobertura puede ser parcial y el dossier se exporta en Markdown."
   },
   "Cookie": {
-    "message": "Usamos almacenamiento local en tu navegador, sin cookies propias. Además de Google Fonts y Gemini, la investigación del dossier consulta Tavily, Jina, BrasilAPI, YouTube y GitHub directamente desde el navegador.",
+    "message": "Usamos almacenamiento local en tu navegador, sin cookies propias. Además de Google Fonts y Gemini, la investigación del dossier consulta Tavily, Jina, BrasilAPI, YouTube y GitHub directamente desde el navegador, con claves configuradas por el despliegue.",
     "accept": "Aceptar", 
     "decline": "Rechazar", 
     "learnMore": "Más información"
@@ -271,9 +272,9 @@
     "s2h": "2. Cookies", 
     "s2b": "No usamos cookies propias ni rastreadores. El aviso existe por transparencia: solo guardamos tu elección de consentimiento (pmcv:consent) y tus preferencias (idioma, tema) en almacenamiento local.", 
     "s3h": "3. Servicios de terceros", 
-    "s3b": "Las conexiones externas se realizan directamente desde el navegador: Google Fonts, la API Google Gemini y, para investigar el dossier, Tavily, Jina Reader, BrasilAPI, YouTube Data API y GitHub API. Las consultas y URLs públicas de la empresa pueden enviarse a estos proveedores; Gemini también recibe el contenido para estructurar el dossier. Las claves de API son tuyas cuando corresponda. Consulta las políticas de privacidad de los servicios.",
-    "s4h": "4. Tu clave de Gemini", 
-    "s4b": "Las claves de Gemini e investigación quedan ofuscadas en el navegador (secure-ls — no es una caja fuerte). Usa claves con límites de cuota, no las compartas y revócalas si crees que se expusieron. El dossier puede contener datos personales públicos de terceros, como nombres y cargos; queda en localStorage y la app no lo publica ni comparte, pero su contenido se envía a Gemini para estructurarlo.",
+    "s3b": "Las conexiones externas se realizan directamente desde el navegador: Google Fonts, la API Google Gemini y, para investigar el dossier, Tavily, Jina Reader, BrasilAPI, YouTube Data API y GitHub API. Las consultas y URLs públicas de la empresa pueden enviarse a estos proveedores; Gemini también recibe el contenido para estructurar el dossier. Las claves de investigación se configuran en el despliegue y quedan embebidas públicamente en la app estática. Consulta las políticas de privacidad de los servicios.",
+    "s4h": "4. Claves de API",
+    "s4b": "La clave de Gemini queda ofuscada en el navegador (secure-ls — no es una caja fuerte); las claves de investigación NEXT_PUBLIC_* son públicas en el JavaScript de la app estática. Usa claves con límites de cuota y permisos adecuados, no las compartas y revócalas si crees que se expusieron. El dossier puede contener datos personales públicos de terceros, como nombres y cargos; queda en localStorage y la app no lo publica ni comparte, pero su contenido se envía a Gemini para estructurarlo.",
     "s5h": "5. Tus derechos", 
     "s5b": "Acceso, corrección, portabilidad y eliminación están en tus manos. Exporta el respaldo en Ajustes para portabilidad; elimina candidaturas, limpia la base o quita la clave para eliminación. Base legal: tu consentimiento.", 
     "s6h": "6. Contacto", 
@@ -371,7 +372,8 @@
   },
   "Research": {
     "title": "Investigación",
-    "desc": "Claves opcionales para recopilar datos públicos de la empresa. Quedan solo en tu navegador.",
+    "desc": "Las claves se definen mediante la configuración del despliegue.",
+    "environmentNotice": "Las claves de investigación y NEXT_PUBLIC_IS_DOSSIE_ENABLED se definen en el entorno de compilación. Como esta aplicación es estática, las variables NEXT_PUBLIC son visibles en el JavaScript enviado al navegador. Usa claves con cuotas limitadas.",
     "tavilyKey": "Clave Tavily",
     "tavilyDesc": "Recomendado. Habilita la búsqueda automática (1.000 créditos/mes gratis, sin tarjeta).",
     "braveKey": "Clave Brave",

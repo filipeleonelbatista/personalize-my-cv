@@ -17,6 +17,7 @@ import {
   normalizeVerdict,
 } from "@/lib/dossier";
 import { collectCompany } from "@/lib/research/collect";
+import { getDossierResearchConfig, isDossierEnabled } from "@/lib/research/config";
 import { canonicalUrl, dedupeUrls, type ReadDoc } from "@/lib/research/providers";
 import { jinaRead, parseReaderMeta } from "@/lib/research/jina";
 import { tavilySearch } from "@/lib/research/tavily";
@@ -361,6 +362,9 @@ export async function runDossierJob(opts: {
   onStage?: (stage: DossierStage) => void;
 }): Promise<DossierJobResult> {
   const locale = opts.locale ?? getLocale();
+  if (!isDossierEnabled()) {
+    return { ok: false, error: tErr(locale, "dossierDisabled"), dossier: null };
+  }
   const key = companyKey(opts.company);
   const existing = findDossierByCompany(key);
   if (existing && existing.status === "done" && opts.force !== true) {
@@ -368,6 +372,7 @@ export async function runDossierJob(opts: {
   }
 
   const settings = loadSettings();
+  const research = getDossierResearchConfig();
   if (!settings.geminiKey.trim()) {
     return { ok: false, error: tErr(locale, "noKey"), dossier: null };
   }
@@ -401,10 +406,6 @@ export async function runDossierJob(opts: {
     }
   }
 
-  if (!settings.research.tavilyKey.trim()) {
-    return { ok: false, error: tErr(locale, "noResearchKey"), dossier: null };
-  }
-
   const base: Envelope = {
     id: `dsr_${key}`,
     companyKey: key,
@@ -423,8 +424,8 @@ export async function runDossierJob(opts: {
       company: opts.company,
       lang: opts.lang,
       cnpj: opts.cnpj,
-      search: (query) => tavilySearch(query, settings.research.tavilyKey),
-      read: (url) => jinaRead(url, settings.research.jinaKey || undefined),
+      search: (query) => tavilySearch(query, research.tavilyKey),
+      read: (url) => jinaRead(url, research.jinaKey),
       cache: readCacheMap(),
       onStage: (stage) => opts.onStage?.(stage),
     });
@@ -459,6 +460,9 @@ export async function runDossierFromDocs(opts: {
   onStage?: (stage: DossierStage) => void;
 }): Promise<DossierJobResult> {
   const locale = opts.locale ?? getLocale();
+  if (!isDossierEnabled()) {
+    return { ok: false, error: tErr(locale, "dossierDisabled"), dossier: null };
+  }
   const key = companyKey(opts.company);
   const settings = loadSettings();
   const existing = findDossierByCompany(key);
@@ -491,6 +495,9 @@ export async function runDossierMatch(
   app: StoredApp,
   locale: UiLocale = getLocale(),
 ): Promise<{ ok: true; match: DossierMatch } | { ok: false; error: string }> {
+  if (!isDossierEnabled()) {
+    return { ok: false, error: tErr(locale, "dossierDisabled") };
+  }
   const dossier =
     (app.dossierId ? loadDossiers().find((item) => item.id === app.dossierId) ?? null : null) ??
     findDossierByCompany(companyKey(app.empresa));

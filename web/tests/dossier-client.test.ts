@@ -84,23 +84,33 @@ beforeEach(() => {
   localStorage.clear();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.stubEnv("NEXT_PUBLIC_IS_DOSSIE_ENABLED", "true");
+  vi.stubEnv("NEXT_PUBLIC_TAVILY_API_KEY", "tvly-key");
+  vi.stubEnv("NEXT_PUBLIC_BRAVE_API_KEY", "brave-key");
+  vi.stubEnv("NEXT_PUBLIC_JINA_API_KEY", "jina-key");
+  vi.stubEnv("NEXT_PUBLIC_YOUTUBE_API_KEY", "youtube-key");
+  vi.stubEnv("NEXT_PUBLIC_GITHUB_TOKEN", "github-token");
   saveBase({ resume: RESUME, lang: "pt-BR", updatedAt: new Date().toISOString() });
   saveSettings({
     geminiKey: "gemini-key",
     models: ["gemini-3.8-flash", "gemini-3.7-flash"],
-    research: { tavilyKey: "tvly-key", braveKey: "", jinaKey: "", youtubeKey: "", githubToken: "" },
   });
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe("runDossierJob", () => {
   it("persiste o dossiê em pmcv:dossiers com id determinístico", async () => {
-    installFetch();
+    const fetchMock = installFetch();
     const r = await runDossierJob({ company: "Acme", lang: "pt-BR" });
     expect(r.ok).toBe(true);
+    const tavilyCall = fetchMock.mock.calls.find((call) => String(call[0]).includes("api.tavily.com"));
+    const jinaCall = fetchMock.mock.calls.find((call) => String(call[0]).includes("r.jina.ai"));
+    expect((tavilyCall?.[1] as RequestInit | undefined)?.headers).toMatchObject({ Authorization: "Bearer tvly-key" });
+    expect((jinaCall?.[1] as RequestInit | undefined)?.headers).toMatchObject({ Authorization: "Bearer jina-key" });
     expect(loadDossiers()).toHaveLength(1);
     expect(loadDossiers()[0].companyKey).toBe("acme");
     expect(loadDossiers()[0].id).toBe("dsr_acme");
@@ -131,13 +141,40 @@ describe("runDossierJob", () => {
     expect(loadDossiers()).toHaveLength(1);
   });
 
-  it("não chama a rede quando falta a chave de pesquisa", async () => {
-    saveSettings({ research: { tavilyKey: "", braveKey: "", jinaKey: "", youtubeKey: "", githubToken: "" } });
+  it("não chama a rede quando falta qualquer credencial de pesquisa do ambiente", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BRAVE_API_KEY", "");
     const fetchMock = installFetch();
     const r = await runDossierJob({ company: "Acme", lang: "pt-BR" });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error).toBe(tErr("pt-BR", "noResearchKey"));
+    if (!r.ok) expect(r.error).toBe(tErr("pt-BR", "dossierDisabled"));
     expect(r.dossier).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("bloqueia a flag false mesmo com todas as credenciais presentes", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_DOSSIE_ENABLED", "false");
+    const fetchMock = installFetch();
+    const r = await runDossierJob({ company: "Acme", lang: "pt-BR" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe(tErr("pt-BR", "dossierDisabled"));
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("bloqueia síntese manual e análise de candidatura quando o dossiê está desabilitado", async () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_DOSSIE_ENABLED", "false");
+    seedDossier();
+    saveApps([makeApp()]);
+    const fetchMock = installFetch();
+    const docsResult = await runDossierFromDocs({
+      company: "Acme",
+      lang: "pt-BR",
+      docs: [{ url: "https://acme.com", title: "Acme", publishedAt: null, content: DOC_TEXT, provider: "jina" }],
+    });
+    const matchResult = await runDossierMatch(loadApps()[0]);
+    expect(docsResult.ok).toBe(false);
+    expect(matchResult.ok).toBe(false);
+    if (!docsResult.ok) expect(docsResult.error).toBe(tErr("pt-BR", "dossierDisabled"));
+    if (!matchResult.ok) expect(matchResult.error).toBe(tErr("pt-BR", "dossierDisabled"));
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -191,8 +228,7 @@ describe("runDossierJob", () => {
     expect(first.ok).toBe(false);
     expect(loadDossiers()[0].status).toBe("failed");
 
-    // Sem chave Tavily: o retry só pode funcionar se sair do cache.
-    saveSettings({ research: { tavilyKey: "", braveKey: "", jinaKey: "", youtubeKey: "", githubToken: "" } });
+    // O retry deve funcionar do cache sem disparar outra busca.
     const retryFetch = installFetch({ geminiText: () => JSON.stringify({ history: { summary: "do cache" } }) });
     const stages: string[] = [];
     const retry = await runDossierJob({ company: "Acme", lang: "pt-BR", onStage: (s) => stages.push(s) });

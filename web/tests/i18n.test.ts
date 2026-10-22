@@ -46,7 +46,7 @@ describe("i18n", () => {
       expect(m.Dossier, loc).toBeTruthy();
       expect(m.Research, loc).toBeTruthy();
       expect(m.Dossier.enums, loc).toBeTruthy();
-      for (const k of ["noResearchKey", "researchInvalidKey", "researchRateLimit", "dossierFailed", "noUrls", "placeholderCompany"]) {
+      for (const k of ["noResearchKey", "dossierDisabled", "researchInvalidKey", "researchRateLimit", "dossierFailed", "noUrls", "placeholderCompany"]) {
         expect(m.Errors[k], `${loc}.${k}`).toBeTruthy();
       }
     }

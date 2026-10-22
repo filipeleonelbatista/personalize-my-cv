@@ -146,6 +146,9 @@ describe("dossiê", () => {
     const s = readFileSync("app/components/DetailDrawer.tsx", "utf8");
     expect(s).toContain('useTranslations("Dossier")');
     expect(s).toContain("onOpenDossier");
+    expect(s).toContain("isDossierEnabled()");
+    expect(readFileSync("app/components/DossierDialog.tsx", "utf8")).toContain("if (!isDossierEnabled()) return null");
+    expect(readFileSync("app/components/DashboardTabs.tsx", "utf8")).toContain("dossierUnavailable");
   });
   it("o DossierDialog NÃO é montado dentro do DetailDrawer (scroll-lock)", () => {
     const drawer = readFileSync("app/components/DetailDrawer.tsx", "utf8");
@@ -237,14 +240,14 @@ describe("settings dialog (post-onboarding)", () => {
     expect(s).not.toMatch(/key=\{locale\}/);
     expect(s).toMatch(/useState<UiLocale>\(\(\) => loadLocale\(\)\)/);
   });
-  it("tem a seção de pesquisa com as chaves de search", () => {
+  it("configura as chaves de pesquisa pelo ambiente, sem expô-las nas configurações", () => {
     const s = readFileSync("app/components/SettingsDialog.tsx", "utf8");
     expect(s).toContain('useTranslations("Research")');
     for (const field of ["tavilyKey", "braveKey", "jinaKey", "youtubeKey", "githubToken"]) {
-      expect(s, field).toContain(field);
+      expect(s, field).not.toContain(field);
     }
-    expect(s).toContain("loadSettings");
-    expect(s).toContain("saveSettings");
+    expect(readFileSync("lib/research/config.ts", "utf8")).toContain("NEXT_PUBLIC_IS_DOSSIE_ENABLED");
+    expect(readFileSync(".env.example", "utf8")).toContain("NEXT_PUBLIC_TAVILY_API_KEY");
   });
   it("nenhum componente novo usa /api/ ou server actions", () => {
     for (const f of ["app/components/SettingsDialog.tsx"]) {

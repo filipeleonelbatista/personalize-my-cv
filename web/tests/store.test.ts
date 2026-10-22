@@ -2,6 +2,7 @@
 // web/tests/store.test.ts
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import { saveBase, loadBase, saveApps, loadApps, saveSettings, loadSettings, exportBackup, importBackup, isOnboarded, wipeAll, type StoredBase } from "@/lib/store";
+import { getSecure, setSecure } from "@/lib/secure-store";
 
 const base: StoredBase = { resume: { cabecalho: { nome: "Ana", titulo_profissional: "Dev", contatos: [{ tipo: "email", valor: "a@a.com", link: null }] }, secoes: { resumo: "X", experiencia: [], formacao: [], habilidades: [], certificacoes: [], idiomas: [], projetos: [] } }, lang: "pt-BR" as const, updatedAt: new Date().toISOString() };
 
@@ -59,7 +60,12 @@ describe("store", () => {
   it("round-trips settings through secure storage", () => {
     saveSettings({ geminiKey: "K", models: ["m1", "m2"] });
     expect(loadSettings()).toMatchObject({ geminiKey: "K", models: ["m1", "m2"] });
-    expect(loadSettings().research).toEqual({ tavilyKey: "", braveKey: "", jinaKey: "", youtubeKey: "", githubToken: "" });
+    expect(loadSettings()).toEqual({ geminiKey: "K", models: ["m1", "m2"] });
+  });
+  it("removes legacy research keys from browser settings", () => {
+    setSecure("pmcv:settings", JSON.stringify({ geminiKey: "K", models: ["m1"], research: { tavilyKey: "legacy-key" } }));
+    expect(loadSettings()).toEqual({ geminiKey: "K", models: ["m1"] });
+    expect(JSON.parse(getSecure("pmcv:settings") ?? "{}")).not.toHaveProperty("research");
   });
   it("saveBase surfaces quota errors with guidance", () => {
     const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => { throw new DOMException("full", "QuotaExceededError"); });

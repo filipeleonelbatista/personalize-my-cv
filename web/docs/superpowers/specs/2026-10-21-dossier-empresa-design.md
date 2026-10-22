@@ -6,6 +6,8 @@ Path: feature → camada de pesquisa de empresa sobre a candidatura, 100% client
 
 > **Revisão 2 (pós builder-check).** O revisor levantou 17 pontos. Resolvidos aqui: corpus = documentos **lidos** (não os descobertos); `sourceUrl` anulável + `origin` para material colado; `coverage` e `sources` passam a ser **do código**, não do modelo; `legal` é escrito pelo código a partir do BrasilAPI (nunca pelo Gemini); **grounding sai da v1** (incompatível com `responseMimeType: application/json` e violaria o invariante de evidência); identidade da empresa é **editável** antes da pesquisa (o placeholder `MISSING_JOB` = "Empresa"/"Company" geraria lixo); dossiê tem `status`/`errorLog` e o retry **re-lê as URLs já lidas** em vez de refazer as buscas; `saveSettings` passa a ser **merge** (hoje sobrescreve e apagaria a chave Tavily); o diálogo do dossiê **não** é montado dentro do `DetailDrawer` (scroll-lock); cobertura dos blocos + limites de array; quotas por seção; datas vêm do Jina (o `published_date` do Tavily é "published or last updated", não data de publicação).
 
+> **Atualização operacional (2026-10-21):** esta decisão posterior substitui o BYOK das chaves de pesquisa descrito abaixo. As credenciais Tavily, Brave, Jina, YouTube e GitHub, mais `NEXT_PUBLIC_IS_DOSSIE_ENABLED=true`, vêm do ambiente de build; qualquer chave ausente ou flag diferente de `true` desabilita todo o dossiê, inclusive os modos manuais. Como `output: "export"` gera um site estático, `NEXT_PUBLIC_*` fica público no JavaScript. Isso é configuração de deployment, não armazenamento de segredos.
+
 ## 1. Entendimento
 
 **Problema.** Hoje o app gera, por vaga, um currículo sob medida + análise + email + mensagem instantânea. Não há nada que responda "essa empresa é boa pra mim?", "existe red flag?" e "como eu falo com alguém de verdade, sem passar só pelo filtro do ATS?".
@@ -25,11 +27,11 @@ Path: feature → camada de pesquisa de empresa sobre a candidatura, 100% client
 **Restrições do parceiro (aprovadas):**
 - O app é 100% estático (`output: "export"`); **server functions / route handlers estão fora** (o static export desabilita Server Actions, Route Handlers, Middleware e APIs dinâmicas).
 - Retrieval e síntese são camadas **separadas**: quem acha o material é uma search API (dados determinísticos, com URL e data); quem estrutura é o Gemini.
-- BYOK: chaves de terceiros ficam no browser, ofuscadas com `secure-ls`, junto com a chave Gemini — mesmo padrão já existente.
+- BYOK: a chave Gemini continua sendo do usuário e armazenada com `secure-ls`; as credenciais de pesquisa são fornecidas pelo ambiente de build, não pela interface nem por `localStorage`.
 - Custo alvo: **US$ 0** com as cotas gratuitas.
 - Primeiro o `web/`; depois replicar o contrato em `mobile/` e `cli/` (reimplementação, nunca import — ver `PROJECT.md`).
 
-**Nota de segurança (consistente com o spec BYOK):** a chave da search API fica no browser do usuário com a mesma ofuscação da chave Gemini. É conveniência, não cofre. Nenhuma chave nova é hardcoded no bundle.
+**Nota de segurança:** as credenciais de pesquisa `NEXT_PUBLIC_*` são públicas no bundle estático; use apenas chaves com cotas e permissões apropriadas. Nenhum segredo privado deve ser colocado nessas variáveis.
 
 ## 2. Decisões que tomei (minhas — vete se discordar)
 
@@ -39,7 +41,7 @@ Path: feature → camada de pesquisa de empresa sobre a candidatura, 100% client
 |---|---|---|---|
 | Tavily `POST https://api.tavily.com/search` | ✅ `ACAO: *`, preflight `authorization,content-type` OK | 1.000 créditos/mês, **sem cartão** | usável |
 | Brave `api.search.brave.com/res/v1/web/search` | ❌ **nenhum header `access-control-*`** | ~$20/mês | **não usável do browser** |
-| Jina `r.jina.ai` | ✅ ecoa a origem | não precisa (20 req/min) | usável |
+| Jina `r.jina.ai` | ✅ ecoa a origem | chave opcional para elevar o limite; exigida pela configuração do deployment | usável |
 | Jina `s.jina.ai` | ✅ | **exige chave** (401) | só com chave |
 | BrasilAPI (CNPJ) | ✅ `ACAO: *` | não precisa | usável |
 | YouTube / GitHub / Wikipedia | ✅ | opcional / não | usáveis |
@@ -48,7 +50,7 @@ O Brave foi a escolha original do brainstorm, mas sem CORS o browser bloqueia a 
 
 **D2 — Cadeia de recuperação em camadas, não um provedor único.**
 - *Descoberta* (achar URLs) → **Tavily** `POST /search` (1 crédito por busca básica).
-- *Leitura* (texto da página + data de publicação) → **Jina Reader** `GET https://r.jina.ai/<url>` (sem chave; `x-ratelimit-limit: 20,20;w=60`).
+- *Leitura* (texto da página + data de publicação) → **Jina Reader** `GET https://r.jina.ai/<url>` (`x-ratelimit-limit: 20,20;w=60` sem chave; a chave de ambiente configurada é enviada para elevar o limite).
 - *Estruturado* (dado oficial) → **fetch direto** em APIs com CORS: BrasilAPI `/api/cnpj/v1/{cnpj}` (razão social, fantasy, data de abertura, CNAE, porte, capital, **QSA com sócios + qualificação + data de entrada**), GitHub `/orgs/{org}/events/public`, YouTube Data API `/search`, Wikipedia/Wikidata.
 - *Síntese* → **Gemini** (`lib/llm/chain.ts` já existente, com fallback de models + repair de JSON).
 
@@ -74,7 +76,7 @@ O Brave foi a escolha original do brainstorm, mas sem CORS o browser bloqueia a 
 
 **D13 — `sources[]` e `coverage[]` são do código, não do modelo.** O modelo devolve só conteúdo. O código sabe exatamente o que leu (→ `sources[]`) e pode computar determinsticamente a cobertura (§4.1).
 
-**D14 — `saveSettings` passa a ser merge.** Hoje `SettingsDialog.handleSave` faz `saveSettings({ geminiKey, models })`, sobrescrevendo tudo — com `research` no schema, salvar a chave Gemini **apagaria a chave Tavily**. `saveSettings` passa a mesclar campos; `loadSettings()` continua devolvendo o objeto completo (o que **quebra** `tests/store.test.ts:50`, que faz `toEqual({geminiKey, models})` — o teste precisa ser atualizado, ver §10).
+**D14 — `saveSettings` passa a ser merge.** `saveSettings` mescla as preferências de IA. A configuração de pesquisa não faz mais parte do schema; `loadSettings()` migra dados legados removendo `research` do armazenamento local.
 
 **D15 — `importBackup` não apaga dossiês quando o backup é antigo.** `dossiers` vira opcional no schema do backup: se a chave não existir, os dossiês locais **são preservados**; se existir, são substituídos (comportamento coerente com base/apps).
 
@@ -463,20 +465,13 @@ Toda afirmação com fonte é um link clicável (`target="_blank" rel="noopener"
 
 ## 7. Configurações
 
-`SettingsDialog` ganha uma seção **"Pesquisa"**:
-
-| Campo | Obrigatório | Observação |
-|---|---|---|
-| Chave Tavily | recomendado | link para o cadastro; botão "Validar" (1 crédito) |
-| Chave Brave | não | desligado por padrão; aviso de que o CORS não está liberado (D1) |
-| Chave Jina | não | só aumenta o rate limit (20/min → mais) |
-| Chave YouTube | não | habilita posts de YouTube |
-| Token GitHub | não | aumenta o rate limit (60/h → 5.000/h) |
-
-Indicador de status por provedor: "pronto" / "sem chave" / "bloqueado (CORS)" / "erro 401".
-**`saveSettings` mescla** (D14): salvar a chave Gemini **não** apaga as chaves de pesquisa.
-
-**Onboarding:** a chave Gemini continua sendo o único passo obrigatório. O onboarding **não** passa a exigir chave Tavily. A seção "Pesquisa" aparece quando o usuário abre Configurações ou clica em "Montar dossiê" sem chave (lá o app explica e leva às Configurações).
+As credenciais de pesquisa são configuradas no build/deploy, não na interface nem em
+`localStorage`. `web/.env.example` lista `NEXT_PUBLIC_IS_DOSSIE_ENABLED` e as
+chaves Tavily, Brave, Jina, YouTube e GitHub. A flag precisa ser exatamente
+`true` e **todas** as chaves precisam estar preenchidas; caso contrário, o
+dossiê inteiro fica indisponível, inclusive os modos manuais. Como o deploy é
+estático, `NEXT_PUBLIC_*` é público no JavaScript. A chave Gemini continua sendo
+configurada pelo usuário em Settings.
 
 ## 8. Erros, limites e privacidade
 
@@ -520,15 +515,15 @@ Vitest, com `fetch` mockado. Novos arquivos:
 - `tests/research-collect.test.ts` — teto de 22 créditos de busca e 15 leituras; cota por seção; dedupe; degradação (leitor falha → snippet do Tavily; busca falha → segue com o que tem); bloqueio do `onStage` na ordem certa.
 - `tests/dossier-client.test.ts` — `runDossierJob` cria e persiste em `pmcv:dossiers`; **reaproveita** o dossiê existente da empresa sem refazer pesquisa; `runDossierMatch` usa `app.jobText` + `app.resume` (o tailored) e grava em `app.dossierMatch`; falha ⇒ `status: "failed"` com `sources[]` preservadas; `onStage` é chamado.
 - `tests/dossier-prompts.test.ts` — o prompt exige `sourceUrl` do corpus, proíbe data inventada, lista os literais exatos dos enums e pede o idioma do dossiê.
-- `tests/store-dossiers.test.ts` — round-trip; item inválido descartado pelo Zod; `exportBackup`/`importBackup` incluem dossiês; **backup antigo sem `dossiers` preserva os dossiês locais**; `wipeAll` limpa `pmcv:dossiers` e `pmcv:readcache`; `StoredApp` antigo (sem `dossierId`/`dossierMatch`) continua válido; **`saveSettings` mescla e não apaga `research`**.
+- `tests/store-dossiers.test.ts` — round-trip; item inválido descartado pelo Zod; `exportBackup`/`importBackup` incluem dossiês; **backup antigo sem `dossiers` preserva os dossiês locais**; `wipeAll` limpa `pmcv:dossiers` e `pmcv:readcache`; `StoredApp` antigo (sem `dossierId`/`dossierMatch`) continua válido; `saveSettings` mescla as preferências de IA.
 
 Ajustes em testes existentes:
-- `tests/store.test.ts:48-51` — `expect(loadSettings()).toEqual({ geminiKey: "K", models: [...] })` **quebra** com a chave `research` → passa a `toMatchObject` + asserção explícita das chaves de pesquisa.
-- `tests/ui-contract.test.ts` — `DetailDrawer` contém o botão de dossiê; **nenhum** componente novo usa `/api/` ou `../actions`; nada de string PT hardcoded nos componentes novos; `SettingsDialog` contém os campos de pesquisa; `DossierDialog`/`DossierPanel` existem; o `DossierDialog` **não** é montado dentro do `DetailDrawer` (checa por import/uso aninhado).
+- `tests/store.test.ts` — settings de IA mantêm o round-trip; dados legados de chaves de pesquisa são removidos de `secure-ls`.
+- `tests/ui-contract.test.ts` — ações do dossiê respeitam o gate de ambiente; `SettingsDialog` não contém campos de chaves de pesquisa; **nenhum** componente novo usa `/api/` ou `../actions`; `DossierDialog`/`DossierPanel` existem e o diálogo não é montado dentro do `DetailDrawer`.
 - `tests/i18n.test.ts` — a paridade de chaves já cobre `Dossier` e `Research` nos 3 locales.
 - O check `not.toContain("/api/")` deve varrer **só `app/components/**`** — `lib/research/direct.ts` contém legitimamente `https://brasilapi.com.br/api/cnpj/v1/…`.
 
-Manual: `npm test -- --run`, `npx tsc --noEmit`, `npm run build` (export estático), fluxo completo com e sem chave Tavily, backup/restore, multi-aba, cancelamento do dossiê no meio.
+Manual: `npm test -- --run`, `npx tsc --noEmit`, `npm run build` (export estático), fluxo completo com ambiente habilitado e com a flag/chaves ausentes, backup/restore, multi-aba, cancelamento do dossiê no meio.
 
 ## 11. Fora do escopo (v1) e backlog
 

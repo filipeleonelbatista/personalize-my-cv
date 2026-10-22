@@ -59,12 +59,12 @@ describe("store: dossiês", () => {
   });
 });
 
-describe("store: settings com research", () => {
-  it("saveSettings MESCLA e não apaga as chaves de pesquisa", () => {
-    saveSettings({ geminiKey: "K", models: ["m1"], research: { tavilyKey: "tvly-x", braveKey: "", jinaKey: "", youtubeKey: "", githubToken: "" } });
+describe("store: settings", () => {
+  it("saveSettings mescla as configurações da IA", () => {
+    saveSettings({ geminiKey: "K", models: ["m1"] });
     saveSettings({ geminiKey: "K2", models: ["m1"] });
-    expect(loadSettings().research.tavilyKey).toBe("tvly-x");
     expect(loadSettings().geminiKey).toBe("K2");
+    expect(loadSettings().models).toEqual(["m1"]);
   });
 });
 
